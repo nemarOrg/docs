@@ -1,0 +1,49 @@
+---
+title: NEMAR CLI
+description: Command-line interface for managing NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) datasets.
+template: splash
+hero:
+  tagline: Upload, validate, version, and download BIDS neurophysiology datasets on NEMAR, from your terminal.
+  actions:
+    - text: Get started
+      link: /getting-started/installation/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/nemarOrg/nemar-cli
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What is NEMAR?
+
+NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is a curated repository for
+neurophysiology data in Brain Imaging Data Structure (BIDS) format. This CLI provides tools
+for uploading, validating, versioning, and downloading datasets, with automatic git-annex,
+S3, GitHub, and DOI integration.
+
+<CardGrid stagger>
+  <Card title="Install the CLI" icon="seti:powershell">
+    Install with Bun and check your environment. [Installation guide](/getting-started/installation/).
+  </Card>
+  <Card title="Authenticate" icon="approve-check">
+    Sign up, get approved, and log in with your API key. [Authentication](/getting-started/authentication/).
+  </Card>
+  <Card title="Upload a dataset" icon="up-caret">
+    Validate BIDS, then upload to a private GitHub repo + S3. [Uploading guide](/guides/uploading/).
+  </Card>
+  <Card title="Download data" icon="down-caret">
+    Clone metadata and pull only the files you need. [Downloading guide](/guides/downloading/).
+  </Card>
+</CardGrid>
+
+## NEMAR at a glance
+
+| Surface | URL | What it is |
+| --- | --- | --- |
+| API | `api.nemar.org` | Backend API (Cloudflare Workers + D1) the CLI talks to |
+| Data plane | `data.nemar.org` | Public dataset files, manifests, and archive zips |
+| Browser | `ww2.nemar.org` | Current dataset browser (Astro) |
+| Viewer | `zarr.nemar.org` | In-browser signal viewer (Zarr proxy) |
+| Docs | `docs.nemar.org` | This site |
