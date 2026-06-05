@@ -18,6 +18,9 @@ export default defineConfig({
 			},
 			favicon: '/favicon.svg',
 			customCss: ['./src/styles/custom.css'],
+			components: {
+				Footer: './src/components/Footer.astro',
+			},
 			plugins: [
 				starlightLinksValidator({
 					// In-page anchors in the migrated content are not yet audited; focus

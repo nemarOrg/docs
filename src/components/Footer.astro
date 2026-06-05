@@ -1,0 +1,136 @@
+---
+// Override of Starlight's Footer: render the built-in page footer (pagination,
+// edit link, last-updated) then a NEMAR site footer that mirrors
+// nemarOrg/website's Footer.astro, styled with Starlight theme tokens.
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+const year = new Date().getFullYear();
+const site = 'https://ww2.nemar.org';
+---
+
+<Default><slot /></Default>
+
+<footer class="nemar-footer">
+  <div class="nemar-footer__inner">
+    <div class="nemar-footer__about">
+      <h2 class="nemar-footer__heading">NEMAR</h2>
+      <p>
+        The Neuroelectromagnetic Data Archive and Tools Resource. Funded by the
+        National Institutes of Health under award number NIMH R24MH120037.
+      </p>
+      <p class="nemar-footer__caveat">
+        Opinions, findings, and conclusions are those of the authors and do not
+        necessarily reflect the views of the National Institutes of Health.
+      </p>
+    </div>
+    <nav class="nemar-footer__nav" aria-label="Footer">
+      <div>
+        <h3>Explore</h3>
+        <ul role="list">
+          <li><a href={`${site}/discover`}>Discover</a></li>
+          <li><a href={`${site}/citation-dashboard`}>Citations</a></li>
+          <li><a href="/">Documentation</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Community</h3>
+        <ul role="list">
+          <li><a href={`${site}/community`}>Forum</a></li>
+          <li><a href={`${site}/about`}>About</a></li>
+          <li><a href={`${site}/support`}>Support</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Data</h3>
+        <ul role="list">
+          <li><a href="https://data.nemar.org/">data.nemar.org</a></li>
+          <li><a href="https://api.nemar.org/">api.nemar.org</a></li>
+          <li><a href="https://ww2.nemar.org/">ww2.nemar.org</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <div class="nemar-footer__bottom">
+    <p>&copy; {year} The Regents of the University of California</p>
+    <p>
+      Built with <a href="https://astro.build">Astro</a> and
+      <a href="https://starlight.astro.build">Starlight</a> on
+      <a href="https://pages.cloudflare.com">Cloudflare</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .nemar-footer {
+    margin-block-start: 3rem;
+    padding-block: 2.5rem;
+    border-block-start: 1px solid var(--sl-color-hairline-shade, var(--sl-color-gray-5));
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+  }
+  .nemar-footer__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) 2fr;
+    gap: 3rem;
+  }
+  @media (max-width: 50rem) {
+    .nemar-footer__inner {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+  .nemar-footer__heading {
+    font-family: 'Rubik', var(--sl-font);
+    font-size: var(--sl-text-2xl);
+    color: var(--sl-color-white);
+    margin: 0 0 0.5rem;
+  }
+  .nemar-footer__about p {
+    margin: 0 0 0.5rem;
+    max-width: 48ch;
+  }
+  .nemar-footer__caveat {
+    color: var(--sl-color-gray-4);
+  }
+  .nemar-footer__nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+  }
+  .nemar-footer__nav h3 {
+    font-size: var(--sl-text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sl-color-white);
+    margin: 0 0 0.5rem;
+  }
+  .nemar-footer__nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .nemar-footer__nav a {
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+  }
+  .nemar-footer__nav a:hover {
+    color: var(--sl-color-text-accent);
+  }
+  .nemar-footer__bottom {
+    margin-block-start: 2rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--sl-color-hairline-shade, var(--sl-color-gray-5));
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--sl-color-gray-4);
+  }
+  @media (max-width: 37rem) {
+    .nemar-footer__bottom {
+      flex-direction: column;
+    }
+  }
+</style>
