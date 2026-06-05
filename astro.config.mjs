@@ -10,6 +10,14 @@ export default defineConfig({
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
+			logo: {
+				light: './src/assets/nemar-logo-light.svg',
+				dark: './src/assets/nemar-logo-dark.svg',
+				alt: 'NEMAR',
+				replacesTitle: true,
+			},
+			favicon: '/favicon.svg',
+			customCss: ['./src/styles/custom.css'],
 			plugins: [
 				starlightLinksValidator({
 					// In-page anchors in the migrated content are not yet audited; focus
