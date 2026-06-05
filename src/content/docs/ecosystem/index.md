@@ -7,6 +7,33 @@ NEMAR is not a single application; it is a set of cooperating systems. This page
 The command-line interface (CLI) is where most users start, but it is one client of a larger
 platform, and more parts are joining over time.
 
+## How the pieces connect
+
+```mermaid
+flowchart TB
+  User([Researcher])
+  CLI["nemar CLI"]
+  Web["ww2.nemar.org<br/>dataset browser"]
+  API["api.nemar.org<br/>Workers + D1"]
+  Data["data.nemar.org<br/>files · manifests · zips"]
+  Zarr["zarr.nemar.org<br/>signal viewer"]
+  GH[("GitHub<br/>metadata + git-annex")]
+  S3[("S3<br/>data blobs")]
+  DOI["Zenodo / EZID<br/>DOIs"]
+
+  User --> CLI
+  User --> Web
+  CLI --> API
+  Web --> API
+  Web --> Data
+  Web --> Zarr
+  API --> GH
+  API --> S3
+  API --> DOI
+  Data --> S3
+  Zarr --> S3
+```
+
 ## Surfaces
 
 | Part | URL | Role | Docs |
@@ -19,6 +46,17 @@ platform, and more parts are joining over time.
 | **Legacy site** | `nemar.org` | Original PHP dataexplorer; being replaced by `ww2.nemar.org` | external |
 
 ## How a dataset flows through NEMAR
+
+```mermaid
+flowchart LR
+  A[Prepare BIDS] --> B[Validate]
+  B --> C[Upload<br/>CLI or web]
+  C --> D[Private GitHub repo<br/>+ S3 blobs]
+  D --> E[Admin mints<br/>concept DOI]
+  E --> F[Versioned release<br/>+ version DOI]
+  F --> G[Public on<br/>data.nemar.org + ww2]
+  G --> H[Recordings to<br/>Zarr viewer]
+```
 
 1. A researcher prepares a BIDS dataset and validates it with the **CLI**.
 2. The CLI registers the dataset through the **backend API**, which creates a private GitHub
