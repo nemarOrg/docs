@@ -7,7 +7,7 @@ title: "NEMAR DISASTER RECOVERY GUIDE"
 **Version:** 1.0.0
 **Last Updated:** 2026-01-18
 **Operator:** nemarRestore account
-**Emergency Contact:** yahya@osc.earth
+**Emergency Contact:** shirazi@ieee.org
 
 ---
 
@@ -34,11 +34,12 @@ command -v git && echo "✓ git" || echo "✗ git - install with: brew install g
 command -v git-annex && echo "✓ git-annex" || echo "✗ git-annex - install with: brew install git-annex"
 command -v gh && echo "✓ gh CLI" || echo "✗ gh CLI - install with: brew install gh"
 command -v aws && echo "✓ aws CLI" || echo "✗ aws CLI - install with: brew install awscli"
-command -v wrangler && echo "✓ wrangler" || echo "✗ wrangler - install with: npm install -g wrangler"
+command -v npx && echo "✓ npx (for cfman wrangler)" || echo "✗ npx - install Node.js"
 
 # 4. Authenticate to services
 gh auth status || gh auth login
-wrangler whoami || wrangler login
+# Cloudflare uses the SCCN account via cfman (token in ~/.config/cfman/tokens.json)
+npx cfman wrangler --account sccn whoami
 ```
 
 **Expected time:** 2 minutes if tools installed, 15-30 minutes if tools must be installed
@@ -58,10 +59,14 @@ aws s3 ls s3://nemar/ | grep "^PRE nm"
 # 2. Check what's on GitHub (metadata layer)
 gh repo list nemarDatasets --limit 200 | grep "^nemarDatasets/nm"
 
-# 3. Check database
-wrangler d1 execute nemar-db --remote --command \
+# 3. Check database (SCCN account; run from the nemar-cli repo root)
+npx cfman wrangler --account sccn d1 execute nemar-db --remote -c backend/wrangler-sccn.toml --command \
   "SELECT dataset_id, name, concept_doi, status FROM datasets ORDER BY dataset_id"
 ```
+
+:::note
+All Cloudflare operations use the SCCN account only (the personal `neuromechanist` account was retired 2026-05-18). Always pass `-c backend/wrangler-sccn.toml` so wrangler doesn't pick up the unrelated `wrangler.jsonc` at the repo root. If you hit an `Authentication error [code: 10000]` on `/memberships`, prefix the command with `CLOUDFLARE_ACCOUNT_ID=da8d7a2a8680dab01592bbbc6f67f12c`. If `CLOUDFLARE_API_TOKEN` is exported in your shell, unset it first (`env -u CLOUDFLARE_API_TOKEN ...`) or it overrides cfman.
+:::
 
 **Record findings:**
 - S3 buckets present: ___________
@@ -82,7 +87,7 @@ done
 ```
 
 **✅ IF S3 DATA EXISTS** → Proceed to restoration (safe!)
-**❌ IF S3 DATA MISSING** → STOP - Escalate to yahya@osc.earth immediately
+**❌ IF S3 DATA MISSING** → STOP - Escalate to shirazi@ieee.org immediately
 
 ---
 
@@ -199,11 +204,12 @@ done
 ### STEP 6: RESTORE DATABASE ENTRIES (5 minutes)
 
 ```bash
-# Run the SQL restoration script
-wrangler d1 execute nemar-db --remote --file=/tmp/restore/restore_database_entries.sql
+# Run the SQL restoration script (SCCN account; run from the nemar-cli repo root)
+npx cfman wrangler --account sccn d1 execute nemar-db --remote -c backend/wrangler-sccn.toml \
+  --file=/tmp/restore/restore_database_entries.sql
 
 # Verify restoration
-wrangler d1 execute nemar-db --remote --command \
+npx cfman wrangler --account sccn d1 execute nemar-db --remote -c backend/wrangler-sccn.toml --command \
   "SELECT dataset_id, name, concept_doi, status FROM datasets
    WHERE dataset_id IN ('nm000103', 'nm000104', 'nm000105', 'nm000106', 'nm000107')
    ORDER BY dataset_id"
@@ -271,12 +277,12 @@ gh issue create --repo nemarOrg/nemar-cli \
 
 ## Follow-up Actions
 
-- [ ] Implement fail-safes (Issue #35)
+- [x] Deletion fail-safes implemented (guarded cascade delete + audit log)
 - [ ] Update disaster recovery procedures
 - [ ] Test recovery procedures quarterly
 
 **Recovered by:** nemarRestore
-**Contact:** yahya@osc.earth"
+**Contact:** shirazi@ieee.org"
 
 # Email notification to admin
 echo "Subject: NEMAR Dataset Recovery Complete
@@ -288,7 +294,7 @@ See issue for details: [issue-url]
 All datasets verified functional.
 
 - NEMAR Restore
-" | mail -s "NEMAR Recovery Complete" nemarAdmin@osc.earth
+" | mail -s "NEMAR Recovery Complete" shirazi@ieee.org
 ```
 
 ---
@@ -300,12 +306,12 @@ All datasets verified functional.
 **Store in 1Password:**
 - AWS Access Key ID: `<retrieve from 1Password: NEMAR Production vault>`
 - AWS Secret Access Key: `<retrieve from 1Password: NEMAR Production vault>`
-- GitHub SSH: `~/.ssh/config` → `nemar-neuromechanist-github`
-- Wrangler auth: `wrangler login`
+- GitHub SSH: `~/.ssh/config` → nemarDatasets deploy key
+- Cloudflare auth: SCCN account token in `~/.config/cfman/tokens.json` (used by `npx cfman wrangler --account sccn`)
 
 **1Password Details:**
 - Vault: "NEMAR Production"
-- Item: "AWS S3 NEMAR Bucket - nemar-neuromechanist"
+- Item: "AWS S3 NEMAR Bucket"
 - Retrieve: `op item get "AWS S3 NEMAR Bucket" --vault "NEMAR Production" --field "access key id"`
 - Retrieve: `op item get "AWS S3 NEMAR Bucket" --vault "NEMAR Production" --field "secret access key"`
 
@@ -335,20 +341,30 @@ All datasets verified functional.
 
 ## ⚠️ PREVENTION NOTE
 
-**Dataset deletion is not yet implemented** in the NEMAR CLI or backend. The incident on 2026-01-18 occurred through direct GitHub repository deletion and database manipulation, not through normal NEMAR operations.
+**Dataset deletion IS implemented** in the NEMAR CLI and backend (`backend/src/services/deletion.ts`, `DELETE /admin/datasets/:id`, and `nemar admin delete-dataset <id>`). The incident on 2026-01-18 predated this and occurred through direct GitHub repository deletion and database manipulation, not through normal NEMAR operations.
 
-### Future Fail-Safes
+Deletion now cascades through all three layers in one operation: the GitHub repo, the S3 objects (and the dataset's private bucket-policy carve-out), and the D1 records (`dataset_versions`, `publication_requests`, `dataset_collaborators`, `user_s3_permissions`, `datasets`), plus removal of the Vectorize search vector. Every deletion is written to `audit_log`.
 
-Backend and CLI fail-safes to prevent accidental deletion are specified in:
-- **[FUTURE_FAIL_SAFES.md](./future-fail-safes)** - Detailed specifications for deletion protection
-- **Issue #35** - Two-tier admin permissions and deletion fail-safes (not yet implemented)
+### Built-in Fail-Safes
 
-**Key protections to be implemented:**
-1. Prevent deletion of datasets with DOIs
-2. Prevent deletion of published/public datasets
-3. Two-tier admin permissions (nemarAdmin vs Owner)
-4. Require explicit confirmation (user must type dataset ID)
-5. Audit log all deletion attempts
+The shipped deletion path enforces the following protections (`backend/src/routes/admin.ts`):
+
+1. **Permission model:**
+   - Unpublished datasets (no concept DOI, private): admin **or** owner may delete.
+   - Published datasets (with a DOI or `visibility = public`): NEMAR **owner only**, and the request must set `force=true` (`--force` on the CLI) as explicit confirmation.
+2. **Active publication requests block deletion** — a dataset with any non-`published`/non-`denied` publication request returns `409` until those requests are denied or completed.
+3. **System catalog rows are refused** — folded legacy nemar.org catalog rows (`owner = nemar-system`) cannot be deleted here; they are managed by the catalog sync.
+4. **Interactive confirmation** — the CLI prompts before deleting; deleting a DOI dataset additionally requires `--force`.
+5. **Audit log** — every deletion attempt is recorded in `audit_log` with the requesting user, force flag, per-step results, and warnings.
+
+### Scheduled Cleanup (cron)
+
+A daily cron (3 AM UTC, production only; see `wrangler-sccn.toml [triggers]` and `scheduledCleanup` in `backend/src/index.ts`) performs automated housekeeping:
+
+- **Sandbox (`xx`) datasets** older than 14 days are **auto-deleted** (disposable).
+- **Stale `nm` datasets** (private, no DOI, no active publication requests, inactive 90 days) are **never auto-deleted** (#662). The cron emails the owner an escalating warning runway (30/14/7/2/1 days) and, at the deadline, asks an admin to delete manually via `nemar admin delete-dataset`. Real archive data is only ever removed by a deliberate human action.
+
+This recovery guide remains the procedure for restoring datasets that are lost through means outside these guarded paths (e.g., direct GitHub/D1 manipulation, or a mistaken manual `delete-dataset`).
 
 ---
 
@@ -403,8 +419,8 @@ rm -rf /tmp/restore/restore_work/nm000105
 
 | Role | Contact | When to Contact |
 |------|---------|-----------------|
-| **Owner** | yahya@osc.earth | S3 data missing, policy decisions |
-| **nemarAdmin** | nemarAdmin@osc.earth | Database access, user issues |
+| **Owner** | shirazi@ieee.org | S3 data missing, policy decisions |
+| **nemarAdmin** | shirazi@ieee.org | Database access, user issues |
 | **AWS Support** | aws.amazon.com/support | S3 access issues |
 | **GitHub Support** | support.github.com | Repository access issues |
 

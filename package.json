@@ -1,5 +1,5 @@
 {
-  "name": "docs",
+  "name": "nemar-docs",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -7,11 +7,18 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "gen:commands": "bun run scripts/generate-commands.ts",
+    "deploy": "astro build && wrangler deploy",
+    "preview:worker": "astro build && wrangler dev"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.39.3",
     "astro": "^6.3.1",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "starlight-links-validator": "^0.24.0",
+    "wrangler": "^4.98.0"
   }
 }

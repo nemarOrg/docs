@@ -68,7 +68,7 @@ TEST_DATASET_ID=nm099999
 
 # Admin credentials (from backend team)
 TEST_ADMIN_API_KEY=your_admin_key
-TEST_API_URL=https://nemar-api-dev.shirazi-10f.workers.dev
+TEST_API_URL=https://nemar-api-dev.sccn-org.workers.dev
 ```
 
 **Security notes:**
@@ -343,7 +343,7 @@ Webhook endpoint tests verify GitHub Actions can trigger version DOI creation:
 
 ### Manual Testing
 ```bash
-curl -X POST https://nemar-api-dev.shirazi-10f.workers.dev/webhooks/publish-version-doi \
+curl -X POST https://nemar-api-dev.sccn-org.workers.dev/webhooks/publish-version-doi \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Token: test_token" \
   -d '{
@@ -360,10 +360,10 @@ curl -X POST https://nemar-api-dev.shirazi-10f.workers.dev/webhooks/publish-vers
 - [Zenodo API Documentation](https://developers.zenodo.org)
 - [Zenodo REST API](https://developers.zenodo.org/#rest-api)
 - [DataCite DOI Registration](https://datacite.org)
-- [NEMAR Backend API](../backend/README)
+- [NEMAR API Reference](/platform/api/)
 
 ## Related Documentation
 
-- [DOI Management](../user-guide/doi-management)
-- [Dataset Publication](../user-guide/publication)
-- [CI/CD Setup](../../.github/workflows/README)
+- [Admin Commands (DOI management)](/admin/commands/)
+- [Publishing Datasets](/cli/guides/publishing/)
+- [Development Setup](/develop/setup/)

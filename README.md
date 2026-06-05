@@ -1,49 +1,55 @@
-# Starlight Starter Kit: Basics
+# NEMAR Documentation
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+Source for [docs.nemar.org](https://docs.nemar.org), built with [Astro Starlight](https://starlight.astro.build).
 
-```
-bun create astro@latest -- --template starlight
-```
+Migrated out of `nemarOrg/nemar-cli` (was MkDocs Material) so the CLI repo carries
+no Python toolchain and the docs can be deployed and gated independently.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+## Structure
 
 ```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+src/content/docs/
+├── index.mdx                 Landing page (splash)
+├── getting-started/          PUBLIC  — install, quickstart, authentication
+├── commands/                 PUBLIC  — auth/dataset/sandbox reference (generated)
+├── guides/                   PUBLIC  — uploading, validation, downloading, versioning, publishing
+├── reference/                PUBLIC  — configuration, environment, api, data-api
+├── development/              PUBLIC  — contributor setup, zenodo testing
+└── admin/                    GATED   — served under /admin/*, fronted by Cloudflare Access
+    ├── commands.md           Admin command reference (generated)
+    ├── github-app-setup.md
+    ├── operations/           access-policies, manifest-summary-backfill, zarr-serving
+    └── disaster-recovery/    restoration runbooks, fail-safes, user roles
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Everything under `admin/` is public static HTML at build time; access control is
+applied at the edge by **Cloudflare Access** on the `docs.nemar.org/admin/*` path,
+not in this repo. Keep genuinely internal material (webhook internals, observability
+instrumentation, SSR contracts) in `nemar-cli` `AGENTS.md`, not here.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+## Commands
 
-Static assets, like favicons, can be placed in the `public/` directory.
+| Command | Action |
+| :-- | :-- |
+| `bun install` | Install dependencies |
+| `bun run dev` | Local dev server at `localhost:4321` |
+| `bun run build` | Build to `./dist/` (includes Pagefind search + sitemap) |
+| `bun run preview` | Preview the production build |
 
-## 🧞 Commands
+## Generators
 
-All commands are run from the root of the project, from a terminal:
+Two scripts keep content in sync with the CLI; both are pure Bun/TypeScript (no Python):
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
+- **`scripts/generate-commands.ts`** — regenerates the command reference
+  (`commands/{auth,dataset,sandbox}.mdx`, `admin/commands.mdx`) by recursively
+  parsing the live `nemar … --help` tree. Run it after CLI changes. It expects
+  `nemar-cli` checked out as a sibling at `../nemar-cli`.
+- **`scripts/migrate-from-mkdocs.ts`** — one-time MkDocs → Starlight port
+  (frontmatter, admonitions → asides, link fixups). Kept for reference; not part
+  of the normal build.
 
-## 👀 Want to learn more?
+## Deployment
 
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+Deployed to Cloudflare Pages (SCCN account) on the `docs.nemar.org` custom domain.
+Build command `bun run build`, output `dist/`. Admin gating via a Cloudflare Access
+application on `docs.nemar.org/admin/*`.

@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightLinksValidator from 'starlight-links-validator';
 
 // https://astro.build/config
 export default defineConfig({
@@ -8,52 +9,74 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'NEMAR',
-			description: 'Documentation for the NEMAR CLI and dataset platform.',
+			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
+			plugins: [
+				starlightLinksValidator({
+					// In-page anchors in the migrated content are not yet audited; focus
+					// the gate on whether links resolve to real pages. Resolving relative
+					// links are allowed (the admin runbooks cross-link relatively).
+					errorOnInvalidHashes: false,
+					errorOnRelativeLinks: false,
+				}),
+			],
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/nemarOrg/nemar-cli' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/nemarOrg' },
 			],
 			sidebar: [
+				{ label: 'The Ecosystem', link: '/ecosystem/' },
 				{
-					label: 'Getting Started',
+					label: 'CLI',
 					items: [
-						{ label: 'Installation', slug: 'getting-started/installation' },
-						{ label: 'Quick Start', slug: 'getting-started/quickstart' },
-						{ label: 'Authentication', slug: 'getting-started/authentication' },
+						{ label: 'Overview', link: '/cli/' },
+						{
+							label: 'Getting Started',
+							items: [
+								{ label: 'Installation', slug: 'cli/getting-started/installation' },
+								{ label: 'Quick Start', slug: 'cli/getting-started/quickstart' },
+								{ label: 'Authentication', slug: 'cli/getting-started/authentication' },
+							],
+						},
+						{
+							label: 'Guides',
+							items: [
+								{ label: 'Uploading Datasets', slug: 'cli/guides/uploading' },
+								{ label: 'BIDS Validation', slug: 'cli/guides/validation' },
+								{ label: 'Downloading Data', slug: 'cli/guides/downloading' },
+								{ label: 'Versioning', slug: 'cli/guides/versioning' },
+								{ label: 'Publishing', slug: 'cli/guides/publishing' },
+							],
+						},
+						{
+							label: 'Command Reference',
+							items: [
+								{ label: 'Overview', slug: 'cli/commands' },
+								{ label: 'auth', slug: 'cli/commands/auth' },
+								{ label: 'dataset', slug: 'cli/commands/dataset' },
+								{ label: 'sandbox', slug: 'cli/commands/sandbox' },
+							],
+						},
+						{
+							label: 'Configuration',
+							items: [
+								{ label: 'Configuration', slug: 'cli/reference/configuration' },
+								{ label: 'Environment Variables', slug: 'cli/reference/environment' },
+							],
+						},
 					],
 				},
 				{
-					label: 'Commands',
+					label: 'Platform & APIs',
 					items: [
-						{ label: 'Overview', slug: 'commands' },
-						{ label: 'auth', slug: 'commands/auth' },
-						{ label: 'dataset', slug: 'commands/dataset' },
-						{ label: 'sandbox', slug: 'commands/sandbox' },
+						{ label: 'Overview', link: '/platform/' },
+						{ label: 'Backend API', slug: 'platform/api' },
+						{ label: 'Data API', slug: 'platform/data-api' },
 					],
 				},
 				{
-					label: 'Guides',
+					label: 'Develop',
 					items: [
-						{ label: 'Uploading Datasets', slug: 'guides/uploading' },
-						{ label: 'BIDS Validation', slug: 'guides/validation' },
-						{ label: 'Downloading Data', slug: 'guides/downloading' },
-						{ label: 'Versioning', slug: 'guides/versioning' },
-						{ label: 'Publishing', slug: 'guides/publishing' },
-					],
-				},
-				{
-					label: 'Reference',
-					items: [
-						{ label: 'Configuration', slug: 'reference/configuration' },
-						{ label: 'Environment Variables', slug: 'reference/environment' },
-						{ label: 'API', slug: 'reference/api' },
-						{ label: 'Data API', slug: 'reference/data-api' },
-					],
-				},
-				{
-					label: 'Development',
-					items: [
-						{ label: 'Setup', slug: 'development/setup' },
-						{ label: 'Zenodo Testing', slug: 'development/zenodo-testing' },
+						{ label: 'Setup', slug: 'develop/setup' },
+						{ label: 'Zenodo Testing', slug: 'develop/zenodo-testing' },
 					],
 				},
 				{

@@ -1,0 +1,499 @@
+---
+title: "dataset"
+---
+
+Dataset management operations.
+
+:::note
+This page is generated from `nemar dataset --help`. Run `generate-commands.ts` to refresh it.
+:::
+
+## dataset
+
+```text
+Usage: nemar dataset [options] [command]
+
+Dataset management
+
+Options:
+  -h, --help                            display help for command
+
+Commands:
+  ci [dataset-id]                       Check BIDS validation CI status for the
+                                        current dataset
+  clone [options] <dataset-id>          Clone a dataset from NEMAR
+  collaborators [options] <dataset-id>  List collaborators for a dataset
+  commit [options]                      Stage and commit changes in the current
+                                        dataset
+  download [options] <dataset-id>       Download a dataset from NEMAR or
+                                        OpenNeuro
+  drop [files...]                       Free local copies of annexed files
+                                        (keeps remote copies)
+  get [options] [files...]              Download annexed data files for the
+                                        current dataset
+  help [command]                        display help for command
+  invite <username> <dataset-id>        Invite a user as collaborator to your
+                                        dataset
+  list [options]                        List datasets on NEMAR (full catalog)
+  manifest [options] [version]          View version manifests for a dataset
+  publish                               Publication workflow management
+  push [options]                        Push commits and data to remotes
+  release [options] <dataset-id>        Create a version bump PR for a dataset
+  request-access <dataset-id>           Request collaborator access to a
+                                        dataset
+  save [options]                        Stage and commit changes (alias for
+                                        commit)
+  search [options] <query>              Search datasets using semantic matching
+  status [options] <dataset-id>         Check status of a dataset
+  update [options] [path]               Push local changes to a dataset via PR
+  upload [options] <path>               Upload a BIDS dataset to NEMAR
+  validate [options] [path]             Validate a BIDS dataset using the
+                                        official BIDS validator (requires Deno)
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset ci
+
+```text
+Usage: nemar dataset ci [options] [dataset-id]
+
+Check BIDS validation CI status for the current dataset
+
+Arguments:
+  dataset-id  Dataset ID (auto-detected from git remote if omitted)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset clone
+
+```text
+Usage: nemar dataset clone [options] <dataset-id>
+
+Clone a dataset from NEMAR
+
+Arguments:
+  dataset-id           Dataset ID (e.g., nm000104)
+
+Options:
+  -o, --output <path>  Output directory (default: ./<dataset-id>)
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset collaborators
+
+```text
+Usage: nemar dataset collaborators [options] <dataset-id>
+
+List collaborators for a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  --json      Output as JSON for scripting
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset commit
+
+```text
+Usage: nemar dataset commit [options]
+
+Stage and commit changes in the current dataset
+
+Options:
+  -m, --message <msg>  Commit message (default: "Save changes")
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset download
+
+```text
+Usage: nemar dataset download [options] <dataset-id>
+
+Download a dataset from NEMAR or OpenNeuro
+
+Arguments:
+  dataset-id           Dataset ID (e.g., nm000104 or OpenNeuro ds000248)
+
+Options:
+  -o, --output <path>  Output directory (default: ./<dataset-id>)
+  -j, --jobs <number>  Parallel download streams (default: 4) (default: "4")
+  --no-data            Download metadata only (skip large data files)
+  --resume             Resume a partial download into an existing clone
+  --update             Pull only the version diff into an existing clone
+  --prune              With --update, drop annex objects that no longer exist
+                       upstream
+  --subjects <list>    Comma-separated subjects (e.g. sub-01,02)
+  --sessions <list>    Comma-separated sessions (e.g. ses-pre,post)
+  --tasks <list>       Comma-separated tasks (e.g. rest,nback)
+  --runs <list>        Comma-separated runs (e.g. 1,2 — matches run-1 and
+                       run-01)
+  --datatypes <list>   Comma-separated BIDS datatypes (e.g. eeg,emg)
+  --include <globs>    Comma-separated extra include globs
+  --exclude <globs>    Comma-separated exclude globs (e.g. sourcedata/**)
+  --stimuli            Include stimuli/ content (skipped by default; can be
+                       large)
+  --derivatives        Include derivatives/ content (skipped by default; can be
+                       large)
+  --skip-port-check    Skip the porting-in-progress check (use if falsely
+                       blocked on an OpenNeuro-sourced dataset)
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset drop
+
+```text
+Usage: nemar dataset drop [options] [files...]
+
+Free local copies of annexed files (keeps remote copies)
+
+Arguments:
+  files       Specific files to drop (default: all)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset get
+
+```text
+Usage: nemar dataset get [options] [files...]
+
+Download annexed data files for the current dataset
+
+Arguments:
+  files                Specific files/paths to get (default: all)
+
+Options:
+  -j, --jobs <number>  Parallel download streams (default: "4")
+  --stimuli            Include stimuli/ content (skipped by default; can be
+                       large)
+  --derivatives        Include derivatives/ content (skipped by default; can be
+                       large)
+  --skip-port-check    Skip the porting-in-progress check (use if falsely
+                       blocked on an OpenNeuro-sourced dataset)
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset invite
+
+```text
+Usage: nemar dataset invite [options] <username> <dataset-id>
+
+Invite a user as collaborator to your dataset
+
+Arguments:
+  username    Username to invite
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset list
+
+```text
+Usage: nemar dataset list [options]
+
+List datasets on NEMAR (full catalog)
+
+Options:
+  --mine              List only your datasets (both private and public)
+  --owner <username>  List datasets owned by a specific user
+  --search <query>    Search by name, description, authors, or tasks
+  --modality <type>   Filter by modality (eeg, emg, meg, etc.)
+  --author <name>     Filter by author name
+  --task <name>       Filter by task name
+  --license <tiers>   Filter by license tier(s), comma-separated: public,
+                      attribution, sharealike, noncommercial, noderiv, unknown
+  --doi               Show only datasets with DOIs
+  --recent [days]     Show recently published datasets
+  --sort <order>      Sort: newest, oldest, name, participants, size (default:
+                      "newest")
+  --json              Output as JSON for scripting
+  -n, --limit <n>     Results per page (default: 20, max: 200) (default: "20")
+  --page <n>          Page number (starts at 1)
+  --offset <n>        Skip this many results (alternative to --page)
+  --all               Show all results (up to 200)
+  -h, --help          display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset manifest
+
+```text
+Usage: nemar dataset manifest [options] [version]
+
+View version manifests for a dataset
+
+Arguments:
+  version             Version to view (lists available if omitted)
+
+Options:
+  -d, --dataset <id>  Dataset ID (auto-detected from git remote if omitted)
+  --json              Output raw JSON
+  -h, --help          display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset publish
+
+```text
+Usage: nemar dataset publish [options] [command]
+
+Publication workflow management
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  help [command]        display help for command
+  request <dataset-id>  Request publication of a dataset
+  resend <dataset-id>   Resend publication request notification to admins
+  status <dataset-id>   Check publication status of a dataset
+```
+
+#### dataset publish request
+
+```text
+Usage: nemar dataset publish request [options] <dataset-id>
+
+Request publication of a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+#### dataset publish resend
+
+```text
+Usage: nemar dataset publish resend [options] <dataset-id>
+
+Resend publication request notification to admins
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+#### dataset publish status
+
+```text
+Usage: nemar dataset publish status [options] <dataset-id>
+
+Check publication status of a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset push
+
+```text
+Usage: nemar dataset push [options]
+
+Push commits and data to remotes
+
+Options:
+  -j, --jobs <number>  Parallel upload streams for S3 (default: "4")
+  --no-s3              Skip pushing data to S3 remote
+  --pr                 Create a pull request after pushing
+  -t, --title <title>  Pull request title (with --pr)
+  -b, --body <body>    Pull request body (with --pr)
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset release
+
+```text
+Usage: nemar dataset release [options] <dataset-id>
+
+Create a version bump PR for a dataset
+
+Arguments:
+  dataset-id           Dataset ID (e.g., nm000104)
+
+Options:
+  --type <type>        Bump type: patch, minor, or major
+  --version <version>  Explicit version (e.g., 2.0.0)
+  --dir <path>         Use existing local clone instead of cloning
+  --monitor            Watch CI checks and offer to merge
+  -y, --yes            Skip confirmation and proceed
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset request-access
+
+```text
+Usage: nemar dataset request-access [options] <dataset-id>
+
+Request collaborator access to a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset save
+
+```text
+Usage: nemar dataset save [options]
+
+Stage and commit changes (alias for commit)
+
+Options:
+  -m, --message <msg>  Commit message (default: "Save changes")
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset search
+
+```text
+Usage: nemar dataset search [options] <query>
+
+Search datasets using semantic matching
+
+Options:
+  --modality <type>  Filter by modality (eeg, emg, meg, etc.)
+  --json             Output as JSON for scripting
+  --limit <n>        Limit results (default: 20) (default: "20")
+  -h, --help         display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset status
+
+```text
+Usage: nemar dataset status [options] <dataset-id>
+
+Check status of a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  --json      Output as JSON for scripting
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset update
+
+```text
+Usage: nemar dataset update [options] [path]
+
+Push local changes to a dataset via PR
+
+Arguments:
+  path                 Path to local dataset clone (default: current directory)
+
+Options:
+  --bump <type>        Version bump type: patch, minor, or major (default:
+                       "patch")
+  --branch <name>      Custom branch name
+  -m, --message <msg>  Commit message
+  --monitor            Watch CI checks and offer to merge
+  -y, --yes            Skip confirmation and proceed
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset upload
+
+```text
+Usage: nemar dataset upload [options] <path>
+
+Upload a BIDS dataset to NEMAR
+
+Arguments:
+  path                      Path to BIDS dataset directory
+
+Options:
+  -n, --name <name>         Dataset name (defaults to BIDS Name, then directory
+                            name)
+  -d, --description <desc>  Dataset description
+  --skip-validation         Skip BIDS validation (not recommended)
+  --skip-orcid              Skip co-author ORCID collection
+  --dry-run                 Show what would be uploaded without doing it
+  -j, --jobs <number>       Parallel upload streams (default: 4) (default: "4")
+  -y, --yes                 Skip confirmation and proceed
+  --restart                 Clear upload progress and re-upload all files
+  --no                      Skip confirmation and decline
+  -h, --help                display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### dataset validate
+
+```text
+Usage: nemar dataset validate [options] [path]
+
+Validate a BIDS dataset using the official BIDS validator (requires Deno)
+
+Arguments:
+  path                 Path to BIDS dataset directory (default: ".")
+
+Options:
+  --ignore-warnings    Only report errors, not warnings
+  -c, --config <file>  Validation config file (.bidsvalidatorrc)
+  -r, --recursive      Validate derivatives subdirectories
+  --prune              Skip sourcedata and derivatives for faster validation
+  -v, --verbose        Show verbose output
+  --json               Output results as JSON (for scripting)
+  --version-info       Show BIDS validator version info
+  --update             Force update the BIDS validator to the latest version
+  -h, --help           display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+

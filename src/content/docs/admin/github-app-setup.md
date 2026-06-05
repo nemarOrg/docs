@@ -3,20 +3,26 @@ title: "GitHub App setup"
 ---
 
 This is the operational runbook for creating the GitHub App that the
-Cloudflare Worker will use to authenticate against GitHub once the
-[migration epic](https://github.com/nemarOrg/nemar-cli/issues/432) lands.
+Cloudflare Worker uses to authenticate against GitHub. App auth is live:
+the [migration epic](https://github.com/nemarOrg/nemar-cli/issues/432)
+has landed and the Worker routes every GitHub call through the App when
+its credentials are configured.
 
 ## Why
 
-The Worker today reads `GITHUB_ADMIN_PAT`, a user PAT tied to an
-individual maintainer. Every Worker call to GitHub competes against that
+Before App auth, the Worker read `GITHUB_ADMIN_PAT`, a user PAT tied to an
+individual maintainer. Every Worker call to GitHub competed against that
 same maintainer's interactive `gh` CLI usage in one shared 5,000/hr core
-bucket, so a large publication batch can starve the queue.
+bucket, so a large publication batch could starve the queue.
 
 A GitHub App installation gets its own rate-limit pool per installed
-organization, independent of any human user. Once the migration ships,
-the Worker mints short-lived installation tokens from the App and never
-touches a user PAT again.
+organization, independent of any human user. With the App configured, the
+Worker mints short-lived installation tokens (`getInstallationToken` in
+`backend/src/services/github-auth.ts`, cached per installation) and routes
+through them via `getDatasetsAuth` / `getDefaultGitHubAuth`. The user PAT
+remains only as a fallback: `getDefaultGitHubAuth` falls back to
+`GITHUB_ADMIN_PAT` when any App secret is missing, so dev environments
+without App secrets keep working.
 
 This runbook covers creating the App and verifying it works.
 
@@ -74,8 +80,8 @@ survives any individual maintainer leaving.
      owner and blocks the second installation.
 3. Click **Create GitHub App**.
 4. On the new App's settings page, note the numeric **App ID** near the
-   top. Record it; Phase 2 will store it as the Worker secret
-   `GITHUB_APP_ID`.
+   top. Record it; it is set as the Worker secret `GITHUB_APP_ID`, which
+   `getGitHubAppConfig` reads to decide whether App auth is available.
 
 ### 2. Generate and download the private key
 
@@ -83,7 +89,9 @@ survives any individual maintainer leaving.
    **Generate a private key**. The browser downloads a `.pem` file.
 2. Open the file in a text editor and confirm the header reads
    `-----BEGIN RSA PRIVATE KEY-----`. Convert to PKCS#8 if needed (GitHub
-   ships PKCS#1; the verify script and Phase 2 helper both expect PKCS#8):
+   ships PKCS#1; both the verify script and the Worker's JWT signer
+   `signAppJwt` / `pkcs8PemToDer` import keys only as PKCS#8, and the
+   latter throws a clear error if handed a PKCS#1 or encrypted PEM):
    ```bash
    openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt \
      -in nemar-publish-bot.<date>.private-key.pem \
@@ -112,7 +120,8 @@ the Worker can access.
 
 1. From the App settings page, click **Install App** in the left sidebar.
 2. Click **Install** next to **nemarDatasets** first (this is the
-   one Phase 3 actively uses).
+   installation the Worker actively uses — `getDatasetsAuth` resolves the
+   `nemarDatasets` installation ID via `GITHUB_APP_INSTALLATION_ID_NEMAR_DATASETS`).
 3. Choose **All repositories** and confirm. Note the installation ID
    from the resulting URL:
    `https://github.com/organizations/nemarDatasets/settings/installations/<INSTALL_ID>`.
@@ -157,7 +166,7 @@ rm /tmp/nemar-app.pem
 
 The canonical copy lives in 1Password.
 
-## Phase 1 acceptance checklist
+## App-creation acceptance checklist
 
 - [ ] App `nemar-publish-bot` exists under `nemarOrg`.
 - [ ] App permissions match the list in step 1 (no extras, no missing
@@ -169,14 +178,18 @@ The canonical copy lives in 1Password.
 - [ ] `bun run scripts/verify-github-app.ts ...` returns OK.
 - [ ] Local copy of the private key removed from disk.
 
-Phase 2 (#437) consumes these credentials in the Worker. No Worker secret
-changes happen in this phase.
+Once these credentials are set as Worker secrets (`GITHUB_APP_ID`,
+`GITHUB_APP_PRIVATE_KEY`, and the two `GITHUB_APP_INSTALLATION_ID_*`
+values), `getGitHubAppConfig` detects them and the Worker mints
+installation tokens instead of using the PAT.
 
-> **Do NOT remove `GITHUB_ADMIN_PAT` from the Worker yet.** The Phase 3 routing helper
-> falls back to the PAT when any App secret is missing; if both are absent the helper
-> throws "No GitHub auth configured" and every orchestrator call 500s. The PAT stays
-> as a safety net until Phase 5 (#440) removes it after a soak period confirms App
-> auth is live in `github-rl` logs.
+> **Do NOT remove `GITHUB_ADMIN_PAT` from the Worker.** The routing helper
+> `getDefaultGitHubAuth` falls back to the PAT when any App secret is
+> missing; if both are absent the helper throws "No GitHub auth
+> configured" and every orchestrator call 500s. The PAT stays as a safety
+> net (and keeps dev environments without App secrets working) until a
+> dedicated cleanup removes it after a soak period confirms App auth is
+> healthy in `github-rl` logs.
 
 ## Dataset-repo CI uses the same App
 
@@ -270,5 +283,5 @@ via `actions/create-github-app-token@v1` so all CI writes carry the
 
 ## Cross-references
 
-- Existing PAT troubleshooting: [Publishing workflow Admin Issues](publishing#admin-issues)
+- Existing PAT troubleshooting: [Publishing workflow](/cli/guides/publishing/)
 - Tracking epic: [#432](https://github.com/nemarOrg/nemar-cli/issues/432)

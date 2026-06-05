@@ -1,190 +1,49 @@
 ---
-title: "Backend Fail-Safes to Prevent Dataset Deletion"
+title: "Backend Fail-Safes Against Dataset Deletion"
 ---
 
-**Status:** TO BE IMPLEMENTED (Tracked in Issue #35)
+**Status:** IMPLEMENTED (shipped; originally tracked in Issue #35)
 **Priority:** P0 - Critical
-**Version:** 1.0.0
-**Date:** 2026-01-18
 
 ---
 
 ## Overview
 
-This document specifies fail-safes that must be implemented in the NEMAR backend and CLI to prevent accidental deletion of production datasets. These requirements were identified after the 2026-01-18 incident where datasets nm000103-nm000107 were accidentally deleted.
+The deletion fail-safes specified after the 2026-01-18 incident (datasets nm000103-nm000107 lost through direct GitHub/D1 manipulation, **not** through NEMAR operations) have **shipped**. Dataset deletion is now a single guarded, audited operation in the backend and CLI.
 
-**IMPORTANT:** These fail-safes are **not yet implemented**. This is a specification document for future development.
+This page is a short summary; the authoritative, kept-up-to-date description of the deletion path and its protections lives in the main recovery guide. See [DISASTER_RECOVERY.md → Prevention Note](./disaster-recovery#prevention-note).
 
----
-
-## Backend Deletion Fail-Safes (CRITICAL - Must Implement)
-
-**File:** `backend/src/routes/datasets.ts`
-
-**Requirements:** The backend must implement a DELETE endpoint with the following checks:
-
-```typescript
-// BEFORE allowing deletion, check:
-
-// 1. CHECK: Does dataset have a concept DOI?
-if (dataset.concept_doi || dataset.latest_version_doi) {
-  throw new Error(
-    `Cannot delete dataset ${dataset.dataset_id}: has DOI(s). ` +
-    `Datasets with DOIs are preserved on Zenodo and cannot be deleted. ` +
-    `Contact owner (yahya@osc.earth) if deletion is absolutely necessary.`
-  );
-}
-
-// 2. CHECK: Is dataset public/published?
-if (dataset.status === 'published' || dataset.visibility === 'public') {
-  throw new Error(
-    `Cannot delete published/public dataset ${dataset.dataset_id}. ` +
-    `Published datasets must remain available. ` +
-    `Contact owner (yahya@osc.earth) if deletion is absolutely necessary.`
-  );
-}
-
-// 3. CHECK: Two-tier admin permissions
-if (dataset.owner_user_id !== requesting_user_id) {
-  if (!requesting_user_is_owner) {  // Only owner can delete others' datasets
-    throw new Error(
-      `Cannot delete dataset ${dataset.dataset_id}: ` +
-      `Only the owner (yahya@osc.earth) can delete datasets created by other users.`
-    );
-  }
-}
-
-// 4. REQUIRE: Explicit confirmation
-if (!request.body.confirm_deletion || request.body.confirmation_text !== dataset.dataset_id) {
-  throw new Error(
-    `Deletion requires explicit confirmation. ` +
-    `Set confirm_deletion=true and confirmation_text='${dataset.dataset_id}'`
-  );
-}
-
-// 5. AUDIT LOG: Record deletion attempt
-await logAuditEvent({
-  user_id: requesting_user_id,
-  action: 'dataset_delete_attempt',
-  resource_type: 'dataset',
-  resource_id: dataset.dataset_id,
-  details: JSON.stringify({
-    has_doi: !!dataset.concept_doi,
-    status: dataset.status,
-    owner: dataset.owner_user_id
-  })
-});
-```
+:::note
+Deletion is exposed as `DELETE /admin/datasets/:id` (admin-gated via `authMiddleware` + `adminMiddleware`) and `nemar admin delete-dataset <id>`. The shared cascade lives in `backend/src/services/deletion.ts`; the guard logic lives in `backend/src/routes/admin.ts`.
+:::
 
 ---
 
-## CLI Deletion Fail-Safes
+## Implemented Safeguards
 
-**File:** `src/commands/dataset.ts`
+The shipped deletion path enforces the following protections:
 
-**Requirements:** The CLI delete command must implement the following safeguards:
-
-```typescript
-// DELETE command must:
-
-// 1. Show warning about DOI datasets
-if (datasetInfo.conceptDoi) {
-  console.error(chalk.red('WARNING: This dataset has a DOI!'));
-  console.error(chalk.yellow(`   Concept DOI: ${datasetInfo.conceptDoi}`));
-  console.error(chalk.yellow('   Datasets with DOIs are preserved on Zenodo.'));
-  console.error(chalk.yellow('   Deletion is strongly discouraged.'));
-  console.error('');
-}
-
-// 2. Require typing dataset ID to confirm
-const confirmation = await prompt({
-  type: 'text',
-  name: 'confirm',
-  message: `Type the dataset ID '${datasetId}' to confirm deletion:`
-});
-
-if (confirmation.confirm !== datasetId) {
-  console.error(chalk.red('Deletion cancelled: confirmation did not match'));
-  process.exit(1);
-}
-
-// 3. Show what will be deleted
-console.log(chalk.yellow('\nThe following will be deleted:'));
-console.log(chalk.yellow(`  - GitHub repository: nemarDatasets/${datasetId}`));
-console.log(chalk.yellow(`  - Database entry`));
-console.log(chalk.yellow(`  - S3 bucket: s3://nemar/${datasetId}/`));
-console.log('');
-
-// 4. Final confirmation
-const finalConfirm = await prompt({
-  type: 'confirm',
-  name: 'final',
-  message: 'Are you ABSOLUTELY SURE?',
-  initial: false
-});
-
-if (!finalConfirm.final) {
-  console.error(chalk.green('Deletion cancelled'));
-  process.exit(0);
-}
-```
+1. **DOI / published gate.** A dataset with a concept DOI, or with `visibility = 'public'`, can only be deleted by the **owner** role (admins get `403`), and the request must set `force=true` (otherwise `400`). Unpublished datasets (no concept DOI, private) may be deleted by an admin or the owner.
+2. **Active publication requests block deletion.** A dataset with any publication request not in `published`/`denied` status returns `409` until those requests are denied or completed.
+3. **System catalog rows are refused.** Folded legacy nemar.org catalog rows (`owner = nemar-system`) cannot be deleted here; they are managed by the catalog sync. `deleteDatasetCascade` refuses them too, as defense-in-depth for other callers.
+4. **Full cascade.** Deletion removes, in one operation: the GitHub repository (`nemarDatasets/<id>`), the S3 objects under `s3://nemar/<id>/` and the dataset's private bucket-policy carve-out, the D1 records (`dataset_versions`, `publication_requests`, `dataset_collaborators`, `user_s3_permissions`, `datasets`), and the Vectorize search vector. `dataset_collaborators` also cascades via its foreign key.
+5. **Audit log.** Every deletion is written to `audit_log` with the requesting user, the `force` flag, per-step results, and any warnings.
 
 ---
 
-## Implementation Checklist
+## Scheduled Cleanup (cron)
 
-- [ ] Backend: Implement DELETE /datasets/:id endpoint
-- [ ] Backend: Add DOI check
-- [ ] Backend: Add published/public status check
-- [ ] Backend: Add owner permission check
-- [ ] Backend: Add explicit confirmation requirement
-- [ ] Backend: Add audit logging
-- [ ] CLI: Implement `nemar dataset delete` command
-- [ ] CLI: Add DOI warning
-- [ ] CLI: Add dataset ID confirmation prompt
-- [ ] CLI: Add deletion preview
-- [ ] CLI: Add final confirmation prompt
-- [ ] Tests: Add integration tests for all fail-safes
-- [ ] Tests: Verify audit logging
-- [ ] Docs: Update user documentation
+A daily cron at **3 AM UTC (production only)** performs automated housekeeping. See `scheduledCleanup` in `backend/src/index.ts` and the `crons` trigger in `backend/wrangler-sccn.toml`; staleness thresholds live in `backend/src/services/staleness.ts`.
 
----
+- **Sandbox (`xx`) datasets** older than 14 days are **auto-deleted** (disposable).
+- **Stale `nm` datasets** (private, no DOI, no active publication requests, inactive 90 days) are **never auto-deleted** (#662/#663). The cron emails the owner an escalating warning runway (30/14/7/2/1 days), and at the deadline asks an admin to delete manually via `nemar admin delete-dataset`. Real archive data is only ever removed by a deliberate human action.
 
-## Testing Requirements
-
-### Unit Tests
-- Backend rejects deletion of datasets with DOIs
-- Backend rejects deletion of published datasets
-- Backend requires explicit confirmation
-- Backend logs all deletion attempts
-
-### Integration Tests
-- CLI shows appropriate warnings for DOI datasets
-- CLI requires correct dataset ID to be typed
-- CLI shows preview of what will be deleted
-- Full deletion flow succeeds for valid deletions
-- Full deletion flow fails appropriately for protected datasets
-
----
-
-## Deployment Plan
-
-1. Implement backend fail-safes first
-2. Deploy backend changes to staging
-3. Test thoroughly with test datasets
-4. Deploy backend to production
-5. Implement CLI fail-safes
-6. Release new CLI version
-7. Document new deletion procedure
+`last_activity_at` (migration 0011) feeds the staleness window; endpoints that mutate a dataset (uploads, version creation, publication requests) update it so an active dataset is never flagged stale (see also `0027_dataset_staleness_tracking.sql`).
 
 ---
 
 ## Related
 
-- **Issue:** #35 - Two-tier admin permissions and deletion fail-safes
-- **Context:** 2026-01-18 incident (datasets nm000103-nm000107 accidentally deleted)
-- **Recovery:** See DISASTER_RECOVERY.md
-
----
-
-**This is a specification document. None of these fail-safes are currently implemented.**
+- **Recovery procedure:** [DISASTER_RECOVERY.md](./disaster-recovery) — the procedure for restoring datasets lost through means outside these guarded paths (direct GitHub/D1 manipulation, or a mistaken manual `delete-dataset`).
+- **Context:** 2026-01-18 incident (datasets nm000103-nm000107 lost outside NEMAR operations).
+- **Issue:** #35 - Two-tier admin permissions and deletion fail-safes (closed; shipped).

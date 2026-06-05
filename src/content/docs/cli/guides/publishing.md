@@ -148,7 +148,7 @@ Checks if BIDS validation and version-check workflows exist on the repo. Deploys
 Changes GitHub repository visibility from private to public. Updates the database visibility record.
 
 #### Step 3: `s3_public_read` - S3 Public Read Access
-Applies an S3 bucket policy granting public read access to the dataset's objects. This enables anonymous downloads via git-annex web remote URLs.
+The bucket is public-by-default behind a single deny-list policy (a public-read `Allow` with a `NotResource` carve-out listing every private dataset prefix; see #673/#674). Making this dataset public **removes** its prefix from the carve-out so anonymous `GetObject` is allowed; it does not add a new grant. Idempotent. This enables anonymous downloads via git-annex web remote URLs.
 
 #### Step 4: `tag_protect` - Tag Protection
 Enables tag protection rules on the repository, preventing deletion or modification of version tags. Ensures DOI integrity since DOIs reference specific tags.
@@ -187,8 +187,8 @@ After this step, the DOI is permanent and cannot be undone.
 #### Step 12: `s3_lock` - S3 Object Lock
 Applies S3 Object Lock (governance mode) to all dataset objects, preventing accidental deletion. Lock duration: 10 years.
 
-#### Step 13: `generate_archive` - Generate Version Manifest
-Generates a version manifest (file listing with sizes and checksums) and uploads it to `s3://nemar/<dataset_id>/version/v1.0.0.json`.
+#### Step 13: `sync_nemar` - Sync Metadata to nemar.org
+Syncs the dataset's metadata to the legacy nemar.org dataexplorer datapipeline. This step is non-fatal (a failure here does not block publication). Note that archive-zip generation is **not** an orchestrator step; the central `run-version-doi.yml` workflow dispatches `generate-archive` separately after the version DOI is minted (see #670).
 
 #### Step 14: `notify_user` - Send Notification Email
 Sends a publication confirmation email to the dataset owner with the DOI and citation information. This is the final step; the publication request status changes to "published".
@@ -293,7 +293,7 @@ nemar admin publish deny nm000104 --reason "BIDS validation failing - please fix
 - **Cause:** GitHub API error or permissions issue
 - **Solution:** Check `GITHUB_ADMIN_PAT` is valid with `repo` and `admin:org` scopes. Retry with `--resume`.
 
-> **Heads up:** the `GITHUB_ADMIN_PAT` user-token approach is being replaced by a GitHub App installation token; see [GitHub App setup](github-app-setup). Migration tracked in [epic #432](https://github.com/nemarOrg/nemar-cli/issues/432).
+> **Heads up:** the `GITHUB_ADMIN_PAT` user-token approach is being replaced by a GitHub App installation token; see [GitHub App setup](/admin/github-app-setup/). Migration tracked in [epic #432](https://github.com/nemarOrg/nemar-cli/issues/432).
 
 **Problem:** Approval fails at `doi_create`
 - **Cause:** DOI provider API error
@@ -390,7 +390,7 @@ No per-repo secret setup is needed when creating new datasets.
 
 ## See Also
 
-- [Dataset Commands Reference](../commands/dataset)
-- [Admin Commands Reference](../commands/admin)
-- [Uploading Datasets Guide](uploading)
-- [BIDS Validation Guide](validation)
+- [Dataset Commands Reference](/cli/commands/dataset/)
+- [Admin Commands Reference](/admin/commands/)
+- [Uploading Datasets Guide](/cli/guides/uploading/)
+- [BIDS Validation Guide](/cli/guides/validation/)

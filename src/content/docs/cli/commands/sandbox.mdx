@@ -1,0 +1,53 @@
+---
+title: "sandbox"
+---
+
+Sandbox training (required before uploading).
+
+:::note
+This page is generated from `nemar sandbox --help`. Run `generate-commands.ts` to refresh it.
+:::
+
+## sandbox
+
+```text
+Usage: nemar sandbox [options] [command]
+
+Complete sandbox training before uploading datasets
+
+Options:
+  -v, --verbose     Print full subprocess output (git, git-annex) for debugging
+  -h, --help        display help for command
+
+Commands:
+  reset [options]   Reset sandbox training status for re-training
+  status [options]  Check sandbox training completion status
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### sandbox reset
+
+```text
+Usage: nemar sandbox reset [options]
+
+Reset sandbox training status for re-training
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+### sandbox status
+
+```text
+Usage: nemar sandbox status [options]
+
+Check sandbox training completion status
+
+Options:
+  --refresh   Fetch latest status from server
+  -h, --help  display help for command
+```
+

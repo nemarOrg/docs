@@ -111,5 +111,5 @@ export PATH="$HOME/.bun/bin:$PATH"
 
 ## Next Steps
 
-- [Quick Start](quickstart) - Upload your first dataset
-- [Authentication](authentication) - Set up your NEMAR account
+- [Quick Start](/cli/getting-started/quickstart/) - Upload your first dataset
+- [Authentication](/cli/getting-started/authentication/) - Set up your NEMAR account

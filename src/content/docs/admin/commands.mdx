@@ -1,0 +1,791 @@
+---
+title: "admin"
+---
+
+Administrative operations (requires admin privileges).
+
+:::note
+This page is generated from `nemar admin --help`. Run `generate-commands.ts` to refresh it.
+:::
+
+## admin
+
+```text
+Usage: nemar admin [options] [command]
+
+Admin commands (requires admin privileges)
+
+Options:
+  -h, --help                                  display help for command
+
+Commands:
+  approve [options] <username>                Approve a pending user
+  bulk-delete [options] <dataset-ids>         Delete multiple phantom/orphaned datasets at once (owner only)
+  ci                                          CI workflow management
+  delete-dataset [options] <dataset-id>       Delete a dataset and all associated resources (GitHub, S3, D1)
+  doi                                         DOI management
+  e2e-test [options]                          Run end-to-end test against nm099999 (admin only)
+  email-preferences                           Manage email notification preferences
+  help [command]                              display help for command
+  import-openneuro [options] <openneuro-ids>  Import an OpenNeuro dataset into NEMAR
+  make-public <dataset-id>                    Publish a dataset (make repository and data public) - PERMANENT
+  notice                                      Manage system notices displayed to CLI users
+  notify [options]                            Send an email to a group or a single user
+  publish                                     Publication workflow management
+  reindex [options] [dataset-id]              Refresh dataset metadata: enrichment + nemar.org sync + first-class D1 columns
+  repo                                        Repository visibility management
+  revert [options] <dataset-id> [version]     Revert a dataset to a previous version (creates PR for review)
+  revoke [options] <username>                 Revoke user access
+  role [options] <username> <role>            Change a user's role (owner only)
+  s3                                          S3 and IAM credential management
+  summary                                     summary.json coverage across published dataset versions
+  sync                                        Sync dataset metadata to nemar.org datapipeline
+  users [options]                             List NEMAR users
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### admin approve
+
+```text
+Usage: nemar admin approve [options] <username>
+
+Approve a pending user
+
+Arguments:
+  username    Username to approve
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+### admin bulk-delete
+
+```text
+Usage: nemar admin bulk-delete [options] <dataset-ids>
+
+Delete multiple phantom/orphaned datasets at once (owner only)
+
+Arguments:
+  dataset-ids  Comma-separated dataset IDs (e.g., nm000153,nm000154,nm000155)
+
+Options:
+  --yes        Skip confirmation prompt
+  -h, --help   display help for command
+```
+
+### admin ci
+
+```text
+Usage: nemar admin ci [options] [command]
+
+CI workflow management
+
+Options:
+  -h, --help                   display help for command
+
+Commands:
+  add [options] [dataset-id]   Deploy CI workflows to a dataset repository (or
+                               all with --all)
+  check <dataset-id>           Check CI workflow status for a dataset
+  help [command]               display help for command
+  sync [options] [dataset-id]  Sync deployed CI workflows to current templates
+                               (only writes drifted/missing files)
+  validate <dataset-id>        Check whether GitHub Actions can parse the
+                               deployed CI workflows
+```
+
+#### admin ci add
+
+```text
+Usage: nemar admin ci add [options] [dataset-id]
+
+Deploy CI workflows to a dataset repository (or all with --all)
+
+Arguments:
+  dataset-id     Dataset ID (e.g., nm000104)
+
+Options:
+  --all          Deploy to all dataset repositories
+  --no-validate  Skip the post-deploy parseability poll on the single-dataset
+                 path. No-op for --all (fleet deploys always skip the poll).
+  -y, --yes      Skip confirmation and proceed
+  -n, --no       Skip confirmation and decline
+  -h, --help     display help for command
+```
+
+#### admin ci check
+
+```text
+Usage: nemar admin ci check [options] <dataset-id>
+
+Check CI workflow status for a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin ci sync
+
+```text
+Usage: nemar admin ci sync [options] [dataset-id]
+
+Sync deployed CI workflows to current templates (only writes drifted/missing
+files)
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  --all       Sync across all dataset repositories
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+#### admin ci validate
+
+```text
+Usage: nemar admin ci validate [options] <dataset-id>
+
+Check whether GitHub Actions can parse the deployed CI workflows
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+```
+
+### admin delete-dataset
+
+```text
+Usage: nemar admin delete-dataset [options] <dataset-id>
+
+Delete a dataset and all associated resources (GitHub, S3, D1)
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000108)
+
+Options:
+  --force     Force deletion of published datasets with DOIs (owner only)
+  -h, --help  display help for command
+```
+
+### admin doi
+
+```text
+Usage: nemar admin doi [options] [command]
+
+DOI management
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  create [options] <dataset-id>  Create concept DOI for a dataset
+  enrich [options] <dataset-id>  Enrich DOI metadata with ORCIDs, descriptions,
+                                 funding, and more
+  help [command]                 display help for command
+  info <dataset-id>              Get DOI info for a dataset
+  update [options] <dataset-id>  Update EZID DOI metadata or status
+```
+
+#### admin doi create
+
+```text
+Usage: nemar admin doi create [options] <dataset-id>
+
+Create concept DOI for a dataset
+
+Arguments:
+  dataset-id             Dataset ID (e.g., nm000104)
+
+Options:
+  --title <title>        DOI title (defaults to dataset name)
+  --description <desc>   DOI description
+  --provider <provider>  DOI provider: ezid (default) or zenodo (default:
+                         "ezid")
+  --sandbox              Use sandbox/test DOI
+  -y, --yes              Skip confirmation and proceed
+  -n, --no               Skip confirmation and decline
+  -h, --help             display help for command
+```
+
+#### admin doi enrich
+
+```text
+Usage: nemar admin doi enrich [options] <dataset-id>
+
+Enrich DOI metadata with ORCIDs, descriptions, funding, and more
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  --no-llm    Skip LLM-based enrichment from README
+  --sandbox   Use sandbox DOI
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+#### admin doi info
+
+```text
+Usage: nemar admin doi info [options] <dataset-id>
+
+Get DOI info for a dataset
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin doi update
+
+```text
+Usage: nemar admin doi update [options] <dataset-id>
+
+Update EZID DOI metadata or status
+
+Arguments:
+  dataset-id     Dataset ID (e.g., nm000104)
+
+Options:
+  --make-public  Transition DOI from reserved to public (permanent)
+  --refresh      Refresh metadata from dataset_description.json and
+                 .nemar/metadata.json
+  -y, --yes      Skip confirmation and proceed
+  -n, --no       Skip confirmation and decline
+  -h, --help     display help for command
+```
+
+### admin e2e-test
+
+```text
+Usage: nemar admin e2e-test [options]
+
+Run end-to-end test against nm099999 (admin only)
+
+Options:
+  --verbose       Show detailed output for each step
+  --skip-reset    Use existing nm099999 state (skip reset)
+  --skip-cleanup  Keep temp directories after test
+  -h, --help      display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### admin email-preferences
+
+```text
+Usage: nemar admin email-preferences [options] [command]
+
+Manage email notification preferences
+
+Options:
+  -h, --help        display help for command
+
+Commands:
+  help [command]    display help for command
+  show              Show current email notification preferences
+  update [options]  Update email notification preferences
+```
+
+#### admin email-preferences show
+
+```text
+Usage: nemar admin email-preferences show [options]
+
+Show current email notification preferences
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin email-preferences update
+
+```text
+Usage: nemar admin email-preferences update [options]
+
+Update email notification preferences
+
+Options:
+  --user-approval <bool>        Enable/disable user approval notifications
+  --publication-request <bool>  Enable/disable publication request
+                                notifications
+  --announcements <bool>        Enable/disable announcement emails
+  --all <bool>                  Enable/disable all notifications
+  -h, --help                    display help for command
+```
+
+### admin import-openneuro
+
+```text
+Usage: nemar admin import-openneuro [options] <openneuro-ids>
+
+Import an OpenNeuro dataset into NEMAR
+
+Arguments:
+  openneuro-ids     OpenNeuro dataset ID(s), comma-separated (e.g.,
+                    ds007262,ds007263)
+
+Options:
+  --local           Run import locally instead of dispatching GitHub Actions
+                    workflow
+  --dir <path>      Working directory for local clone (requires --local)
+  --skip-data       Skip S3 data copy, metadata only (requires --local)
+  --trust-upstream  If BIDS validation does not register within the bounded
+                    poll, fall back to skip_ci_check=true at approval.
+                    OpenNeuro data is pre-validated upstream so this is the
+                    recommended setting for OpenNeuro imports (#431).
+  -h, --help        display help for command
+```
+
+### admin make-public
+
+```text
+Usage: nemar admin make-public [options] <dataset-id>
+
+Publish a dataset (make repository and data public) - PERMANENT
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### admin notice
+
+```text
+Usage: nemar admin notice [options] [command]
+
+Manage system notices displayed to CLI users
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  clear [options] <id>  Delete a notice by ID
+  help [command]        display help for command
+  list                  List all notices (including expired)
+  set [options]         Create a new system notice
+```
+
+#### admin notice clear
+
+```text
+Usage: nemar admin notice clear [options] <id>
+
+Delete a notice by ID
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+#### admin notice list
+
+```text
+Usage: nemar admin notice list [options]
+
+List all notices (including expired)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin notice set
+
+```text
+Usage: nemar admin notice set [options]
+
+Create a new system notice
+
+Options:
+  -m, --message <text>      Notice message text
+  -l, --level <level>       Notice level: info, warning, critical (default:
+                            "info")
+  -s, --scope <scope>       Target scope: all, admins, members (default: "all")
+  -e, --expires <datetime>  Expiry datetime (ISO 8601)
+  -h, --help                display help for command
+```
+
+### admin notify
+
+```text
+Usage: nemar admin notify [options]
+
+Send an email to a group or a single user
+
+Options:
+  --to <group>        Recipient group: all, admins, members
+  --user <username>   Send to a single user by username
+  --subject <text>    Email subject line
+  --body <text>       Email body (markdown)
+  --body-file <path>  Read email body from file (markdown)
+  --dry-run           Preview recipients without sending
+  -y, --yes           Skip confirmation and proceed
+  -n, --no            Skip confirmation and decline
+  -h, --help          display help for command
+```
+
+### admin publish
+
+```text
+Usage: nemar admin publish [options] [command]
+
+Publication workflow management
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  approve [options] <dataset-id>  Approve and publish a dataset (runs
+                                  orchestrator)
+  deny [options] <dataset-id>     Deny a publication request
+  help [command]                  display help for command
+  list [options]                  List publication requests
+```
+
+#### admin publish approve
+
+```text
+Usage: nemar admin publish approve [options] <dataset-id>
+
+Approve and publish a dataset (runs orchestrator)
+
+Arguments:
+  dataset-id       Dataset ID
+
+Options:
+  --resume         Resume from last failed step
+  --sandbox        Use Zenodo sandbox for testing
+  --skip-ci-check  Skip BIDS validation CI check (admin override)
+  -y, --yes        Skip confirmation and proceed
+  -n, --no         Skip confirmation and decline
+  -h, --help       display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+#### admin publish deny
+
+```text
+Usage: nemar admin publish deny [options] <dataset-id>
+
+Deny a publication request
+
+Arguments:
+  dataset-id             Dataset ID
+
+Options:
+  -r, --reason <reason>  Reason for denial
+  -y, --yes              Skip confirmation and proceed
+  -n, --no               Skip confirmation and decline
+  -h, --help             display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+#### admin publish list
+
+```text
+Usage: nemar admin publish list [options]
+
+List publication requests
+
+Options:
+  -s, --status <status>  Filter by status (requested, approving, published,
+                         denied)
+  -h, --help             display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### admin reindex
+
+```text
+Usage: nemar admin reindex [options] [dataset-id]
+
+Refresh dataset metadata: enrichment + nemar.org sync + first-class D1 columns
+
+Arguments:
+  dataset-id           Dataset ID to reindex (e.g., nm000103)
+
+Options:
+  --all                Reindex every dataset with a GitHub repo
+  --missing-metadata   Reindex only datasets with NULL metadata columns
+  --stale              Reindex only datasets whose metadata is older than
+                       --older-than days
+  --older-than <days>  Threshold in days. Default 30 for --stale, 1 (24h) for
+                       --missing-metadata recency guard.
+  --skip-enrichment    Skip the LLM enrichment step
+  --skip-sync          Skip the nemar.org sync + D1 column refresh step
+  --ref <ref>          Ref to enrich from (single-dataset only; default: main)
+  --dry-run            List matched datasets without firing the reindex (bulk
+                       only)
+  -h, --help           display help for command
+```
+
+### admin repo
+
+```text
+Usage: nemar admin repo [options] [command]
+
+Repository visibility management
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  help [command]                  display help for command
+  private [options] <dataset-id>  Make a dataset repository private
+  public [options] <dataset-id>   Make a dataset repository public
+```
+
+#### admin repo private
+
+```text
+Usage: nemar admin repo private [options] <dataset-id>
+
+Make a dataset repository private
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+#### admin repo public
+
+```text
+Usage: nemar admin repo public [options] <dataset-id>
+
+Make a dataset repository public
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+### admin revert
+
+```text
+Usage: nemar admin revert [options] <dataset-id> [version]
+
+Revert a dataset to a previous version (creates PR for review)
+
+Arguments:
+  dataset-id       Dataset ID (e.g., nm000104)
+  version          Target version to revert to (e.g., 1.0.0)
+
+Options:
+  --list           List available versions without reverting
+  --force          Direct push to main without PR (emergency only)
+  --message <msg>  Custom revert commit message
+  --dir <path>     Use existing local clone instead of cloning fresh
+  -y, --yes        Skip confirmation and proceed
+  -n, --no         Skip confirmation and decline
+  -h, --help       display help for command
+```
+
+### admin revoke
+
+```text
+Usage: nemar admin revoke [options] <username>
+
+Revoke user access
+
+Arguments:
+  username    Username to revoke
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+### admin role
+
+```text
+Usage: nemar admin role [options] <username> <role>
+
+Change a user's role (owner only)
+
+Arguments:
+  username    Username to change role for
+  role        New role: owner, admin, or member
+
+Options:
+  -y, --yes   Skip confirmation prompt
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### admin s3
+
+```text
+Usage: nemar admin s3 [options] [command]
+
+S3 and IAM credential management
+
+Options:
+  -h, --help                           display help for command
+
+Commands:
+  help [command]                       display help for command
+  lock [options] <dataset-id>          Apply S3 Object Lock (Governance mode)
+                                       to a dataset
+  regenerate-iam [options] <username>  Regenerate AWS IAM credentials for a
+                                       user
+```
+
+#### admin s3 lock
+
+```text
+Usage: nemar admin s3 lock [options] <dataset-id>
+
+Apply S3 Object Lock (Governance mode) to a dataset
+
+Arguments:
+  dataset-id  Dataset ID to lock
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+#### admin s3 regenerate-iam
+
+```text
+Usage: nemar admin s3 regenerate-iam [options] <username>
+
+Regenerate AWS IAM credentials for a user
+
+Arguments:
+  username    Username to regenerate credentials for
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+```
+
+### admin summary
+
+```text
+Usage: nemar admin summary [options] [command]
+
+summary.json coverage across published dataset versions
+
+Options:
+  -h, --help       display help for command
+
+Commands:
+  check [options]  Report which (dataset_id, version) pairs have stale or
+                   missing summary.json
+  help [command]   display help for command
+```
+
+#### admin summary check
+
+```text
+Usage: nemar admin summary check [options]
+
+Report which (dataset_id, version) pairs have stale or missing summary.json
+
+Options:
+  --fix           Dispatch generate-manifest for every stale/missing version
+  --id <id>       Limit to a single dataset_id (exact match)
+  --match <glob>  Limit to dataset_ids matching a glob pattern: `*` matches any
+                  run of chars, `?` matches one char. Examples: `on*`,
+                  `nm00010?`, `*99999`. Can be combined with --id (id wins if
+                  both passed).
+  --only-stale    Print only rows that are not ok (suppresses ok rows)
+  --json          Emit the full report as JSON instead of a table
+  -y, --yes       Skip confirmation and proceed
+  -n, --no        Skip confirmation and decline
+  -h, --help      display help for command
+```
+
+### admin sync
+
+```text
+Usage: nemar admin sync [options] [command]
+
+Sync dataset metadata to nemar.org datapipeline
+
+Options:
+  -h, --help        display help for command
+
+Commands:
+  help [command]    display help for command
+  run <dataset-id>  Sync a dataset to nemar.org
+  status            Show nemar.org sync status for all published datasets
+```
+
+#### admin sync run
+
+```text
+Usage: nemar admin sync run [options] <dataset-id>
+
+Sync a dataset to nemar.org
+
+Arguments:
+  dataset-id  Dataset ID (e.g., nm000103)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin sync status
+
+```text
+Usage: nemar admin sync status [options]
+
+Show nemar.org sync status for all published datasets
+
+Options:
+  -h, --help  display help for command
+```
+
+### admin users
+
+```text
+Usage: nemar admin users [options]
+
+List NEMAR users
+
+Options:
+  --pending      Show only pending approval
+  --verified     Show only verified (awaiting approval)
+  --approved     Show only approved users
+  --revoked      Show only revoked users
+  --role <role>  Filter by role: owner, admin, or member
+  -h, --help     display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+

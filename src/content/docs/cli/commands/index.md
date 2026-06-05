@@ -50,7 +50,7 @@ Support:
 
 | Command | Description |
 |---------|-------------|
-| [auth](auth) | Authentication and account management |
-| [dataset](dataset) | Dataset management operations |
-| [sandbox](sandbox) | Sandbox training (required before uploading) |
-| [admin](admin) | Administrative operations (admin only) |
+| [auth](/cli/commands/auth/) | Authentication and account management |
+| [dataset](/cli/commands/dataset/) | Dataset management operations |
+| [sandbox](/cli/commands/sandbox/) | Sandbox training (required before uploading) |
+| [admin](/admin/commands/) | Administrative operations (admin only) |

@@ -1,0 +1,168 @@
+---
+title: "auth"
+---
+
+Authentication and account management.
+
+:::note
+This page is generated from `nemar auth --help`. Run `generate-commands.ts` to refresh it.
+:::
+
+## auth
+
+```text
+Usage: nemar auth [options] [command]
+
+Authentication management
+
+Options:
+  -h, --help           display help for command
+
+Commands:
+  help [command]       display help for command
+  login [options]      Authenticate with your NEMAR API key
+  logout [options]     Remove the active account (use --all to remove all)
+  regenerate-key       Request a new API key (revokes current key, requires
+                       email verification)
+  resend-verification  Resend email verification link
+  retrieve-key         Retrieve your API key after account approval (requires
+                       email and password)
+  setup-ssh [options]  Configure SSH access for GitHub (optional, gh CLI
+                       preferred)
+  signup               Register for a new NEMAR account
+  status [options]     Check current authentication status
+  switch [username]    Switch between stored accounts
+  whoami [options]     Show current user (alias for status)
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth login
+
+```text
+Usage: nemar auth login [options]
+
+Authenticate with your NEMAR API key
+
+Options:
+  -k, --key <key>  API key (alternative: set NEMAR_API_KEY env var)
+  -y, --yes        Skip confirmation and proceed
+  -n, --no         Skip confirmation and decline
+  -h, --help       display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth logout
+
+```text
+Usage: nemar auth logout [options]
+
+Remove the active account (use --all to remove all)
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  --all       Remove all stored accounts
+  -h, --help  display help for command
+```
+
+### auth regenerate-key
+
+```text
+Usage: nemar auth regenerate-key [options]
+
+Request a new API key (revokes current key, requires email verification)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth resend-verification
+
+```text
+Usage: nemar auth resend-verification [options]
+
+Resend email verification link
+
+Options:
+  -h, --help  display help for command
+```
+
+### auth retrieve-key
+
+```text
+Usage: nemar auth retrieve-key [options]
+
+Retrieve your API key after account approval (requires email and password)
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth setup-ssh
+
+```text
+Usage: nemar auth setup-ssh [options]
+
+Configure SSH access for GitHub (optional, gh CLI preferred)
+
+Options:
+  -f, --force  Regenerate SSH key even if one exists
+  -h, --help   display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth signup
+
+```text
+Usage: nemar auth signup [options]
+
+Register for a new NEMAR account
+
+Options:
+  -h, --help  display help for command
+```
+
+### auth status
+
+```text
+Usage: nemar auth status [options]
+
+Check current authentication status
+
+Options:
+  --refresh   Refresh user info from server
+  -h, --help  display help for command
+```
+
+### auth switch
+
+```text
+Usage: nemar auth switch [options] [username]
+
+Switch between stored accounts
+
+Options:
+  -h, --help  display help for command
+
+  Run with --help-all for examples and detailed descriptions.
+```
+
+### auth whoami
+
+```text
+Usage: nemar auth whoami [options]
+
+Show current user (alias for status)
+
+Options:
+  --refresh   Refresh user info from server
+  -h, --help  display help for command
+```
+

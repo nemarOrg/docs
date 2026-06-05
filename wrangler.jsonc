@@ -1,0 +1,20 @@
+{
+  // Deploy docs.nemar.org as a Cloudflare Worker using Workers Static Assets.
+  // The Astro/Starlight build is fully static; this Worker serves ./dist and
+  // can later grow request-handling logic (headers, redirects, edge auth hooks)
+  // as the NEMAR ecosystem adds more around it.
+  //
+  // Registration + custom-domain binding are done in the Cloudflare dashboard
+  // (SCCN account). The name below is a suggestion; adjust at registration to
+  // avoid colliding with the legacy `nemar-docs` Pages project during cutover.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nemar-docs",
+  "compatibility_date": "2025-09-27",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

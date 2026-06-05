@@ -83,8 +83,9 @@ echo "All tools installed ✓"
    # Select: GitHub.com → SSH → Authenticate
    ```
 
-3. **Multi-Account GitHub SSH** - For pushing to nemarDatasets org
-   - Configured in `~/.ssh/config` as `nemar-neuromechanist-github`
+3. **GitHub push access** - For pushing to the nemarDatasets org
+   - Easiest: `gh auth login` (HTTPS) and push to `https://github.com/nemarDatasets/{id}.git`
+   - Or configure SSH for the standard host (`git@github.com`); `nemar auth setup-ssh` helps generate and register a key
 
 ### Required Files
 
@@ -317,9 +318,9 @@ gh repo create nemarDatasets/nm000105 \
   --private \
   --description "NEMAR Dataset nm000105: discrete_gestures (Restored from Zenodo)"
 
-# Add remote
+# Add remote (standard GitHub host; gh auth provides credentials)
 git remote add origin \
-  git@nemar-neuromechanist-github:nemarDatasets/nm000105.git
+  git@github.com:nemarDatasets/nm000105.git
 ```
 
 #### 8. Push to GitHub (Step 12/13)
