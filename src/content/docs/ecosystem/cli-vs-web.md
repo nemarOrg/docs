@@ -9,8 +9,8 @@ difference is workflow style, not capability.
 
 ## What the web is best for
 
-- **Signing up.** The web is the only place to create an account today; the CLI authenticates
-  against an existing account.
+- **Signing up.** Web sign-in and sign-up are planned for **July 2026**; until then, create your
+  account and authenticate with the CLI (`nemar auth signup` / `nemar auth login`).
 - **Browsing and exploring.** [Discover](https://ww2.nemar.org/discover), dataset detail pages,
   READMEs, and the citation dashboard live there.
 - **One-off uploads.** Drop a folder, walk through validation, request publication. No tooling

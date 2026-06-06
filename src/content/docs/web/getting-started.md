@@ -19,7 +19,11 @@ A web sign-up flow is on the way. Until then, returning users sign in here with 
 
 ## Signing in
 
-Once your account is approved, sign in at the [login page](https://ww2.nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
+:::caution[Coming soon — planned July 2026]
+Passwordless web sign-in is planned for **July 2026**. Until it launches, authenticate with the [CLI](/cli/getting-started/installation/) (`nemar auth login`); the web and CLI share the same backend account.
+:::
+
+Once web sign-in launches, you'll sign in at the [login page](https://ww2.nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
 
 Uploads and publication requests unlock when your account is in the `active` state. The dashboard tells you which state you're in.
 
