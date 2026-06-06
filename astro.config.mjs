@@ -44,6 +44,15 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Web App',
+					items: [
+						{ label: 'Getting Started', slug: 'web/getting-started' },
+						{ label: 'Uploading a Dataset', slug: 'web/uploading' },
+						{ label: 'Managing Your Datasets', slug: 'web/managing-datasets' },
+						{ label: 'Publication Review', slug: 'web/publication-review' },
+					],
+				},
+				{
 					label: 'CLI',
 					items: [
 						{ label: 'Overview', link: '/cli/' },
