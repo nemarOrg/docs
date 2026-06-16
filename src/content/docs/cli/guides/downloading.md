@@ -202,6 +202,57 @@ git pull
 nemar dataset get <file>
 ```
 
+## DataLad
+
+Every dataset is a [DataLad](https://www.datalad.org/) dataset (git + git-annex).
+If you already use DataLad, clone the published repo and fetch content on demand:
+
+```bash
+datalad clone https://github.com/nemarDatasets/nm000104 nm000104
+cd nm000104
+datalad get .                 # fetch everything
+datalad get sub-01/           # or just part of the tree
+```
+
+`datalad get` resolves annexed files from NEMAR's public S3 special remote, so
+no NEMAR account is needed for published datasets. For very large datasets,
+prefer the [direct download](#direct-download) below or `nemar dataset download`,
+which skip `stimuli/` and `derivatives/` by default.
+
+## git-annex
+
+The dataset repo is a plain git + git-annex repo, so you can use the tools
+directly without DataLad or nemar-cli:
+
+```bash
+git clone https://github.com/nemarDatasets/nm000104 nm000104
+cd nm000104
+git annex get .               # fetch annexed file content from S3
+git annex get sub-01/         # or a subset
+```
+
+The git-annex S3 remote ships in the clone, so `git annex get` works against the
+public bucket for published datasets. nemar-cli wraps exactly this with sensible
+defaults (version pinning, `stimuli/`+`derivatives/` skipping, resume).
+
+## Direct download
+
+For the largest datasets — including any over the ~100 GB archive limit that
+have **no downloadable zip** — fetch files directly over HTTPS. Every version's
+`manifest.json` lists every file with a stable, range-resumable `bytes_url`, so
+`wget -c` / `curl -C -` resume cleanly and parallelize:
+
+```bash
+# All files for a version, resumable + restartable:
+curl -s https://data.nemar.org/nm000104/v1.0.0/manifest.json \
+  | jq -r '.[].bytes_url' > urls.txt
+wget -xc -i urls.txt
+```
+
+Any HTTPS client works — `wget`, `curl`, `aria2c`, or `rclone` (see
+[Sync with rclone](#sync-with-rclone) below). The next section documents the
+HTTPS routes in detail.
+
 ## HTTPS access via data.nemar.org
 
 Every published dataset is also reachable over plain HTTPS, with no
