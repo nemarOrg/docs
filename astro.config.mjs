@@ -108,6 +108,16 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Policies',
+					items: [
+						{ label: 'Overview', link: '/policies/' },
+						{ label: 'Privacy Policy', slug: 'policies/privacy' },
+						{ label: 'Data Contributor Terms', slug: 'policies/contributor-terms' },
+						{ label: 'GDPR Position Statement', slug: 'policies/gdpr' },
+						{ label: 'Takedown Procedure', slug: 'policies/takedown' },
+					],
+				},
+				{
 					label: 'Admin',
 					badge: { text: 'gated', variant: 'caution' },
 					items: [
