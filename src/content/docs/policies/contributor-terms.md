@@ -12,12 +12,22 @@ and to keep NEMAR datasets shareable worldwide.
 These terms are comparable to those of
 [OpenNeuro](https://openneuro.org/), with differences noted below.
 
-## Ownership and ethics approval
+## Ownership, license, and ethics approval
 
-You warrant that you are the owner of the dataset or authorized by the owner to deposit it,
-and that you hold all ethics permissions required to share the data publicly,
-such as Institutional Review Board (IRB) or ethics committee approval
-and participant consent covering public sharing.
+You warrant that one of the following applies to your deposit:
+
+- **Owner deposit.** You are the owner of the dataset or authorized by the owner to deposit it, and you hold all ethics permissions required to share the data publicly, such as Institutional Review Board (IRB) or ethics committee approval and participant consent covering public sharing.
+- **Licensed redistribution.** You are not the owner, but the dataset was publicly released under a license that permits redistribution, and your deposit complies with that license, including attribution and any share-alike or non-commercial conditions. The original release carries the ethics permissions; you warrant that you have not altered the data in any way that would undermine its de-identification.
+
+For licensed redistribution, you must additionally affirm that the dataset
+is not already available on NEMAR or on any upstream archive,
+such as [OpenNeuro](https://openneuro.org/),
+in Brain Imaging Data Structure (BIDS) format.
+This prevents duplicate archival copies of the same dataset,
+which would split citations and create conflicting versions of record.
+If the dataset exists upstream in another format,
+state the upstream source in the dataset description
+so the provenance is clear.
 
 ## De-identification
 
