@@ -2,7 +2,7 @@
 title: "Managing your datasets"
 ---
 
-The [dashboard](https://ww2.nemar.org/dashboard) is your home base. Every dataset you own appears there, sorted by most recently updated. This page is the dashboard tour in written form, handy if you dismissed the on-screen tour or want a reference.
+The [dashboard](https://www.nemar.org/dashboard) is your home base. Every dataset you own appears there, sorted by most recently updated. This page is the dashboard tour in written form, handy if you dismissed the on-screen tour or want a reference.
 
 ## Reading a dataset card
 
@@ -17,7 +17,7 @@ Each card has four zones:
 
 - **Draft.** Private, no review requested yet. You can edit, re-upload, or delete.
 - **Awaiting review.** You've clicked **Request publication**; an admin will be in touch via email.
-- **Published.** Public, has a DOI, listed on [Discover](https://ww2.nemar.org/discover) and indexed by the catalog.
+- **Published.** Public, has a DOI, listed on [Discover](https://www.nemar.org/discover) and indexed by the catalog.
 - **Denied.** The admin sent feedback; address it and re-request.
 - **Validation failed.** BIDS validation failed; fix and re-upload, then request again.
 
@@ -33,6 +33,6 @@ To remove a collaborator today, contact [admin@nemar.org](mailto:admin@nemar.org
 
 ## When something looks off
 
-- **A card vanished.** The dashboard sorts by recent activity; older datasets paginate. Use the search at [Discover](https://ww2.nemar.org/discover) if you can't find one quickly.
+- **A card vanished.** The dashboard sorts by recent activity; older datasets paginate. Use the search at [Discover](https://www.nemar.org/discover) if you can't find one quickly.
 - **You can't click Request publication.** The button is hidden when the dataset is public, when a request is already in flight, or when BIDS validation is failing. The badge tells you which.
 - **Your account is pending.** Most actions are locked until an admin approves your account; this usually takes <1 business day.

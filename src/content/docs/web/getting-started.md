@@ -13,7 +13,7 @@ bun install -g @nemar/cli
 nemar auth signup
 ```
 
-The CLI opens a browser tab for ORCID authorization, collects the rest, and submits your account for a short admin review (typically same-day). See [the sign-up page](https://ww2.nemar.org/signup) for the field-by-field breakdown.
+The CLI opens a browser tab for ORCID authorization, collects the rest, and submits your account for a short admin review (typically same-day). See [the sign-up page](https://www.nemar.org/signup) for the field-by-field breakdown.
 
 A web sign-up flow is on the way. Until then, returning users sign in here with their existing email; the web and CLI share the same backend account.
 
@@ -23,7 +23,7 @@ A web sign-up flow is on the way. Until then, returning users sign in here with 
 Passwordless web sign-in is planned for **July 2026**. Until it launches, authenticate with the [CLI](/cli/getting-started/installation/) (`nemar auth login`); the web and CLI share the same backend account.
 :::
 
-Once web sign-in launches, you'll sign in at the [login page](https://ww2.nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
+Once web sign-in launches, you'll sign in at the [login page](https://www.nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
 
 Uploads and publication requests unlock when your account is in the `active` state. The dashboard tells you which state you're in.
 
