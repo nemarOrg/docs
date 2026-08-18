@@ -8,7 +8,7 @@ Publication review is how a private NEMAR dataset becomes a citable, public, arc
 
 When a dataset is published, three things change:
 
-- **Visibility.** The dataset moves from private to public; anyone can find it on [Discover](https://ww2.nemar.org/discover).
+- **Visibility.** The dataset moves from private to public; anyone can find it on [Discover](https://nemar.org/discover).
 - **DOI.** A concept DOI is minted (via DataCite/Zenodo) so the dataset becomes citable. Each future version gets its own version DOI under the concept.
 - **S3 lock.** Files are written under S3 Object Lock so they can't be tampered with after publication.
 

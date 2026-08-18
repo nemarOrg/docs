@@ -13,7 +13,7 @@ platform, and more parts are joining over time.
 flowchart TB
   User([Researcher])
   CLI["nemar CLI"]
-  Web["ww2.nemar.org<br/>dataset browser"]
+  Web["nemar.org<br/>dataset browser"]
   API["api.nemar.org<br/>Workers + D1"]
   Data["data.nemar.org<br/>files · manifests · zips"]
   Zarr["zarr.nemar.org<br/>signal viewer"]
@@ -41,9 +41,8 @@ flowchart TB
 | **CLI** | `nemar` | Upload, validate, version, download, and manage datasets from the terminal | [CLI](/cli/) |
 | **Backend API** | `api.nemar.org` | Auth, dataset lifecycle, admin, publication, DOIs (Cloudflare Workers + D1) | [Platform API](/platform/api/) |
 | **Data plane** | `data.nemar.org` | Public dataset files, version manifests, `records.json`, archive zips | [Data API](/platform/data-api/) |
-| **Dataset browser** | `ww2.nemar.org` | The current web browser for datasets (Astro) | external |
+| **Dataset browser** | `nemar.org` | The dataset browser (Astro) | external |
 | **Signal viewer** | `zarr.nemar.org` | In-browser EEG/EMG viewer streaming per-recording Zarr | external |
-| **Legacy site** | `nemar.org` | Original PHP dataexplorer; being replaced by `ww2.nemar.org` | external |
 
 ## How a dataset flows through NEMAR
 
@@ -54,7 +53,7 @@ flowchart LR
   C --> D[Private GitHub repo<br/>+ S3 blobs]
   D --> E[Admin mints<br/>concept DOI]
   E --> F[Versioned release<br/>+ version DOI]
-  F --> G[Public on<br/>data.nemar.org + ww2]
+  F --> G[Public on<br/>data.nemar.org + nemar.org]
   G --> H[Recordings to<br/>Zarr viewer]
 ```
 
@@ -64,7 +63,7 @@ flowchart LR
 3. Data files upload to S3; metadata is versioned in GitHub.
 4. An admin mints a concept DOI; the researcher cuts versioned releases (each with its own DOI).
 5. On publication the dataset becomes public on the **data plane** (`data.nemar.org`) and is
-   surfaced in the **browser** (`ww2.nemar.org`); recordings are converted for the **viewer**.
+   surfaced in the **browser** (`nemar.org`); recordings are converted for the **viewer**.
 
 ## Where to go next
 
