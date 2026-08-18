@@ -114,6 +114,8 @@ export default defineConfig({
 						{ label: 'Overview', link: '/policies/' },
 						{ label: 'Privacy Policy', slug: 'policies/privacy' },
 						{ label: 'Data Contributor Terms', slug: 'policies/contributor-terms' },
+						{ label: 'Dataset Submission Standards', slug: 'policies/submission-standards' },
+						{ label: 'AI-Assisted Curation', slug: 'policies/ai-use' },
 						{ label: 'GDPR Position Statement', slug: 'policies/gdpr' },
 						{ label: 'Takedown Procedure', slug: 'policies/takedown' },
 					],
