@@ -47,6 +47,17 @@ and a request that falls short is returned with the reasons.
   Validation runs automatically on upload and again at publication.
 - **A `dataset_description.json`** with at least `Name` and `BIDSVersion`
   (BIDS validation already requires this).
+- **A descriptive dataset name of at least 25 characters.**
+  The title must tell a reader what was studied;
+  the dataset identifier, a bare author-year string, or a placeholder such as
+  `DataSet1` is not accepted.
+  If your dataset is known by a short acronym,
+  expand it with a subtitle, for example
+  `ACRO: auditory cortex recordings during natural speech`.
+- **Named authors.**
+  You cannot submit anonymously:
+  the `Authors` field of `dataset_description.json` must list the people
+  responsible for the dataset, and placeholder entries count as missing.
 - **A substantive README** that describes this specific dataset:
   what was recorded, from whom, and how the files are organized.
   A placeholder, a stub of a few sentences, or boilerplate copied across a
@@ -56,6 +67,11 @@ and a request that falls short is returned with the reasons.
   in the [Data Contributor Terms](/policies/contributor-terms/#licensing):
   the data must remain freely usable for nonprofit research.
   The upload tooling helps you pick one and writes the `LICENSE` file.
+- **An ethics approval statement**, either in the `EthicsApprovals` field of
+  `dataset_description.json` or as a statement in the README.
+  This is the visible counterpart of the warranty in the
+  [Data Contributor Terms](/policies/contributor-terms/) that the data was
+  collected under appropriate ethical approval.
 - **The data files are actually present.**
   A dataset whose metadata references recordings that were never uploaded is
   not approved.
@@ -66,26 +82,14 @@ The following are strongly recommended;
 a missing item may be flagged on the dataset page or raised during review,
 but does not block publication on its own:
 
-- **A descriptive dataset name.**
-  As a guideline, a good title is at least 25 characters and tells a reader
-  what was studied; the dataset identifier, a bare author-year string, or a
-  placeholder such as `DataSet1` is not a name.
-  Name adequacy is judged, not mechanically counted, so legitimate short
-  acronym titles are not penalized.
-- **Authors listed in full, each with an ORCID iD.**
+- **An ORCID iD for each author.**
   The upload tooling collects co-author ORCID iDs so every author is
   unambiguously credited in the dataset's DOI record.
-  Placeholder author entries count as missing.
 - **Funding sources**, in the `Funding` field of `dataset_description.json`.
   These become funding references in the DOI metadata, which is how funders
   discover the datasets they supported.
 - **Acknowledgments**, in the `Acknowledgements` field of
   `dataset_description.json`, for contributions that fall short of authorship.
-- **Ethics approval information**, either in the `EthicsApprovals` field or as
-  a statement in the README.
-  Datasets without it carry a visible flag; the underlying warranty that the
-  data was collected under appropriate ethical approval is part of the
-  [Data Contributor Terms](/policies/contributor-terms/).
 
 ## How the standards are checked
 
@@ -96,9 +100,8 @@ problem before it costs you time:
    warn about missing recommended metadata.
 2. **At publication request**, an automated prescreen reviews the dataset,
    including the quality judgments above.
-   Its judgment calls, such as whether a name is adequately descriptive, are
-   advisory by design; they inform the reviewer rather than desk-rejecting
-   automatically.
+   Its judgment calls are advisory by design; they inform the reviewer, who
+   enforces the required bar, rather than desk-rejecting automatically.
 3. **A NEMAR administrator reviews every publication request.**
    Datasets that do not meet the required bar are returned with the specific
    reasons, and can be resubmitted after revision.
