@@ -10,6 +10,7 @@ and how we handle privacy and removal requests.
 - [Privacy Policy](/policies/privacy/): what account information we collect from registered users, why, and your rights over it.
 - [Data Contributor Terms](/policies/contributor-terms/): what depositors warrant when uploading a dataset, including de-identification, ethics approval, and licensing.
 - [Dataset Submission Standards](/policies/submission-standards/): what a dataset must include to be published, and the metadata we strongly recommend beyond that minimum.
+- [AI-Assisted Curation](/policies/ai-use/): where NEMAR uses AI in curation, why its output is never final, and how to request a correction.
 - [GDPR Position Statement](/policies/gdpr/): how the European Union's General Data Protection Regulation applies to NEMAR datasets and user accounts.
 - [Takedown Procedure](/policies/takedown/): how to report a dataset that should be removed, and how we handle such reports.
 
