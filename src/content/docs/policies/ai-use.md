@@ -3,6 +3,8 @@ title: AI-Assisted Curation
 description: Where NEMAR uses AI in dataset curation, why its output is never final, and how to request a correction.
 ---
 
+Effective date: 2026-08-18.
+
 NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) uses
 artificial intelligence (AI), specifically large language models (LLMs),
 at defined points in dataset curation.
@@ -16,7 +18,7 @@ They are assistants to curation, not its authority.
 
 ## Where AI is used
 
-- **Metadata enrichment for DOI records.**
+- **Metadata enrichment.**
   When a dataset is published, an LLM reads the dataset's README and
   `dataset_description.json` and proposes structured metadata for the
   Digital Object Identifier (DOI) record:
@@ -43,9 +45,10 @@ They are assistants to curation, not its authority.
 
 ## What AI never sees or decides
 
-- **Only dataset documentation is processed.**
+- **Only dataset documentation and structural metadata are processed.**
   The models read the README, `dataset_description.json`,
-  and metadata derived from them.
+  and structural metadata about the dataset,
+  such as file counts, formats, and declared data size.
   Recordings and participant-level data files are never sent to a model
   by these pipelines.
 - **No AI output is final.**
@@ -62,7 +65,8 @@ We monitor these systems continuously and improve them deliberately;
 prompts, models, and thresholds change over time.
 Calibration is empirical:
 the advisory-only status of quality judgments, for example,
-was set after measuring false-positive rates on the published corpus.
+was set after measuring false-positive rates on a large corpus of
+publicly archived datasets.
 
 ## Corrections
 

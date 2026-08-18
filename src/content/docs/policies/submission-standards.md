@@ -3,6 +3,8 @@ title: Dataset Submission Standards
 description: What a dataset must include to be published on NEMAR, and what we strongly recommend beyond that minimum.
 ---
 
+Effective date: 2026-08-18.
+
 This page describes the quality bar a dataset must meet to be published on
 NEMAR (Neuroelectromagnetic Data Archive and Tools Resource),
 and the metadata we strongly recommend beyond that minimum.
@@ -12,8 +14,8 @@ and licensing warranties, is covered by the
 completeness and quality.
 
 We keep this bar deliberately small.
-It was calibrated against a scan of 577 published datasets in NEMAR's modality
-scope, so each requirement targets a failure mode that actually occurs,
+It was calibrated against a scan of 577 public OpenNeuro datasets in NEMAR's
+modality scope, so each requirement targets a failure mode that actually occurs,
 rather than aspiration.
 
 ## Account requirements
@@ -36,12 +38,13 @@ rather than aspiration.
 
 ## Required for publication
 
-A dataset must meet all of the following before a publication request is
-approved:
+A dataset must meet all of the following to be published.
+Brain Imaging Data Structure (BIDS) validation is checked automatically;
+the rest is the bar a NEMAR administrator holds every publication request to,
+and a request that falls short is returned with the reasons.
 
 - **BIDS validation passes with zero errors.**
-  The dataset must be a valid Brain Imaging Data Structure (BIDS) dataset;
-  validation runs automatically on upload and again at publication.
+  Validation runs automatically on upload and again at publication.
 - **A `dataset_description.json`** with at least `Name` and `BIDSVersion`
   (BIDS validation already requires this).
 - **A substantive README** that describes this specific dataset:
@@ -55,12 +58,13 @@ approved:
   The upload tooling helps you pick one and writes the `LICENSE` file.
 - **The data files are actually present.**
   A dataset whose metadata references recordings that were never uploaded is
-  not published.
+  not approved.
 
 ## Strongly recommended
 
-The following are checked and flagged when missing, but do not block
-publication on their own:
+The following are strongly recommended;
+a missing item may be flagged on the dataset page or raised during review,
+but does not block publication on its own:
 
 - **A descriptive dataset name.**
   As a guideline, a good title is at least 25 characters and tells a reader
@@ -71,7 +75,7 @@ publication on their own:
 - **Authors listed in full, each with an ORCID iD.**
   The upload tooling collects co-author ORCID iDs so every author is
   unambiguously credited in the dataset's DOI record.
-  Placeholder author entries are treated as missing.
+  Placeholder author entries count as missing.
 - **Funding sources**, in the `Funding` field of `dataset_description.json`.
   These become funding references in the DOI metadata, which is how funders
   discover the datasets they supported.
@@ -92,8 +96,9 @@ problem before it costs you time:
    warn about missing recommended metadata.
 2. **At publication request**, an automated prescreen reviews the dataset,
    including the quality judgments above.
-   Its verdicts on name and README adequacy are advisory by design; they
-   inform the reviewer rather than desk-rejecting automatically.
+   Its judgment calls, such as whether a name is adequately descriptive, are
+   advisory by design; they inform the reviewer rather than desk-rejecting
+   automatically.
 3. **A NEMAR administrator reviews every publication request.**
    Datasets that do not meet the required bar are returned with the specific
    reasons, and can be resubmitted after revision.
