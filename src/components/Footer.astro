@@ -5,7 +5,7 @@
 import Default from '@astrojs/starlight/components/Footer.astro';
 
 const year = new Date().getFullYear();
-const site = 'https://ww2.nemar.org';
+const site = 'https://www.nemar.org';
 // On splash pages the built-in footer is just an empty pager (no prev/next,
 // edit link, or last-updated), which renders as an empty block. Skip it there.
 const isSplash = Astro.locals.starlightRoute?.entry?.data?.template === 'splash';
@@ -31,24 +31,25 @@ const isSplash = Astro.locals.starlightRoute?.entry?.data?.template === 'splash'
         <h3>Explore</h3>
         <ul role="list">
           <li><a href={`${site}/discover`}>Discover</a></li>
-          <li><a href={`${site}/citation-dashboard`}>Citations</a></li>
+          <li><a href="https://dashboard.nemar.org/citations/">Citations</a></li>
           <li><a href="/">Documentation</a></li>
         </ul>
       </div>
       <div>
-        <h3>Community</h3>
+        <h3>Project</h3>
         <ul role="list">
-          <li><a href={`${site}/community`}>Forum</a></li>
           <li><a href={`${site}/about`}>About</a></li>
           <li><a href={`${site}/support`}>Support</a></li>
+          <li><a href="/policies/">Policies</a></li>
+          <li><a href="https://github.com/nemarOrg/nemar-cli/issues">Report an issue</a></li>
         </ul>
       </div>
       <div>
         <h3>Data</h3>
         <ul role="list">
+          <li><a href="https://www.nemar.org/">www.nemar.org</a></li>
           <li><a href="https://data.nemar.org/">data.nemar.org</a></li>
           <li><a href="https://api.nemar.org/">api.nemar.org</a></li>
-          <li><a href="https://ww2.nemar.org/">ww2.nemar.org</a></li>
         </ul>
       </div>
     </nav>
