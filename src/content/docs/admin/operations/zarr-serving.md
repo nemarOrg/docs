@@ -138,9 +138,9 @@ nemar admin zarr status <id>                # show zarr_status / store count / c
 nemar admin zarr backfill --all             # one-time sweep over public datasets
 
 # Verify CORS + range against the cache host:
-curl -sI -H 'Origin: https://www.nemar.org' -H 'Range: bytes=0-99' \
+curl -sI -H 'Origin: https://nemar.org' -H 'Range: bytes=0-99' \
   https://zarr.nemar.org/nm099999/zarr/<path>.zarr/zarr.json
-# expect: 206, Access-Control-Allow-Origin: https://www.nemar.org,
+# expect: 206, Access-Control-Allow-Origin: https://nemar.org,
 #         Access-Control-Expose-Headers includes ETag, Content-Range
 
 # A foreign origin must NOT be allowed:

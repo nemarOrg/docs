@@ -51,7 +51,7 @@ bun run gen:commands   # regenerate the CLI command reference (needs ../nemar-cl
 - Every page needs Starlight frontmatter with a `title`.
 - Use Starlight asides (`:::note`, `:::tip`, `:::caution`, `:::danger`), not MkDocs `!!!` admonitions.
 - Prefer root-absolute internal links (`/cli/guides/uploading/`); relative links are allowed if they resolve. `bun run build` fails on broken internal links (starlight-links-validator).
-- "The website" / "the browser" means `ww2.nemar.org`; `nemar.org` is the legacy PHP dataexplorer. The API is `api.nemar.org`, data plane `data.nemar.org`, viewer `zarr.nemar.org`. Never reference the retired `api.osc.earth` or the retired `neuromechanist` Cloudflare account (SCCN only).
+- "The website" / "the browser" means `nemar.org` (the apex cutover is done; the legacy PHP dataexplorer is gone). `ww2.nemar.org` and `www.nemar.org` still resolve but are non-canonical aliases; never reference them in content. The API is `api.nemar.org`, data plane `data.nemar.org`, viewer `zarr.nemar.org`. Never reference the retired `api.osc.earth` or the retired `neuromechanist` Cloudflare account (SCCN only).
 
 ## Development Workflow
 1. Check `.context/plan.md` for current tasks (the cutover checklist lives there).
