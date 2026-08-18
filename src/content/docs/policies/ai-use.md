@@ -59,10 +59,7 @@ They are assistants to curation, not its authority.
 ## Monitoring and improvement
 
 We monitor these systems continuously and improve them deliberately;
-prompts, models, and thresholds change over time,
-and the binding decisions about how they may be used are recorded as
-[Architecture Decision Records](https://github.com/nemarOrg/nemar-cli/tree/main/.context/decisions)
-in the nemar-cli repository.
+prompts, models, and thresholds change over time.
 Calibration is empirical:
 the advisory-only status of quality judgments, for example,
 was set after measuring false-positive rates on the published corpus.

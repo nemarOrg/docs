@@ -15,9 +15,6 @@ We keep this bar deliberately small.
 It was calibrated against a scan of 577 published datasets in NEMAR's modality
 scope, so each requirement targets a failure mode that actually occurs,
 rather than aspiration.
-The binding engineering decisions behind it are recorded as
-[Architecture Decision Records](https://github.com/nemarOrg/nemar-cli/tree/main/.context/decisions)
-in the nemar-cli repository.
 
 ## Account requirements
 
@@ -70,8 +67,7 @@ publication on their own:
   what was studied; the dataset identifier, a bare author-year string, or a
   placeholder such as `DataSet1` is not a name.
   Name adequacy is judged, not mechanically counted, so legitimate short
-  acronym titles are not penalized
-  ([ADR 0014](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0014-submission-minimums-are-llm-judged-not-regex-gated.md)).
+  acronym titles are not penalized.
 - **Authors listed in full, each with an ORCID iD.**
   The upload tooling collects co-author ORCID iDs so every author is
   unambiguously credited in the dataset's DOI record.
@@ -103,8 +99,7 @@ problem before it costs you time:
    reasons, and can be resubmitted after revision.
 
 Before a DOI is minted, the dataset's metadata record must additionally pass
-validation, including checks on the enriched subject terms
-([ADR 0018](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0018-metadata-must-be-validated-before-a-doi-is-minted.md)).
+validation, including checks on the enriched subject terms.
 A DOI is permanent, so no dataset acquires one carrying metadata nobody
 checked.
 
