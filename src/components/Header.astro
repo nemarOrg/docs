@@ -1,0 +1,165 @@
+---
+// Override of Starlight's default Header (registered as `components.Header` in
+// astro.config.mjs). docs.nemar.org is reached from nemar.org's own primary nav
+// and footer (raised as nemarOrg/website#222, tracked here as nemarOrg/docs#2),
+// so a visitor arriving here should be able to reach the rest of NEMAR without a
+// back button.
+//
+// This recomposes the same building blocks Starlight's own
+// `@astrojs/starlight/components/Header.astro` uses (SiteTitle, Search,
+// SocialIcons, ThemeSelect, LanguageSelect — see node_modules/@astrojs/starlight/
+// components/Header.astro for the stock version this mirrors) and adds a NEMAR
+// primary-nav between the site title and the search box.
+//
+// Per owner decision (overriding the literal issue #2 text): the wordmark keeps
+// Starlight's default behavior and links to this site's own homepage ("/"), not
+// out to nemar.org. The route back to the main site is carried entirely by the
+// nav links below. That is why there is no `components.SiteTitle` override here.
+//
+// Layout choice: rather than reproduce Starlight's internal desktop header grid
+// (a formula tied to sidebar/content-width internals — see the stock component's
+// <style> block), this uses a plain flex row and simply hides the nav below the
+// `lg` breakpoint (72rem, an existing Starlight utility breakpoint — see
+// node_modules/@astrojs/starlight/style/util.css). That keeps `--sl-nav-height`
+// (and everything computed from it: sidebar offset, main content padding) fully
+// untouched at every viewport, and matches the task's guidance that collapsing
+// the primary nav away on narrow viewports, rather than folding it into
+// Starlight's own mobile menu, is an acceptable simplification.
+import config from 'virtual:starlight/user-config';
+import LanguageSelect from 'virtual:starlight/components/LanguageSelect';
+import Search from 'virtual:starlight/components/Search';
+import SiteTitle from 'virtual:starlight/components/SiteTitle';
+import SocialIcons from 'virtual:starlight/components/SocialIcons';
+import ThemeSelect from 'virtual:starlight/components/ThemeSelect';
+
+const shouldRenderSearch =
+	config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
+
+// nemar.org's own primary nav (nemarOrg/website src/components/Nav.astro,
+// `marketingLinks`), reproduced here so a visitor lands somewhere that still
+// feels like NEMAR. "Documentation" there points at this deployment
+// (https://docs.nemar.org) with an absolute, new-tab URL; here it is a same-site
+// link to "/" instead, since this deployment IS that entry. The other four keep
+// the website's absolute URLs, since About/Discover/Support are routes on
+// nemar.org itself and the Citation Dashboard is a separate deployment
+// (nemarOrg/nemar-citations), same as on the website.
+const NEMAR_SITE = 'https://www.nemar.org';
+const primaryNavLinks = [
+	{ href: `${NEMAR_SITE}/about`, label: 'About' },
+	{ href: `${NEMAR_SITE}/discover`, label: 'Discover' },
+	{ href: 'https://dashboard.nemar.org/citations/', label: 'Citation Dashboard' },
+	{ href: '/', label: 'Documentation' },
+	{ href: `${NEMAR_SITE}/support`, label: 'Support' },
+];
+
+const pathname = Astro.url.pathname;
+const isCurrentDocs = pathname === '/' || pathname === '';
+---
+
+<div class="header">
+	<div class="title-wrapper sl-flex">
+		<SiteTitle />
+	</div>
+	<nav class="nemar-nav sl-hidden lg:sl-flex print:hidden" aria-label="NEMAR">
+		<ul role="list" class="nemar-nav__list">
+			{
+				primaryNavLinks.map((link) => (
+					<li>
+						<a
+							href={link.href}
+							aria-current={link.href === '/' && isCurrentDocs ? 'page' : undefined}
+						>
+							{link.label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+	<div class="sl-flex print:hidden search-wrapper">
+		{shouldRenderSearch && <Search />}
+	</div>
+	<div class="sl-hidden md:sl-flex print:hidden right-group">
+		<div class="sl-flex social-icons">
+			<SocialIcons />
+		</div>
+		<ThemeSelect />
+		<LanguageSelect />
+	</div>
+</div>
+
+<style>
+	@layer starlight.core {
+		.header {
+			display: flex;
+			align-items: center;
+			gap: var(--sl-nav-gap);
+			height: 100%;
+		}
+		.title-wrapper {
+			/* Prevent long titles overflowing and covering the search and menu buttons on narrow viewports. */
+			overflow: clip;
+			/* Avoid clipping focus ring around link inside title wrapper. */
+			padding: 0.25rem;
+			margin: -0.25rem;
+			min-width: 0;
+			flex-shrink: 0;
+		}
+		.nemar-nav {
+			flex-shrink: 0;
+			margin-inline-start: var(--sl-nav-gap);
+		}
+		.nemar-nav__list {
+			display: flex;
+			align-items: center;
+			gap: 1.25rem;
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+		.search-wrapper {
+			flex: 1;
+			min-width: 0;
+		}
+		.right-group,
+		.social-icons {
+			gap: 1rem;
+			align-items: center;
+			flex-shrink: 0;
+		}
+		.social-icons::after {
+			content: '';
+			height: 2rem;
+			border-inline-end: 1px solid var(--sl-color-gray-5);
+		}
+	}
+</style>
+
+<style>
+	/* NEMAR primary-nav links. Colors and type reuse tokens already mapped from
+	   nemarOrg/website src/styles/tokens.css in ../styles/custom.css (accent
+	   blue, Inter font stack); the brand-teal current-page underline
+	   (#5bbad5 = website tokens.css --brand-teal) is added here since it is
+	   nav-specific and this is the only place in the docs theme that needs it. */
+	.nemar-nav__list a {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 2.75rem;
+		padding-inline: 0.25rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		text-decoration: none;
+		white-space: nowrap;
+		border-block-end: 2px solid transparent;
+		transition: color 0.15s ease, border-color 0.15s ease;
+	}
+	.nemar-nav__list a:hover,
+	.nemar-nav__list a:focus-visible {
+		color: var(--sl-color-white);
+	}
+	.nemar-nav__list a[aria-current='page'] {
+		color: var(--sl-color-white);
+		border-block-end-color: #5bbad5;
+	}
+</style>
