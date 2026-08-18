@@ -97,12 +97,13 @@ const isCurrentDocs = pathname === '/' || pathname === '';
 			height: 100%;
 		}
 		.title-wrapper {
-			/* Prevent long titles overflowing and covering the search and menu buttons on narrow viewports. */
+			/* The logo is height-locked (config.logo.replacesTitle), so the wordmark
+			   never shrinks; stock's shrink-and-clip (min-width: 0) is dropped in
+			   favor of keeping it full-width next to the nav. */
 			overflow: clip;
 			/* Avoid clipping focus ring around link inside title wrapper. */
 			padding: 0.25rem;
 			margin: -0.25rem;
-			min-width: 0;
 			flex-shrink: 0;
 		}
 		.nemar-nav {
@@ -160,6 +161,6 @@ const isCurrentDocs = pathname === '/' || pathname === '';
 	}
 	.nemar-nav__list a[aria-current='page'] {
 		color: var(--sl-color-white);
-		border-block-end-color: #5bbad5;
+		border-block-end-color: var(--sl-color-text-accent);
 	}
 </style>
