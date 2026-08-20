@@ -211,8 +211,10 @@ A channel group's own attributes describe the recording as a whole and every cha
 ```
 
 `row_index` is the channel's position along the first axis of the signal array below; `unit` is
-the physical unit each dequantized sample is in (typically `"uV"` for EEG/MEG/iEEG, and the
-appropriate unit for EMG).
+the physical unit each dequantized sample is in, taken from the recording's own metadata. EEG
+recordings observed so far report `"uV"`; do not assume the same unit holds for every modality
+(MEG in particular is natively a Tesla-based unit, not a voltage), and always read `unit` from
+the channel itself rather than hardcoding it.
 
 ### The signal array
 
@@ -295,7 +297,8 @@ for (let c = 0; c < nChan; c++) {
     physical[c * nSamp + t] = region.data[c * nSamp + t] * scale[c] + offset[c];
   }
 }
-// physical[c, t] is now in the unit given by group.attrs.channels[c].unit (typically "uV").
+// physical[c, t] is now in the unit given by group.attrs.channels[c].unit (this
+// EEG example reports "uV"; read the unit rather than assuming it).
 ```
 
 A Python client (`zarr` or `xarray`) can open the same URLs and apply the same formula; the
