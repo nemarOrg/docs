@@ -169,8 +169,8 @@ positions, the root also carries `electrode_positions` (a label-to-XYZ-coordinat
 ### Channel groups and the rate caps
 
 Each name in `channel_groups` is a child group, one per modality present in the recording.
-Groups are named `<modality>_<rate>hz`, and the rate is capped per modality rather than left at
-whatever the source recording used:
+Groups are named `<modality>_<rate>hz`, where `<rate>` is the group's actual serving rate, and
+that rate is capped per modality rather than upsampled to a fixed target:
 
 | Modality | Cap |
 | --- | --- |
@@ -179,11 +179,21 @@ whatever the source recording used:
 | Intracranial EEG (iEEG) | 1000 Hz |
 | Electromyography (EMG) | 1000 Hz |
 
-A recording sampled above its modality's cap is resampled down to it (`eeg_250hz` for an EEG
-recording originally sampled at 1000 Hz, for example). The modality is read from the recording's
-BIDS filename suffix (`_eeg`, `_meg`, `_ieeg`, `_emg`), not guessed per channel, so a recording
-with a handful of non-neural channels riding along (EOG, reference, trigger) still lands in one
-coherent group at its datatype's cap.
+The cap is a ceiling, not a target. A recording sampled above its modality's cap is resampled
+down to it (`eeg_250hz` for an EEG recording originally sampled at 1000 Hz, for example). A
+recording already at or below the cap is passed through at its native rate, unchanged: a 512 Hz
+iEEG recording (below the 1000 Hz iEEG cap) is served as `ieeg_512hz`, with the group's `rate`
+attribute at 512.0 and the level-0 array's `downsample_factor` at 1, not upsampled to 1000 Hz.
+
+This has a direct consequence for client code: **the group name encodes the recording's actual
+stored rate, not its modality's cap.** Do not construct a group name by assuming the cap;
+`ieeg_1000hz` will 404 against a store whose recording never needed downsampling. Read the group
+name from the index entry's `groups[].name` (or from the store's own `channel_groups` list)
+rather than hardcoding it from the table above.
+
+The modality itself is read from the recording's BIDS filename suffix (`_eeg`, `_meg`, `_ieeg`,
+`_emg`), not guessed per channel, so a recording with a handful of non-neural channels riding
+along (EOG, reference, trigger) still lands in one coherent group at its datatype's rate.
 
 A channel group's own attributes describe the recording as a whole and every channel in it:
 
