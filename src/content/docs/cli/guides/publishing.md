@@ -187,8 +187,8 @@ After this step, the DOI is permanent and cannot be undone.
 #### Step 12: `s3_lock` - S3 Object Lock
 Applies S3 Object Lock (governance mode) to all dataset objects, preventing accidental deletion. Lock duration: 10 years.
 
-#### Step 13: `sync_nemar` - Sync Metadata to nemar.org
-Syncs the dataset's metadata to the legacy nemar.org dataexplorer datapipeline. This step is non-fatal (a failure here does not block publication). Note that archive-zip generation is **not** an orchestrator step; the central `run-version-doi.yml` workflow dispatches `generate-archive` separately after the version DOI is minted (see #670).
+#### Step 13: `sync_nemar` - Legacy Metadata Sync (disabled)
+This step is now a no-op: it used to sync dataset metadata to a legacy PHP dataexplorer data pipeline that predated the current `nemar.org` (the dataset browser itself, not a separate downstream consumer), and that coupling has since been removed. The step is kept in the orchestrator only so existing publication-request records stay valid; it logs a skip and always succeeds. Note that archive-zip generation is **not** an orchestrator step; the central `run-version-doi.yml` workflow dispatches `generate-archive` separately after the version DOI is minted.
 
 #### Step 14: `notify_user` - Send Notification Email
 Sends a publication confirmation email to the dataset owner with the DOI and citation information. This is the final step; the publication request status changes to "published".
