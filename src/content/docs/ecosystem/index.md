@@ -42,7 +42,7 @@ flowchart TB
 | **Backend API** | `api.nemar.org` | Auth, dataset lifecycle, admin, publication, DOIs (Cloudflare Workers + D1) | [Platform API](/platform/api/) |
 | **Data plane** | `data.nemar.org` | Public dataset files, version manifests, `records.json`, archive zips | [Data API](/platform/data-api/) |
 | **Dataset browser** | `nemar.org` | The dataset browser (Astro) | external |
-| **Signal viewer** | `zarr.nemar.org` | In-browser EEG/EMG viewer streaming per-recording Zarr | external |
+| **Signal viewer** | `zarr.nemar.org` | In-browser EEG/EMG viewer streaming per-recording Zarr | [Zarr contract](/develop/zarr-contract/) |
 
 ## How a dataset flows through NEMAR
 
