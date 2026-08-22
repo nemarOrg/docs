@@ -62,7 +62,8 @@ index means "nothing to serve here," not "no such dataset."
 ```
 
 `source_commit` is the dataset repository commit the copy was built from. `updated_utc` is when the
-index was last written; it doubles as a cache key (see [Caching](#caching)).
+index was last written; it doubles as a cache key (see [Caching](#caching)). Neither is a dataset
+version: this copy has none, and both simply identify one generation of it.
 
 Each entry in `stores` describes one recording:
 
@@ -150,6 +151,13 @@ physical = digital * scale + offset
 The store states this itself in the `physical_formula` attribute on the array. Units are per channel
 in the `unit` attribute (for example `uV`).
 
+Reading a store over HTTP needs Zarr's fsspec-backed HTTP store, which is not pulled in by `zarr`
+alone:
+
+```
+pip install zarr numpy "fsspec[http]" aiohttp requests
+```
+
 ```python
 import zarr, numpy as np
 
@@ -198,11 +206,15 @@ Verified against the live service:
 
 - **Range requests** are supported. Chunk requests return `206` with `Content-Range`, and
   `Accept-Ranges: bytes` is advertised. This is what makes partial chunk reads viable from a browser.
-- **Cross-origin** reads work from any origin. `Range` is an allowed request header; `ETag`,
-  `Content-Length`, `Content-Range`, and `Accept-Ranges` are exposed. `GET`, `HEAD`, and `OPTIONS`
-  are allowed.
-- Arrays are **sharded** (`sharding_indexed`), so a client that understands Zarr v3 sharding will
-  fetch far fewer, larger objects than the chunk grid alone suggests.
+- **Cross-origin reads are restricted to NEMAR-family origins.** An allowed origin is reflected back
+  in `Access-Control-Allow-Origin`; any other origin gets no such header, so a browser fetch from an
+  unrelated site will fail. This is deliberate, not an oversight. Server-side clients are unaffected,
+  since the same-origin policy is a browser rule. Where the header is returned, `Range` is an allowed
+  request header, `ETag`, `Content-Length`, `Content-Range`, and `Accept-Ranges` are exposed, and
+  `GET`, `HEAD`, and `OPTIONS` are permitted.
+- The **base signal array is sharded** (`sharding_indexed`), so a client that understands Zarr v3
+  sharding fetches far fewer, larger objects than the chunk grid alone suggests. The view pyramid and
+  the event arrays are not sharded; they use plain `bytes` + compression.
 
 ### Caching
 
@@ -210,23 +222,28 @@ Two different policies, which matter if you are building a viewer:
 
 | Resource | `Cache-Control` |
 |---|---|
-| `index.json` | `public, max-age=60, stale-while-revalidate=300` |
-| Chunks and array metadata | `public, max-age=86400, stale-while-revalidate=86400` |
+| All JSON metadata: `index.json` and every `zarr.json` | `public, max-age=60, stale-while-revalidate=300` |
+| Chunk bytes | `public, max-age=86400, stale-while-revalidate=86400` |
+
+The split is metadata against payload, not index against store. Every `zarr.json` in the tree, at the
+store root, the group, and each array, refreshes on the same short lifetime as the index.
 
 Chunk content is effectively immutable for a given conversion, hence the day-long lifetime. When a
 recording is reconverted its chunks are rewritten in place at the same URLs, so a client holding a
-cached chunk can pair it with a newer index.
+cached chunk can pair it with a newer index. That is the case worth defending against.
 
-The index is the version signal. Append its `updated_utc` as a query parameter when fetching store
-resources:
+The index carries the generation marker. Append its `updated_utc` as a query parameter when fetching
+**chunks**, which are the long-lived resources:
 
 ```
-<store>/eeg_250hz/0/zarr.json?v=2026-07-28T02:09:28Z
+<store>/eeg_250hz/0/c/0/0?v=2026-07-28T02:09:28Z
 ```
 
 The query string does not change what the server returns; it changes the browser's cache key, so a
 reconversion moves every client to the new bytes at once. Read `updated_utc` from the index, use it
-for every request belonging to that index, and refetch the index to learn about a new one.
+for every chunk request belonging to that index, and refetch the index to learn about a new one.
+Applying it to `zarr.json` requests is harmless but buys little, since those already expire in a
+minute.
 
 ## Reconversion
 

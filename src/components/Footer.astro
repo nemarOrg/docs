@@ -5,7 +5,7 @@
 import Default from '@astrojs/starlight/components/Footer.astro';
 
 const year = new Date().getFullYear();
-const site = 'https://ww2.nemar.org';
+const site = 'https://nemar.org';
 // On splash pages the built-in footer is just an empty pager (no prev/next,
 // edit link, or last-updated), which renders as an empty block. Skip it there.
 const isSplash = Astro.locals.starlightRoute?.entry?.data?.template === 'splash';
@@ -48,7 +48,7 @@ const isSplash = Astro.locals.starlightRoute?.entry?.data?.template === 'splash'
         <ul role="list">
           <li><a href="https://data.nemar.org/">data.nemar.org</a></li>
           <li><a href="https://api.nemar.org/">api.nemar.org</a></li>
-          <li><a href="https://ww2.nemar.org/">ww2.nemar.org</a></li>
+          <li><a href="https://nemar.org/">nemar.org</a></li>
         </ul>
       </div>
     </nav>

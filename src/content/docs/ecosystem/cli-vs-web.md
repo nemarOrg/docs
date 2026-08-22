@@ -3,7 +3,7 @@ title: CLI vs the web
 description: NEMAR has two surfaces, the CLI and the web app. They share one backend, accounts, and datasets. Here is when to use each.
 ---
 
-NEMAR has two surfaces: the **web app** ([ww2.nemar.org](https://ww2.nemar.org)) and the
+NEMAR has two surfaces: the **web app** ([nemar.org](https://nemar.org)) and the
 **[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets. The
 difference is workflow style, not capability.
 
@@ -11,7 +11,7 @@ difference is workflow style, not capability.
 
 - **Signing up.** Web sign-in and sign-up are planned for **July 2026**; until then, create your
   account and authenticate with the CLI (`nemar auth signup` / `nemar auth login`).
-- **Browsing and exploring.** [Discover](https://ww2.nemar.org/discover), dataset detail pages,
+- **Browsing and exploring.** [Discover](https://nemar.org/discover), dataset detail pages,
   READMEs, and the citation dashboard live there.
 - **One-off uploads.** Drop a folder, walk through validation, request publication. No tooling
   to install.
