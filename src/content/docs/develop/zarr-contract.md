@@ -150,15 +150,22 @@ The codes currently in use:
 | `unsupported_format` | The source file format is not yet supported by the converter. |
 | `empty_recording` | The recording has no signal channels to display. |
 | `file_read_error` | A generic failure preparing the recording; no more specific code applies. |
-| `recording_too_large` | The recording is too large to convert within the conversion node's memory budget. |
-| `recording_memory_exceeded` | The recording ran out of memory partway through conversion. |
+| `recording_too_large` | The recording needs more memory than the conversion node can provide at all. |
+| `recording_memory_exceeded` | The recording needed more memory than was free when it was attempted, on a node that could otherwise hold it. |
 | `channel_count_mismatch` | The converted store would carry fewer channels than the recording's BIDS channel metadata declares, so it was withheld rather than served as a silently unfaithful copy. |
 
-Most of these describe the recording itself and will not change on their own.
-Two do not: `recording_too_large` and `recording_memory_exceeded` describe the conversion
-environment rather than a defect in the data,
-so a recording carrying either can gain a store on a later run without anything about the dataset changing.
-Do not cache those two verdicts as permanent.
+Most of these describe the recording itself and will not change on their own,
+including `recording_too_large`:
+the node cannot hold that recording at all,
+so the verdict stands until the hardware or the converter changes.
+
+One is different.
+`recording_memory_exceeded` means the recording did not fit the memory that happened to be free
+on a shared machine at that moment,
+not that anything is wrong with it,
+so the same recording can gain a store on a later run
+with nothing about the dataset having changed.
+It is the one code here worth re-checking rather than treating as settled.
 
 A transient conversion error is retried on the next run instead of being recorded as a failure,
 so a recording can briefly appear in neither `stores` nor `failures` while it is queued;
