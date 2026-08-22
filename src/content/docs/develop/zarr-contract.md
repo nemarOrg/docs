@@ -34,6 +34,19 @@ that is a separate, access-gated document for NEMAR administrators.
 - **Raw recordings only.** Coverage is BIDS raw data
   (the recordings under each subject/session data type folder).
   Derivatives, source data, and code folders are out of scope and are not converted.
+- **Almost always the source signal, with one disclosed exception.** A store normally carries
+  the recording as acquired, quantized and rate-capped and nothing else.
+  Some magnetoencephalography recordings are acquired with internal active shielding,
+  which distorts the signal until it is corrected,
+  and their manufacturer's position is that such data is not fit for analysis uncorrected.
+  Those recordings are corrected before serving, using the site calibration files the dataset
+  ships, and the resulting store is a **processed derivative** rather than the raw signal.
+  Where that has happened the store's root attributes and the store's index entry both carry
+  an `sss` object naming the method and inputs.
+  **Check for it if you are training across datasets**, or you will mix corrected and
+  uncorrected magnetoencephalography with nothing to tell them apart.
+  A recording that needs the correction but whose calibration files are absent is declined
+  rather than served uncorrected; it appears in `failures` with `maxshield_uncalibrated`.
 - **No stability promise beyond what is written here.** The index and every store carry explicit
   `format` and `format_version` fields for exactly this reason:
   treat this page as a description of the current contract,
@@ -152,6 +165,7 @@ The codes currently in use:
 | `file_read_error` | A generic failure preparing the recording; no more specific code applies. |
 | `recording_too_large` | The recording needs more memory than the conversion node can provide at all. |
 | `recording_memory_exceeded` | The recording needed more memory than was free when it was attempted, on a node that could otherwise hold it. |
+| `maxshield_uncalibrated` | The recording was acquired with internal active shielding, and the site calibration files needed to correct it are not provided for it. |
 | `channel_count_mismatch` | The converted store would carry fewer channels than the recording's BIDS channel metadata declares, so it was withheld rather than served as a silently unfaithful copy. |
 
 Most of these describe the recording itself and will not change on their own,
