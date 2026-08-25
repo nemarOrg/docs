@@ -339,7 +339,7 @@ A: Once approved, the orchestrator takes 1-2 minutes to complete all 14 steps. A
 A: No. Once published, a dataset is permanently public. The DOI is permanent and cannot be deleted.
 
 **Q: Can I update a published dataset?**
-A: Yes. Dataset owners can update their datasets via direct pushes or pull requests.
+A: Yes, but only through pull requests, direct pushes to `main` are blocked once a dataset is public. Owners and collaborators use `nemar dataset update`/`release`; anyone else can fork and open a PR. See [Collaboration & the Lifecycle](/cli/guides/collaboration/).
 
 **Q: What if I need to publish urgently?**
 A: Contact NEMAR admins directly. Publication requests are processed in order received.

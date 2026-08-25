@@ -68,6 +68,7 @@ export default defineConfig({
 						{
 							label: 'Guides',
 							items: [
+								{ label: 'Collaboration & the Lifecycle', slug: 'cli/guides/collaboration' },
 								{ label: 'Uploading Datasets', slug: 'cli/guides/uploading' },
 								{ label: 'BIDS Validation', slug: 'cli/guides/validation' },
 								{ label: 'Downloading Data', slug: 'cli/guides/downloading' },
