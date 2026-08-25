@@ -117,6 +117,8 @@ The CLI uses HTTPS-first authentication for GitHub operations:
 
 ## Step 4: Making Updates
 
+A freshly uploaded dataset is **private**, and you can push to it directly. To bring in co-authors or hand off curation, see [Collaboration & the Lifecycle](/cli/guides/collaboration/).
+
 After initial upload, push changes using the CLI:
 
 ```bash
