@@ -55,7 +55,7 @@ that is a separate, access-gated runbook for NEMAR administrators (`/admin/opera
 
 This page and the four it links to describe the contract as it ships, not as it stands today.
 **Nothing in the "after" column below exists in production or in staging as of 2026-09-02** — checked live, and against the deployed source for the two rows that cannot be checked by URL alone.
-It all ships together with **nemar-cli release 0.9.12** (epic #1181), `events.parquet` included — though `events.parquet` ships from a still-open pull request (nemarOrg/nemar-cli#1205) on the same epic branch, one step further out than everything else here.
+It all ships together with **nemar-cli release 0.9.12** (epic #1181), `events.parquet` included — merged into the epic branch as nemarOrg/nemar-cli#1205 (merge commit `606745d9`, 2026-09-02).
 
 | Capability | Today (production and staging) | After nemar-cli release 0.9.12 |
 | --- | --- | --- |
@@ -76,8 +76,6 @@ It all ships together with **nemar-cli release 0.9.12** (epic #1181), `events.pa
 See the "Rollout" note on whichever page documents each row for how it was checked.
 
 :::note[Rollout]
-`events.parquet` — full shape at [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) — is design-final but still an open pull request
-(nemarOrg/nemar-cli#1205, closing [#1060](https://github.com/nemarOrg/nemar-cli/issues/1060)) on top of the same epic branch as everything else on this page,
-not yet merged even there.
-It ships together with the rest of this table when nemar-cli release 0.9.12 does.
+`events.parquet` — full shape at [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) — closes [nemarOrg/nemar-cli#1060](https://github.com/nemarOrg/nemar-cli/issues/1060) via nemarOrg/nemar-cli#1205, merged into the epic branch on 2026-09-02.
+It ships together with the rest of this table when nemar-cli release 0.9.12 does, same as every other row here.
 :::

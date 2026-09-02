@@ -13,7 +13,7 @@ then gives the read recipe Architecture Decision Record (ADR) [0025](https://git
 The `catalog.json` row, the `index.json` row's v3 figures, and the whole `events.parquet` row describe the contract as it ships with nemar-cli release 0.9.12 (epic #1181).
 `catalog.json` 404s today, on production and on staging (checked live on 2026-09-02);
 every dataset's `index.json` is `format_version 1` today, everywhere;
-`events.parquet` ships from a still-open pull request (nemarOrg/nemar-cli#1205) on the same epic branch, one step further out than the rest.
+`events.parquet` (nemarOrg/nemar-cli#1205, merged into the epic branch 2026-09-02) is on the same footing as the rest — merged, not live.
 See the [overview's rollout table](/platform/zarr/#what-is-live-today-versus-after-the-release) for the full list.
 :::
 
@@ -64,10 +64,12 @@ Everything needed to decide which recording to open, and at what rate, is alread
 ### `events.parquet`
 
 Not live anywhere yet — see the rollout note at the top of this section, and [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) for the full shape.
-Row size is dominated by the numeric columns (`onset_s` float64, `duration_s` float32, `sample_index` int64) plus small dictionary indices for the string columns, zstd-compressed.
-There is no live file to measure yet, so the figure below is a **synthetic worked example**, built and measured against the real schema-building code (`events_schema`/`events_table_from_columns` in `scripts/zarr/generate_zarr.py`) rather than guessed:
-a 40-store, single-group dataset with 60–200 events per store (5,242 rows total, a plausible task-fMRI-style event count) compressed to 166,521 bytes — **about 32 bytes per row**.
-Row count is what actually drives size: it is `events × channel groups`, summed across every store, so a resting-state dataset with few events per recording lands in the tens-of-kB range,
+There is no live file to measure yet.
+Building small synthetic files against the real schema-building code (`events_schema`/`events_table_from_columns` in `scripts/zarr/generate_zarr.py`) puts the per-row cost, zstd-compressed, at **roughly 10 to 40 bytes per row** — not a single number, because it moves with the shape of the data, not just the row count:
+the numeric columns (`onset_s` float64, `duration_s` float32, `sample_index` int64) cost about the same either way,
+but the dictionary-encoded string columns (`store_path`, `subject`, `trial_type`, `value`, and whether `session`/`hed` are populated at all) compress hard when a small set of distinct strings repeats across many rows, and far less when the dictionary is nearly as large as the row count —
+a dataset with many stores but few events each sits toward the high end for exactly that reason, one with fewer stores and denser trial designs toward the low end.
+Row count is what actually drives total size: it is `events × channel groups`, summed across every store, so a resting-state dataset with few events per recording lands in the tens-of-kB range,
 while a dense trial design (hundreds of events per store) or a store with several channel groups (each onset counted once per group) can reach the tens-of-MB range at the same per-row rate.
 
 Either read the whole file, if you want every event in the dataset, or filter by `store_path` (predicate pushdown skips row groups that cannot match, without downloading them) if you only want one recording's events.

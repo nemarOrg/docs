@@ -38,10 +38,7 @@ Until then:
 - [`GET /catalog.json`](#zarr-catalogjson-the-discovery-front-door) 404s the same way, on both `zarr.nemar.org` and `zarr-test.nemar.org` — checked live on 2026-09-02.
 - The [manifest file](#the-manifest-file) does not exist either — `manifest.json` also 404s today, checked the same way.
 - Neither [`has_zarr` nor `has_zarr_verified`](#has_zarr-and-has_zarr_verified-on-the-api) exists on the deployed API yet — both are accepted as query parameters today but have no effect, so the request succeeds and simply ignores them rather than erroring.
-- [`events.parquet`](#eventsparquet) does not exist anywhere either, and is a step further out than the rest of this page:
-  it ships from a still-open pull request (nemarOrg/nemar-cli#1205, head `60aa6f3`) on top of the same epic branch, not yet merged even there.
-  Its design is final (three review rounds applied, tests green) and it ships together with everything else on this page,
-  but read it as the least-settled fact here.
+- [`events.parquet`](#eventsparquet) does not exist anywhere either — merged into the epic branch (nemarOrg/nemar-cli#1205, merge commit `606745d9`, head `2390c424`, 2026-09-02) on the same footing as the rest of this page, and ships with it.
 
 Once the release ships, format version 3 still reaches a dataset only when that dataset *reconverts* under converter engine version 3 (Architecture Decision Record (ADR) 0033) —
 an unchanged dataset does not pick it up on its own, so the two formats will coexist for a while even after release.
@@ -271,7 +268,7 @@ it shares `index.json`'s cache lifetime (both are rewritten by the same conversi
 ## `events.parquet`
 
 :::note[Rollout]
-Not live anywhere, and one step further out than the rest of this page — see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+Not live anywhere yet — see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
 Design is final (nemarOrg/nemar-cli#1205, closing [#1060](https://github.com/nemarOrg/nemar-cli/issues/1060)); it ships together with everything else on this page.
 :::
 
@@ -310,7 +307,10 @@ Columns, in this order:
 | `sample_index` | int64 | The level-0 sample the onset falls on — see the formula below. `null` under the same conditions as `onset_s`, or when the group has no `rate`. |
 | `group_name` | dictionary-encoded string | Which channel group this row's `sample_index` is computed against — joins to `stores[].groups[].name`. |
 | `trial_type`, `value`, `hed` | dictionary-encoded string | The matching `events.tsv` columns (case-insensitive match; BIDS's `HED` and a lowercase `hed` both land here), `null` for a blank or `n/a` cell. |
-| *(remaining `events.tsv` columns)* | dictionary-encoded string | Every other column the file has, under its own name — `x_`-prefixed only on a collision with one of the names above or with another passthrough column. |
+| *(remaining `events.tsv` columns)* | dictionary-encoded string | Every other column the file has, under its own name — `x_`-prefixed only on a collision with one of the names above or with another passthrough column. Ordered alphabetically after the twelve fixed columns above, not by first appearance. |
+
+The alphabetical ordering is deliberate: workers convert recordings in whatever order the pool finishes them, so a column order taken from "whichever store's passthrough column was seen first" would make two runs over the same commit produce different files.
+Sorting the passthrough names makes the schema, and so the published rows, the same across two runs over the same commit — not dependent on pool-worker scheduling.
 
 Every string column is dictionary-encoded, the file is zstd-compressed, and rows are written store by store (row groups flushed every 65,536 rows) rather than assembled into one in-memory table —
 `nm000281`'s ~25,000 stores never become a single frame.
@@ -333,7 +333,8 @@ Bound-check against `groups[].n_samples` yourself if you need to know whether an
 
 **Duplicate onsets keep both rows, in file order.** Two events sharing the same `onset_s` are not deduplicated or reordered against each other;
 the tiebreak is the event's original position in `events.tsv`, so the published order is deterministic without being alphabetical or otherwise arbitrary.
-Rows are ordered `store_path`, then `onset_s` (ties broken by file order), then `group_name`.
+A row with no parseable onset sorts **after** every row that has one, within its store — not interleaved by original position — and ties among those unparseable rows are broken the same way, by file order.
+Rows are ordered `store_path`, then `onset_s` (unparseable-onset rows last, ties broken by file order), then `group_name`.
 
 ### Carry-forward
 
