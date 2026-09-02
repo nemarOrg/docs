@@ -6,7 +6,7 @@ description: "The stable URL, anonymous S3 access, the browser-versus-machine sp
 :::note[Rollout]
 This page describes the contract as it ships with **nemar-cli release 0.9.12** (epic #1181), not as it stands today.
 Checked live on 2026-09-02, on both production and the `zarr-test.nemar.org` staging host:
-the redirect split, the tokened/untokened cache lifetimes below, `GET /catalog.json`, and `GET /schemas/*` do not exist yet.
+the redirect split, the tokened/untokened cache lifetimes below, `GET /catalog.json`, `GET /schemas/*`, and `events.parquet` do not exist yet.
 Today, every request — browser or not — is proxied the same way, and `index.json` and a store's `zarr.json` share one flat cache lifetime (`max-age=60, stale-while-revalidate=300`), checked against the deployed source.
 Anonymous S3 access, the `s3:ListBucket` denial, and the 10,000-requests-per-60-seconds rate bucket are **already live today**, independent of this release — see each section below for which parts of it apply now.
 :::
@@ -57,7 +57,7 @@ Once it ships, `zarr.nemar.org` — a Cloudflare Worker in front of that same S3
   This is the overwhelming majority of request volume, and Cloudflare's terms restrict proxying large files at this scale on a non-Enterprise plan regardless —
   every request is counted whether the Worker carries the bytes or not, so redirecting costs nothing extra and avoids that ceiling.
 - **`index.json` is always proxied**, regardless of `Origin` — it is the mandatory entry point and needs to be visibility-gated and edge-cached the same way for every caller.
-  **`manifest.json` and every other object are not specially exempted**: a non-browser `GET` for `manifest.json` redirects to S3 exactly like a chunk object does.
+  **`manifest.json` and `events.parquet` are not specially exempted**, even though they share `index.json`'s cache lifetime (see below): a non-browser `GET` for either redirects to S3 exactly like a chunk object does.
 - **`HEAD` is never redirected**, regardless of `Origin` — always answered by the proxied path.
   This matters in practice: `fsspec`'s `info()` and `rclone`'s HTTP backend both probe with `HEAD`, and `rclone` does not follow a redirected `HEAD`.
 - **Only public datasets are gated on the proxied branches.** The redirect branch relies on the S3 bucket policy itself as the enforcement point:
@@ -70,20 +70,22 @@ it is always proxied and edge-cached, the same as `index.json`, once it ships (s
 
 The table below is the shape that ships with the release.
 Today, `index.json` and a store's `zarr.json` share one flat, untokened lifetime — `max-age=60, stale-while-revalidate=300` — with no tokened variant at all;
-every other object already uses the same `max-age=86400, stale-while-revalidate=86400` shown below, since that part has not changed.
+neither `manifest.json` nor `events.parquet` is a concept the deployed Worker knows about at all today, so a request for either (once one exists) would fall through to the generic `max-age=86400` chunk default below, not the row it gets after the release.
 
 | Object | Untokened | Tokened (`?v=<updated_utc>`) |
 | --- | --- | --- |
-| `index.json` | `max-age=300, stale-while-revalidate=3600` | `max-age=86400, stale-while-revalidate=86400` |
+| `index.json`, `manifest.json`, `events.parquet` (`ZARR_DATASET_DOCUMENTS`) | `max-age=300, stale-while-revalidate=3600` | `max-age=86400, stale-while-revalidate=86400` |
 | a store's `zarr.json` (group/array metadata) | `max-age=60, stale-while-revalidate=300` | `max-age=86400, stale-while-revalidate=86400` |
-| every other object (chunks, `manifest.json`) | `max-age=86400, stale-while-revalidate=86400` | same |
+| every other object (chunks) | `max-age=86400, stale-while-revalidate=86400` | same |
 | `GET /catalog.json` | `max-age=3600, stale-while-revalidate=3600` | — |
 | `GET /schemas/*` | `max-age=86400` | — |
 | a `404` from this gateway | `max-age=60` | — |
 
+`index.json`, `manifest.json`, and `events.parquet` — the three dataset-level documents, named by the shared `ZARR_DATASET_DOCUMENTS` list — are rewritten together by every conversion, so they share one cache lifetime and one purge list, whichever one you request.
+`manifest.json` used to fall through to the generic chunk row before this list existed, getting a full day of edge cache with no purge behind it; that was a bug, not a design choice, and this list is the fix.
 Chunk data (the level-0 signal and `view/*` bytes) gets a long cache lifetime regardless of tokening,
 because a given store's chunks do not change between conversions — only a re-conversion replaces them, in place.
-`index.json` and each store's `zarr.json` get a short *untokened* lifetime instead,
+The three dataset-level documents get a short *untokened* lifetime instead,
 so a re-conversion surfaces to a client within minutes.
 
 Because chunk data is cached far longer than the metadata that describes it,
