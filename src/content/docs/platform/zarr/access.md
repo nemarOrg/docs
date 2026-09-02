@@ -3,12 +3,22 @@ title: "Access and Hosting"
 description: "The stable URL, anonymous S3 access, the browser-versus-machine split at the edge, caching, and rate limits for the Zarr serving copy."
 ---
 
+:::note[Rollout]
+This page describes the contract as it ships with **nemar-cli release 0.9.12** (epic #1181), not as it stands today.
+Checked live on 2026-09-02, on both production and the `zarr-test.nemar.org` staging host:
+the redirect split, the tokened/untokened cache lifetimes below, `GET /catalog.json`, and `GET /schemas/*` do not exist yet.
+Today, every request — browser or not — is proxied the same way, and `index.json` and a store's `zarr.json` share one flat cache lifetime (`max-age=60, stale-while-revalidate=300`), checked against the deployed source.
+Anonymous S3 access, the `s3:ListBucket` denial, and the 10,000-requests-per-60-seconds rate bucket are **already live today**, independent of this release — see each section below for which parts of it apply now.
+:::
+
 ## The one stable URL
 
 `https://zarr.nemar.org` is the only host and base path a client should hardcode:
 it is the index document's own `contract_base`, `https://zarr.nemar.org/<dataset_id>/zarr/`.
+That said, `contract_base` itself is a `format_version 3` field —
+today's `format_version 1` index does not publish it, so a client reading a v1 index has only the hostname convention above to go on, not the field itself.
 
-`data_base` and `s3_uri`, also published in [`index.json`](/platform/zarr/index-contract/),
+`data_base` and `s3_uri`, also published in [`index.json`](/platform/zarr/index-contract/) once v3 ships,
 describe where the bytes happen to live *today* — currently a public Amazon S3 object under `s3://nemar/<dataset_id>/zarr/`, region `us-east-2` —
 and may change independently of `contract_base`.
 **Read them from the index each time rather than hardcoding either one.**
@@ -17,21 +27,26 @@ A client that only ever needs to read bytes can ignore both and simply request e
 
 ## Anonymous S3 access
 
-Every public dataset's Zarr prefix is anonymously readable:
-`GET`/`HEAD` against `s3://nemar/<dataset_id>/zarr/...` (or the equivalent `https://nemar.s3.us-east-2.amazonaws.com/...` URL) works with **no AWS credentials**, for any object whose key you already know.
+Every public dataset's Zarr prefix is anonymously readable, **already, today**:
+`GET`/`HEAD` against `s3://nemar/<dataset_id>/zarr/...`
+(or the equivalent `https://nemar.s3.us-east-2.amazonaws.com/...` URL)
+works with **no AWS credentials**,
+for any object whose key you already know.
 
 **`s3:ListBucket` is denied for the anonymous principal — entirely, not only within a dataset's prefix.**
-There is no anonymous directory listing at any level of the bucket, including its root.
+There is no anonymous directory listing at any level of the bucket, including its root; this is also already true today, independent of this epic.
 This is exactly why the [index](/platform/zarr/index-contract/) and the [`zarr-catalog.json` discovery front door](/platform/zarr/index-contract/#zarr-catalogjson-the-discovery-front-door) exist:
 with no listing available, a document a client can *fetch by name* is the only way to discover what a dataset serves, or which datasets are served at all.
-If you find yourself reaching for `ListObjectsV2` against this bucket, the object you want is `index.json` or `catalog.json`, not a listing.
+If you find yourself reaching for `ListObjectsV2` against this bucket, the object you want is `index.json` or `catalog.json`, not a listing —
+though `catalog.json` itself is one of the pieces still shipping with 0.9.12; see the rollout note above.
 
 A private dataset's objects are excluded from the bucket's public-read grant,
 so a request for one returns `403` at S3 (or `404` through the gateway below) — the same as a path that does not exist.
 
 ## Browser versus everything else
 
-`zarr.nemar.org` is a Cloudflare Worker in front of that same S3 origin, and it treats two kinds of request differently:
+The split described in this section ships with nemar-cli release 0.9.12; today, every request is proxied, with no redirect branch at all.
+Once it ships, `zarr.nemar.org` — a Cloudflare Worker in front of that same S3 origin — will treat two kinds of request differently:
 
 - **A browser request** — one carrying an `Origin` header from `nemar.org`, a `*.nemar.org` subdomain, or `localhost`/`127.0.0.1` — is **proxied**:
   the Worker fetches the object server-side, sets Cross-Origin Resource Sharing (CORS) headers scoped to that origin, and edge-caches the response.
@@ -48,10 +63,14 @@ so a request for one returns `403` at S3 (or `404` through the gateway below) �
 - **Only public datasets are gated on the proxied branches.** The redirect branch relies on the S3 bucket policy itself as the enforcement point:
   a redirect that then 403s at S3 for a private dataset's object leaks nothing the proxied `404` would not.
 
-`GET /catalog.json` (no dataset id segment) is a separate route that can never match the redirect rule above —
-it is always proxied and edge-cached, the same as `index.json`.
+`GET /catalog.json` (no dataset id segment) will be a separate route that can never match the redirect rule above —
+it is always proxied and edge-cached, the same as `index.json`, once it ships (see the rollout note above; it 404s today).
 
 ## Caching and freshness
+
+The table below is the shape that ships with the release.
+Today, `index.json` and a store's `zarr.json` share one flat, untokened lifetime — `max-age=60, stale-while-revalidate=300` — with no tokened variant at all;
+every other object already uses the same `max-age=86400, stale-while-revalidate=86400` shown below, since that part has not changed.
 
 | Object | Untokened | Tokened (`?v=<updated_utc>`) |
 | --- | --- | --- |
@@ -75,15 +94,17 @@ The query string does not change which object is fetched, only the cache key.
 
 ## Rate limits
 
-Every request under `<zarr.nemar.org host>/<id>/zarr/...` — proxied or redirected —
+The shared rate-limit bucket itself is **already live today**: every request under `<zarr.nemar.org host>/<id>/zarr/...` — proxied today, redirected once 0.9.12 ships —
 is counted against one shared, IP-keyed bucket of **10,000 requests per 60 seconds**, the same generous data-plane bucket `data.nemar.org` uses.
+What is new is the *observe-only* treatment of a redirect, which cannot exist before the redirect branch itself does.
 
-A redirect is **observe-only**: it still counts against that shared bucket, but it never itself returns `429` —
+Once the release ships: a redirect is **observe-only**: it still counts against that shared bucket, but it never itself returns `429` —
 a `302` costs a fraction of a millisecond of Worker time and zero bytes of egress, so there is no reason to block it.
 A *proxied* request from the same client IP — a browser-origin fetch, or a request for `index.json` —
 is enforced normally and can `429` once the shared bucket the redirected traffic already counted against is exhausted.
 In other words: redirected traffic is never itself throttled, but it is not free either —
 heavy redirected traffic from one IP can still trip the limit for that IP's proxied requests.
+Today, with no redirect branch, every request against this bucket is a normal, enforced hit — there is no observe-only case yet.
 
 Everything above is anonymous by design;
 there is no authentication on this gateway, and no token-keyed bucket applies here — contrast the authenticated, token-bucketed [backend API](/platform/api/).
