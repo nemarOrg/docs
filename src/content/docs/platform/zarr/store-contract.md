@@ -3,16 +3,32 @@ title: "Store Contract"
 description: "The Zarr v3 layout of one NEMAR recording's serving store: groups, attributes, chunk geometry, and the dequantization formula."
 ---
 
-This page documents one recording's store:
+This page documents one Brain Imaging Data Structure (BIDS) recording's store:
 the Zarr version 3 (v3) hierarchy at `<contract_base><zarr>/`,
 where `<zarr>` is that recording's `zarr` field in the dataset's [index](/platform/zarr/index-contract/).
 The store itself is written by [biosigIO](https://github.com/neuromechanist/biosigio) (`Recording.to_zarr` / `stream_to_zarr`);
 NEMAR's converter (`scripts/zarr/generate_zarr.py` in `nemarOrg/nemar-cli`) adds a small set of its own attributes on top, named below.
 
 :::note[Rollout]
-Everything on this page — the `nemar` root attribute, the declared pyramid (`n_view_levels`, `view_levels`, `chunk_seconds`, `shard_seconds`), and the level-0 array's `source_rate_hz` / `chunk_samples` / `shard_samples` — ships together with converter engine version 3 and biosigIO ≥1.2.7 (see the [index contract's rollout note](/platform/zarr/index-contract/#rollout-check-format_version-before-assuming-this-shape)).
-A store built by an older converter run has none of these;
-it carries only biosigIO's older attribute set (for example `biosigio_version: "1.2.1"` stores currently still in production lack `nemar`, the declared-pyramid keys, and `channels_tsv_units`).
+Nothing on this page is live yet, in production or in staging.
+The `nemar` root attribute ships with **nemar-cli release 0.9.12** (epic #1181);
+until then, no store anywhere carries it, regardless of which biosigIO release wrote the store.
+
+Two separate biosigIO floors apply to the rest of this page, not one:
+the declared pyramid and chunk-geometry attributes
+(`n_view_levels`, `view_levels`, `chunk_seconds`, `shard_seconds`, `chunk_samples`, `shard_samples`, `source_rate_hz`, `view_chunk_columns`)
+need biosigIO ≥1.2.6.
+`channels_tsv_units` and `bids_unit` need the higher floor of biosigIO ≥1.2.7:
+1.2.6 converts channel units on the in-memory export path only,
+and 1.2.7 is what brings the streaming export path to parity with it —
+a store converted under 1.2.6 alone can carry correct units for a small recording and importer-only units for a large one, silently.
+See the [format stability policy](/platform/zarr/format-stability/) for how a client should read `biosigio_version`.
+
+Checked directly against a live production store on 2026-09-02 (`nm000103`):
+`biosigio_version` is `"1.2.1"`, and the store carries none of the above —
+no `nemar` attribute, no declared-pyramid keys, no `channels_tsv_units`.
+Every store checked in production and in staging today looks like this one;
+none of what follows on this page exists anywhere outside the epic branch yet.
 Check the store's own `format_version` and `biosigio_version` before assuming this full shape.
 :::
 
