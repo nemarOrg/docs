@@ -51,8 +51,31 @@ that is a separate, access-gated runbook for NEMAR administrators (`/admin/opera
   and check those fields in code that needs to detect a future change;
   see [Format stability policy](/platform/zarr/format-stability/).
 
+## What is live today versus after the release
+
+This page and the four it links to describe the contract as it ships, not as it stands today.
+**Nothing in the "after" column below exists in production or in staging as of 2026-09-02** — checked live, and against the deployed source for the two rows that cannot be checked by URL alone.
+It all ships together with **nemar-cli release 0.9.12** (epic #1181), except `events.parquet`, which is a separate, later release (see the note below the table).
+
+| Capability | Today (production and staging) | After nemar-cli release 0.9.12 |
+| --- | --- | --- |
+| Index `format_version` | `1`, on every dataset checked | `3`, once a dataset reconverts under the new engine version |
+| `nemar` root store attribute | absent from every store | present on every store converted after the release |
+| Declared pyramid / chunk-geometry attributes | absent (needs biosigIO ≥1.2.6, not yet installed) | present |
+| `channels_tsv_units` / `bids_unit` parity across both export paths | absent (needs biosigIO ≥1.2.7) | present |
+| `sss` root attribute (MaxShield correction, ADR 0028) | **already live** — predates this epic | unchanged |
+| `GET /schemas/*` | `404` | serves the index and manifest JSON Schemas |
+| `GET /catalog.json` | `404` | serves `zarr-catalog.json`, the discovery front door |
+| `manifest.json` | `404` | serves the producer manifest split out of `index.json` |
+| A non-browser request for a store object | proxied, the same as every other request | redirected (`302`) straight to S3 |
+| `index.json` / `zarr.json` cache lifetimes | flat `max-age=60, stale-while-revalidate=300` for both | `300s`/`3600s` and `60s`/`300s` respectively when untokened; `86400s` when tokened |
+| `has_zarr` / `has_zarr_verified` API filters | accepted as query parameters, silently ignored | `has_zarr` filters correctly; `has_zarr_verified` narrows it further |
+| Anonymous S3 reads; `s3:ListBucket` denial | **already live**, independent of this epic | unchanged |
+
+See the "Rollout" note on whichever page documents each row for how it was checked.
+
 :::note[In progress]
-The `events.parquet` sidecar and its `sample_index` guarantee for training-time streaming are shipping in a following release.
+The `events.parquet` sidecar and its `sample_index` guarantee for training-time streaming are a separate, later release — not part of nemar-cli 0.9.12.
 The [index contract](/platform/zarr/index-contract/#eventsparquet) page carries a placeholder for that section until it lands;
 see [nemarOrg/nemar-cli#1060](https://github.com/nemarOrg/nemar-cli/issues/1060).
 :::
