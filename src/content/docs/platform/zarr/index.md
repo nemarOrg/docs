@@ -18,7 +18,7 @@ that is a separate, access-gated runbook for NEMAR administrators (`/admin/opera
   groups, the level-0 signal array, the `view/*` render pyramid, the `events` group,
   and how to turn stored integers back into physical units.
 - **[Index contract](/platform/zarr/index-contract/)** — the per-dataset `index.json` document that lists every store, failure, and pending recording, field by field,
-  plus the sidecar `manifest.json` and the top-level discovery catalog.
+  plus the sidecar `manifest.json`, the dataset-wide `events.parquet` file, and the top-level discovery catalog.
 - **[Access and hosting](/platform/zarr/access/)** — which URL is stable,
   how anonymous reads work,
   the browser-versus-machine split at the edge,
@@ -55,7 +55,7 @@ that is a separate, access-gated runbook for NEMAR administrators (`/admin/opera
 
 This page and the four it links to describe the contract as it ships, not as it stands today.
 **Nothing in the "after" column below exists in production or in staging as of 2026-09-02** — checked live, and against the deployed source for the two rows that cannot be checked by URL alone.
-It all ships together with **nemar-cli release 0.9.12** (epic #1181), except `events.parquet`, which is a separate, later release (see the note below the table).
+It all ships together with **nemar-cli release 0.9.12** (epic #1181), `events.parquet` included — though `events.parquet` ships from a still-open pull request (nemarOrg/nemar-cli#1205) on the same epic branch, one step further out than everything else here.
 
 | Capability | Today (production and staging) | After nemar-cli release 0.9.12 |
 | --- | --- | --- |
@@ -67,6 +67,7 @@ It all ships together with **nemar-cli release 0.9.12** (epic #1181), except `ev
 | `GET /schemas/*` | `404` | serves the index and manifest JSON Schemas |
 | `GET /catalog.json` | `404` | serves `zarr-catalog.json`, the discovery front door |
 | `manifest.json` | `404` | serves the producer manifest split out of `index.json` |
+| `events.parquet` | `404`; `events_parquet`/`events_row_count` absent from every index | serves one Parquet row per (event, channel group), with a computed `sample_index`; index gains the two fields |
 | A non-browser request for a store object | proxied, the same as every other request | redirected (`302`) straight to S3 |
 | `index.json` / `zarr.json` cache lifetimes | flat `max-age=60, stale-while-revalidate=300` for both | `300s`/`3600s` and `60s`/`300s` respectively when untokened; `86400s` when tokened |
 | `has_zarr` / `has_zarr_verified` API filters | accepted as query parameters, silently ignored | `has_zarr` filters correctly; `has_zarr_verified` narrows it further |
@@ -74,8 +75,9 @@ It all ships together with **nemar-cli release 0.9.12** (epic #1181), except `ev
 
 See the "Rollout" note on whichever page documents each row for how it was checked.
 
-:::note[In progress]
-The `events.parquet` sidecar and its `sample_index` guarantee for training-time streaming are a separate, later release — not part of nemar-cli 0.9.12.
-The [index contract](/platform/zarr/index-contract/#eventsparquet) page carries a placeholder for that section until it lands;
-see [nemarOrg/nemar-cli#1060](https://github.com/nemarOrg/nemar-cli/issues/1060).
+:::note[Rollout]
+`events.parquet` — full shape at [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) — is design-final but still an open pull request
+(nemarOrg/nemar-cli#1205, closing [#1060](https://github.com/nemarOrg/nemar-cli/issues/1060)) on top of the same epic branch as everything else on this page,
+not yet merged even there.
+It ships together with the rest of this table when nemar-cli release 0.9.12 does.
 :::
