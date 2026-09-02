@@ -25,13 +25,24 @@ so the schema a client validates against cannot drift from the one the converter
 The schema is **closed**: every object sets `additionalProperties: false`,
 so a document carrying a field this page does not name would fail its own producer's validation before publishing.
 
-## Rollout: check `format_version` before assuming this shape
+## Rollout: what is live today versus after the release
 
-Index format `format_version 3` — everything on this page — is reached by a dataset only when it *reconverts* under converter engine version 3 (Architecture Decision Record (ADR) 0033);
-an unchanged dataset does not pick it up on its own.
-At any given time some datasets have already reconverted and others still publish an older `format_version 1` document
-(no `pending`, no `layout`, no `discovered_count`, a per-store `source_key` instead of the separate manifest below).
+:::note[Rollout]
+Nothing on this page is live yet, in production or in staging.
+It all ships with **nemar-cli release 0.9.12** (epic #1181).
+Until then:
+
+- Every dataset's index is `format_version 1` — no `pending`, no `layout`, no `discovered_count`, and a per-store `source_key` inline instead of the separate [manifest file](#the-manifest-file) below.
+  Checked directly on 2026-09-02 against production (`nm000103`, `nm000281`) and against the `zarr-test.nemar.org` staging host (the exemplar fleet): every index checked on both is `format_version 1`.
+- `GET /schemas/zarr-index-v3.json` 404s, on both `api.nemar.org` and the staging equivalent `api-test.nemar.org` — checked live on 2026-09-02.
+- [`GET /catalog.json`](#zarr-catalogjson-the-discovery-front-door) 404s the same way, on both `zarr.nemar.org` and `zarr-test.nemar.org` — checked live on 2026-09-02.
+- The [manifest file](#the-manifest-file) does not exist either — `manifest.json` also 404s today, checked the same way.
+- Neither [`has_zarr` nor `has_zarr_verified`](#has_zarr-and-has_zarr_verified-on-the-api) exists on the deployed API yet — both are accepted as query parameters today but have no effect, so the request succeeds and simply ignores them rather than erroring.
+
+Once the release ships, format version 3 still reaches a dataset only when that dataset *reconverts* under converter engine version 3 (Architecture Decision Record (ADR) 0033) —
+an unchanged dataset does not pick it up on its own, so the two formats will coexist for a while even after release.
 **Read `format_version` first**, and branch on it, rather than assuming every dataset's index looks like this page.
+:::
 
 ## Top-level fields
 
@@ -214,6 +225,11 @@ so a permanently failing recording stops consuming the queue.
 
 ## The manifest file
 
+:::note[Rollout]
+`manifest.json` does not exist yet — checked live on 2026-09-02, it 404s on production and on staging.
+It ships with nemar-cli release 0.9.12 (epic #1181); see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::
+
 A second, producer-internal document sits alongside the index:
 
 ```
@@ -222,9 +238,11 @@ https://zarr.nemar.org/<dataset_id>/zarr/manifest.json
 
 schema published at `GET https://api.nemar.org/schemas/zarr-manifest-v1.json`.
 It carries each store's git-annex `source_key` and `size_bytes` — the join key back to the recording's exact uploaded content —
-which used to live inline in `index.json` until format v3:
-on one large dataset the per-store `source_key` field alone was 18 percent of a 12.8 MB index that no consumer actually read,
-and `index.json` is fetched on every dataset-page visit.
+which used to live inline in `index.json` until format v3.
+Measured on 2026-09-02 against `nm000281`'s live index (12,846,915 bytes, 25,253 stores):
+stripping the `source_key` field from every store entry saves 2,593,563 bytes — about 20 percent of the document —
+for a field no consumer on `nemar.org` reads, while `index.json` is fetched on every dataset-page visit.
+See the [cost ladder page](/platform/zarr/cost-ladder/#indexjson) for the exact measurement method.
 **Nothing on `nemar.org` reads this file**, and it carries no serving contract of its own;
 it may change shape more freely than the index.
 See [Access and hosting](/platform/zarr/access/#caching-and-freshness) for why `manifest.json` is *not* cached or redirect-gated the same way `index.json` is —
@@ -239,6 +257,11 @@ see [nemarOrg/nemar-cli#1060](https://github.com/nemarOrg/nemar-cli/issues/1060)
 :::
 
 ## `zarr-catalog.json`: the discovery front door
+
+:::note[Rollout]
+`GET /catalog.json` 404s today — checked live on 2026-09-02, on production and on staging.
+It ships with nemar-cli release 0.9.12 (epic #1181); see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::
 
 A client with no dataset id to start from — human or agent, and without `s3:ListBucket` — has no way to enumerate datasets from the per-dataset index alone.
 `zarr-catalog.json`, published at the bucket root and reachable through the same gateway as every other object:
@@ -288,6 +311,12 @@ it means the sweep re-derived ground truth from the dataset's own `channels.tsv`
 Published once daily plus on demand, not per-conversion, so treat `generated_utc` as approximate rather than live.
 
 ## `has_zarr` and `has_zarr_verified` on the API
+
+:::note[Rollout]
+Neither filter exists on `api.nemar.org` today — not just `has_zarr_verified`.
+Checked against the deployed API source on 2026-09-02: `has_zarr` query-parameter handling is absent too, so both are silently ignored, not rejected, until nemar-cli release 0.9.12 (epic #1181) ships.
+See the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::
 
 `GET /datasets` on the backend API accepts two independent boolean filters,
 both `1`/`true` to enable (any other value is ignored, same as the parameter being absent):
