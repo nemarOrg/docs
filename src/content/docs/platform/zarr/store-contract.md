@@ -64,6 +64,11 @@ Check the store's own `format_version` and `biosigio_version` before assuming th
     attrs: label_map {code: description}, n_events
 ```
 
+This per-store `events/` group is separate from the dataset-wide [`events.parquet`](/platform/zarr/index-contract/#eventsparquet) file:
+the group is written directly into each store by biosigIO and holds this one recording's events with a small integer `code` per row (decoded via `label_map`);
+`events.parquet` is a NEMAR-side, cross-store file with a computed level-0 `sample_index` per event and no join required to open a store first.
+Reading events for one recording, open the store; reading events across many recordings without opening any of them, read `events.parquet`.
+
 The group name encodes the recording's **served** rate, not its acquisition rate:
 `eeg_250hz` even when the source was 1000 Hz.
 Do not construct a group name from the rate-cap table below;
