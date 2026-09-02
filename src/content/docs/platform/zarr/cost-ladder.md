@@ -9,10 +9,17 @@ then gives the read recipe Architecture Decision Record (ADR) [0025](https://git
 
 ## The ladder
 
+:::note[Rollout]
+The `catalog.json` row and the `index.json` row's v3 figures describe the contract as it ships with nemar-cli release 0.9.12 (epic #1181).
+`catalog.json` 404s today, on production and on staging (checked live on 2026-09-02);
+every dataset's `index.json` is `format_version 1` today, everywhere.
+See the [overview's rollout table](/platform/zarr/#what-is-live-today-versus-after-the-release) for the full list.
+:::
+
 | Layer | Rough size | What it costs to read |
 | --- | --- | --- |
 | [`catalog.json`](/platform/zarr/index-contract/#zarr-catalogjson-the-discovery-front-door) | tens to low hundreds of kilobytes (kB) | One request, regardless of how many datasets you end up reading. |
-| [`index.json`](/platform/zarr/index-contract/) | kB, up to roughly a dozen MB for the largest datasets | One request per dataset. |
+| [`index.json`](/platform/zarr/index-contract/) | kB, up to roughly a dozen megabytes (MB) for the largest datasets | One request per dataset. |
 | [`events.parquet`](/platform/zarr/index-contract/#eventsparquet) | *shipping in a following release* | — |
 | `view/*` (the whole render pyramid for one recording) | tens of kB to a few MB | 1–4 requests per screenful, at whichever level fills the viewport (see below). |
 | level-0 signal (one recording) | MB for a short recording, up to several gigabytes (GB) for a long, high-density one | 1 request per shard read (4 s chunks bundled into 300 s shards) via HTTP range requests. |
@@ -23,6 +30,7 @@ One entry (`ZarrCatalogDataset` in `backend/src/services/zarr-catalog.ts`) is on
 There is exactly one document for the whole platform —
 its size grows with the number of converted public datasets, not with how many you read,
 so it is the cheapest possible "what is there" query regardless of scale.
+Not live yet; see the rollout note above.
 
 ### `index.json`
 
@@ -30,11 +38,21 @@ Measured directly against production on 2026-09-02:
 a one-recording dataset's index is 675 bytes;
 a 14-recording dataset is 7.1 kB;
 a 5-recording dataset is 2.3 kB;
-and `nm000103`, one of the largest datasets on the platform at 3,522 recordings, is 1.6 MB —
-about 462 bytes per store entry on average, in today's still-live format v1 shape.
-Format v1 (the shape currently live for most datasets) carries an inline `source_key` per store;
-on the `nm000281` dataset that one field alone was 2.3 MB of a 12.8 MB index — 18 percent of it, for a field no consumer on `nemar.org` reads.
-Format v3 splits that into the separate [manifest file](/platform/zarr/index-contract/#the-manifest-file) for exactly this reason.
+`nm000103` (3,522 recordings) is 1.6 MB;
+and `nm000281`, the largest dataset checked at 25,253 recordings, is 12.85 MB.
+`nm000103` is a mid-sized dataset by this measure, not one of the largest — `nm000281` alone has more than seven times as many recordings.
+
+All of the above is today's still-live format v1 shape, which is what every dataset actually serves right now (see the [rollout note](/platform/zarr/index-contract/#rollout-what-is-live-today-versus-after-the-release)).
+Format v1 carries an inline `source_key` per store.
+**Measurement method**: fetched `nm000281`'s live index (12,846,915 bytes, 25,253 stores) and parsed it.
+Removed the `source_key` field from every store entry,
+then re-serialized both the original and the stripped document with identical compact JSON formatting (`json.dumps(..., separators=(",", ":"))`),
+so the diff reflects field content, not whitespace style —
+the re-serialized original matched the live file's byte count exactly,
+confirming the live document is already compact JSON with no formatting noise to control for.
+Result: stripping `source_key` saves **2,593,563 bytes, about 20.2 percent of the document** —
+higher than the 18 percent a prior, smaller measurement of this same dataset found, consistent with the dataset having grown since.
+Format v3 splits `source_key` into the separate [manifest file](/platform/zarr/index-contract/#the-manifest-file) for exactly this reason, once it ships.
 Set against that saving, v3 also adds new per-store detail (the `layout` recipe geometry, `units_report`, structured provenance) that v1 does not carry —
 a fully-populated v3 store entry runs a few hundred bytes larger than its v1 equivalent by schema shape alone —
 so the net effect on total index size varies by dataset depending on how many of the new, optional fields apply to it.
@@ -50,13 +68,13 @@ Measured against a live store still on the older chunking (a 172 s, 129-channel 
 a single chunk near the finest render level is 87 kB,
 and the level itself is split across roughly 44 such chunks end to end —
 a full-level read there costs dozens of small requests, not one.
-The 1178 audit put a number on exactly that cost at production scale:
-a whole-recording render on a 40-minute, 129-channel store was **594 requests for 1.16 MB** at one level and **148 requests for 77 kB** at the coarsest, before the fix.
-With every `view/*` level chunked at a constant `view_chunk_columns` (1024 by default) instead, the *same* two reads become **3 requests and 1 request**.
+The 1178 audit put a number on exactly that cost at production scale, on the two pyramid levels furthest apart:
+a whole-recording render on a 40-minute, 129-channel store was **594 requests for 1.16 MB at level 4**, and **148 requests for 77 kB at the level-6 minimap** (the coarsest level that store had), before the fix.
+With every `view/*` level chunked at a constant `view_chunk_columns` (1024 by default) instead, that same level-4 render becomes **3 requests**, and the level-6 minimap becomes **1 request**.
 A viewport needs roughly 1000–2500 columns at whatever level it picks,
 so a constant-column chunk is sized to the request, not to the recording's length —
-this is the shape every store converted under the current [engine version](/platform/zarr/format-stability/) has;
-see the [store contract's rollout note](/platform/zarr/store-contract/) for which stores still predate it.
+this is the shape every store will carry once it is converted under nemar-cli release 0.9.12's engine version;
+see the [store contract's rollout note](/platform/zarr/store-contract/) for what today's stores look like instead.
 
 ### Level 0
 
@@ -85,9 +103,12 @@ from zarr.storage import FsspecStore
 
 base = "https://zarr.nemar.org/nm000103/zarr"
 
-# 1. Fetch the index and pick a store (any HTTP client works here).
+# 1. Fetch the index and pick a store. Cloudflare's bot management blocks the
+#    default Python-urllib User-Agent with a 403 unrelated to S3 (see step 2);
+#    set a normal-looking one to get past it.
 import urllib.request, json
-with urllib.request.urlopen(f"{base}/index.json") as r:
+req = urllib.request.Request(f"{base}/index.json", headers={"User-Agent": "nemar-docs-recipe/1.0"})
+with urllib.request.urlopen(req) as r:
     index = json.load(r)
 store_entry = next(s for s in index["stores"] if "eeg" in s["modalities"])
 
