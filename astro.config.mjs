@@ -100,6 +100,17 @@ export default defineConfig({
 						{ label: 'Overview', link: '/platform/' },
 						{ label: 'Backend API', slug: 'platform/api' },
 						{ label: 'Data API', slug: 'platform/data-api' },
+						{
+							label: 'Zarr Serving Copy',
+							items: [
+								{ label: 'Overview', slug: 'platform/zarr' },
+								{ label: 'Store Contract', slug: 'platform/zarr/store-contract' },
+								{ label: 'Index Contract', slug: 'platform/zarr/index-contract' },
+								{ label: 'Access and Hosting', slug: 'platform/zarr/access' },
+								{ label: 'Cost Ladder and Recipes', slug: 'platform/zarr/cost-ladder' },
+								{ label: 'Format Stability Policy', slug: 'platform/zarr/format-stability' },
+							],
+						},
 					],
 				},
 				{
