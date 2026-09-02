@@ -10,9 +10,10 @@ then gives the read recipe Architecture Decision Record (ADR) [0025](https://git
 ## The ladder
 
 :::note[Rollout]
-The `catalog.json` row and the `index.json` row's v3 figures describe the contract as it ships with nemar-cli release 0.9.12 (epic #1181).
+The `catalog.json` row, the `index.json` row's v3 figures, and the whole `events.parquet` row describe the contract as it ships with nemar-cli release 0.9.12 (epic #1181).
 `catalog.json` 404s today, on production and on staging (checked live on 2026-09-02);
-every dataset's `index.json` is `format_version 1` today, everywhere.
+every dataset's `index.json` is `format_version 1` today, everywhere;
+`events.parquet` ships from a still-open pull request (nemarOrg/nemar-cli#1205) on the same epic branch, one step further out than the rest.
 See the [overview's rollout table](/platform/zarr/#what-is-live-today-versus-after-the-release) for the full list.
 :::
 
@@ -20,7 +21,7 @@ See the [overview's rollout table](/platform/zarr/#what-is-live-today-versus-aft
 | --- | --- | --- |
 | [`catalog.json`](/platform/zarr/index-contract/#zarr-catalogjson-the-discovery-front-door) | tens to low hundreds of kilobytes (kB) | One request, regardless of how many datasets you end up reading. |
 | [`index.json`](/platform/zarr/index-contract/) | kB, up to roughly a dozen megabytes (MB) for the largest datasets | One request per dataset. |
-| [`events.parquet`](/platform/zarr/index-contract/#eventsparquet) | *shipping in a following release* | — |
+| [`events.parquet`](/platform/zarr/index-contract/#eventsparquet) | tens of kB for a small dataset, low tens of MB for one with hundreds of thousands of event rows | One request for the whole dataset (or fewer, if your reader prunes row groups by `store_path`). |
 | `view/*` (the whole render pyramid for one recording) | tens of kB to a few MB | 1–4 requests per screenful, at whichever level fills the viewport (see below). |
 | level-0 signal (one recording) | MB for a short recording, up to several gigabytes (GB) for a long, high-density one | 1 request per shard read (4 s chunks bundled into 300 s shards) via HTTP range requests. |
 
@@ -59,6 +60,45 @@ so the net effect on total index size varies by dataset depending on how many of
 
 Either way: **fetch `index.json` once per dataset, not per recording.**
 Everything needed to decide which recording to open, and at what rate, is already in it.
+
+### `events.parquet`
+
+Not live anywhere yet — see the rollout note at the top of this section, and [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) for the full shape.
+Row size is dominated by the numeric columns (`onset_s` float64, `duration_s` float32, `sample_index` int64) plus small dictionary indices for the string columns, zstd-compressed.
+There is no live file to measure yet, so the figure below is a **synthetic worked example**, built and measured against the real schema-building code (`events_schema`/`events_table_from_columns` in `scripts/zarr/generate_zarr.py`) rather than guessed:
+a 40-store, single-group dataset with 60–200 events per store (5,242 rows total, a plausible task-fMRI-style event count) compressed to 166,521 bytes — **about 32 bytes per row**.
+Row count is what actually drives size: it is `events × channel groups`, summed across every store, so a resting-state dataset with few events per recording lands in the tens-of-kB range,
+while a dense trial design (hundreds of events per store) or a store with several channel groups (each onset counted once per group) can reach the tens-of-MB range at the same per-row rate.
+
+Either read the whole file, if you want every event in the dataset, or filter by `store_path` (predicate pushdown skips row groups that cannot match, without downloading them) if you only want one recording's events.
+Plain `pyarrow.parquet.read_table()` does not accept an `https://` URL directly (it raises `Unrecognized filesystem type in URI`) —
+read straight from S3 instead, anonymously, the same pattern the Python recipe below uses for the store itself:
+
+```python
+import pyarrow.fs as pafs
+import pyarrow.parquet as pq
+
+fs = pafs.S3FileSystem(anonymous=True, region="us-east-2")
+table = pq.read_table(
+    "nemar/nm000103/zarr/events.parquet",
+    filesystem=fs,
+    filters=[("store_path", "=", "sub-01/eeg/sub-01_task-rest_eeg.zarr")],
+)
+# table now has one row per (event, channel group) for just that store, ordered by onset_s then group_name.
+```
+
+or the same filter in one line of [duckdb](https://duckdb.org/), which reads a remote Parquet file directly over HTTPS with no S3 credentials needed:
+
+```sql
+SELECT * FROM read_parquet('https://zarr.nemar.org/nm000103/zarr/events.parquet')
+WHERE store_path = 'sub-01/eeg/sub-01_task-rest_eeg.zarr'
+ORDER BY onset_s, group_name;
+```
+
+The `filesystem=`/`filters=` combination above was verified against the synthetic file (through a local filesystem, same code path pyarrow uses for S3),
+and `pafs.S3FileSystem(anonymous=True, region="us-east-2")` was separately verified live against this exact bucket, reading a real object (`nm000103/zarr/index.json`) anonymously —
+the two together cover the pattern, though not yet the real events.parquet object, which does not exist.
+duckdb's remote-HTTPS `read_parquet()` was verified against a public test file (its own httpfs support auto-loads; no separate `INSTALL`/`LOAD` needed) — again the mechanism, not this specific URL.
 
 ### `view/*`
 
