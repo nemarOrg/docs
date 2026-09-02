@@ -356,8 +356,8 @@ Two fields on the (otherwise undocumented, producer-facing) zarr-ready callback 
 - `events_upload_failed` (boolean) — set when the build or upload raised, so an operator watching the callback stream sees a replaced-but-unreferenced file even though the index refused to point at it.
 - `events_stores_without_rows` (integer) — how many reconverted stores contributed no usable rows:
   no channel group to attach an onset to, or every published `sample_index` in the store came back null (unparseable onsets, or a group with no rate).
-  Sent on the callback; not yet parsed into the backend's summary log or persisted anywhere,
-  so reading it today means reading the raw callback payload or the run's own `::warning::` lines.
+  Reported by the converter on the callback, and logged by the backend API — appended to its `[zarr-ready]` summary line, plus its own `console.warn` naming the count whenever it is non-zero —
+  but not persisted anywhere, the same call already made for `events_row_count` and `events_upload_failed` under the `datasets` table's enforced column budget (ADR 0034).
 
 ### In the manifest, too
 
