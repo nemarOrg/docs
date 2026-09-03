@@ -7,6 +7,8 @@ signals can be scrubbed in the browser (zarrita) and streamed for ML, from a
 single conversion. BIDS stays the source of truth; the Zarr store is reproducible.
 Epic: nemarOrg/nemar-cli#684.
 
+For the consumer-facing contract — store layout, the `index.json` schema, access rules, and format stability — see [Zarr Serving Copy](/platform/zarr/) in the public documentation; this page does not duplicate it.
+
 This runbook covers the **serving** side owned by `nemar-cli` (backend trigger,
 callback, D1 state, and the Cloudflare cache host + CORS). The conversion itself
 runs in `nemarDatasets/.github` (`run-generate-zarr.yml`); the viewer lives in
