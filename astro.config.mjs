@@ -111,6 +111,7 @@ export default defineConfig({
 								{ label: 'Format Stability Policy', slug: 'platform/zarr/format-stability' },
 							],
 						},
+						{ label: 'For Agents', slug: 'platform/for-agents' },
 					],
 				},
 				{
