@@ -206,10 +206,11 @@ DataCite record.)
 
 ## Licenses and terms
 
-`license` in the metadata above is not decorative. Depositors choose their own dataset's license,
-and licenses vary — the example just above is `CC BY-NC-SA` (non-commercial), not the permissive
-`CC0` default. **Check a dataset's license before using its data for anything beyond nonprofit
-research.** That floor is a warranty depositors make, described in the
-[Data Contributor Terms](/policies/contributor-terms/#licensing) and the
+`license` in the metadata above is not decorative. Depositors choose their own dataset's license
+— NEMAR recommends `CC0` or `CC BY 4.0` for maximum reuse but does not require either — and
+licenses vary accordingly: the example just above is `CC BY-NC-SA` (non-commercial), not the
+permissive `CC0` this dataset could equally have chosen. **Check a dataset's license before using
+its data for anything beyond nonprofit research.** That floor is a warranty depositors make,
+described in the [Data Contributor Terms](/policies/contributor-terms/#licensing) and the
 [Dataset Submission Standards](/policies/submission-standards/). See [Policies](/policies/) for
 the rest — privacy, takedown, and the GDPR position.
