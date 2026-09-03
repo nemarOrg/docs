@@ -4,7 +4,8 @@ import { getCollection } from 'astro:content';
 // This endpoint is a no-regret addition, not a claimed findability win: the
 // research behind it found no evidence llms.txt is actually consumed, and an
 // on-the-record denial from Google that it feeds their systems. It costs one
-// generated file, so it ships anyway. See .context/research.md.
+// generated file, so it ships anyway. See nemarOrg/nemar-cli's
+// .context/research-agent-findability.md.
 //
 // Generated from the real `docs` content collection (not hand-maintained) so
 // it cannot silently drift from the pages that actually exist -- a stale
