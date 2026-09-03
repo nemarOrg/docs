@@ -117,8 +117,10 @@ last-modified: Mon, 31 Aug 2026 00:21:32 GMT
 
 ## Downloading: the CLI
 
-For a full local copy, `nemar dataset download <id>` fetches everything: metadata and every
-file's content, git-annex-managed. For a subset, `nemar dataset clone <id>` followed by
+For a full local copy, `nemar dataset download <id>` fetches metadata and every file's content,
+git-annex-managed — except content under `stimuli/` and `derivatives/`, which are skipped by
+default because they can be very large; pass `--stimuli` and/or `--derivatives` to include them.
+For a subset, `nemar dataset clone <id>` followed by
 `nemar dataset get <files>` — **`clone` alone fetches no file content**, only the git-annex
 metadata tree (structure and pointers, no bytes). See
 [Downloading Data](/cli/guides/downloading/) for BIDS entity filters (`--subjects`, `--tasks`,
