@@ -153,9 +153,12 @@ redirected), see [Access and Hosting](/platform/zarr/access/).
 Filter on `has_zarr_verified` rather than `has_zarr` when a pipeline needs a fidelity guarantee,
 not just a store's existence: `has_zarr` means a store was produced, `has_zarr_verified` means the
 standing fidelity sweep re-derived ground truth from the dataset's own BIDS metadata and confirmed
-the store agrees. Neither filter is live on `api.nemar.org` yet — see
-[Index Contract: `has_zarr` and `has_zarr_verified`](/platform/zarr/index-contract/#has_zarr-and-has_zarr_verified-on-the-api)
-for the rollout status.
+the store agrees. Both filters are live on `api.nemar.org` today. Measured against production
+while writing this page: `GET /datasets?has_zarr=1` returns 618 of 755 public datasets.
+`has_zarr_verified=1` is also live and genuinely filters, but currently matches none of them,
+because the standing fidelity sweep has not yet stamped a `verified` verdict on any production
+dataset — a pipeline that needs results today should filter on `has_zarr` and move to
+`has_zarr_verified` once the sweep has run.
 :::
 
 ## Per-dataset entry points
