@@ -166,15 +166,16 @@ dataset — a pipeline that needs results today should filter on `has_zarr` and 
 A client that already has a dataset id has entry points beyond the API endpoints above:
 
 - **The dataset page**, `nemar.org/dataset/<id>` — server-rendered, and carries
-  [schema.org](https://schema.org/Dataset) `Dataset` JSON-LD plus a "Use this data" section aimed
-  at exactly this audience.
-- **A markdown mirror** of the same page, at `nemar.org/dataset/<id>.md`.
+  [schema.org](https://schema.org/Dataset) `Dataset` JSON-LD today. A "Use this data" section
+  aimed at exactly this audience is planned for a later phase of the same epic as this page, and
+  is **not live yet**.
+- **A markdown mirror** of the same page, at `nemar.org/dataset/<id>.md` — also planned for a
+  later phase of the same epic, and **not live yet**.
 - **The DOI**, which resolves through DataCite content negotiation.
 
 :::caution
-The markdown mirror and the "Use this data" section are part of the same epic as this page but
-ship in a later phase, and are **not live yet**. Treat them as planned, not available — do not
-link-check against production for either.
+The "Use this data" section and the markdown mirror are not live yet — treat them as planned, not
+available, and do not link-check against production for either.
 :::
 
 The DOI is live today and works the same way any DataCite DOI does: ask for schema.org JSON-LD by
