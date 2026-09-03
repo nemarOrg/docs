@@ -97,9 +97,22 @@ version with its checksum and URL. Full grammar, headers, and the tombstone beha
 files: [Data API](/platform/data-api/).
 
 ```bash
-$ curl -sI https://data.nemar.org/nm000281/latest/dataset_description.json
+$ curl -s -D - -o /dev/null https://data.nemar.org/nm000281/latest/dataset_description.json
 HTTP/2 302
 location: https://raw.githubusercontent.com/nemarDatasets/nm000281/v1.0.3/dataset_description.json
+```
+
+`HEAD` on the same path does not follow that redirect — it answers `200` directly, with the
+file's size and cache metadata and no `Location`, so it never transfers the body. Use it for a
+cheap existence-and-size check:
+
+```bash
+$ curl -sI https://data.nemar.org/nm000281/latest/dataset_description.json
+HTTP/2 200
+content-length: 2235
+cache-control: public, max-age=300
+etag: "git:a3d2bdb99399482ef3a6cb7c4ade533229bdc1d0"
+last-modified: Mon, 31 Aug 2026 00:21:32 GMT
 ```
 
 ## Downloading: the CLI
