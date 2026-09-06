@@ -16,7 +16,7 @@ NEMAR_DEBUG=1 nemar dataset upload ./my-dataset
 ## What the log contains
 
 - **Environment.** CLI version, operating system and architecture, the Bun (or Node) runtime version, your active account (username, API URL, role, whether sandbox training is complete — never your API key), and the versions of the external tools NEMAR uses (git, git-annex, `gh`, `aws`, Deno).
-- **Every NEMAR API request the run made.** Method, URL, status code, duration, request and response headers, and request and response bodies, in order.
+- **Every NEMAR API request the run made.** Method, URL, status code, duration, request headers, and request and response bodies, in order.
 - **The failing step,** when the command is one of the dataset-upload steps that reports one; other commands show `(none recorded)` rather than a guess.
 - **The exit code** the command finished with.
 
