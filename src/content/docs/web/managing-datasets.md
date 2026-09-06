@@ -35,4 +35,4 @@ To remove a collaborator today, contact [admin@nemar.org](mailto:admin@nemar.org
 
 - **A card vanished.** The dashboard sorts by recent activity; older datasets paginate. Use the search at [Discover](https://nemar.org/discover) if you can't find one quickly.
 - **You can't click Request publication.** The button is hidden when the dataset is public, when a request is already in flight, or when BIDS validation is failing. The badge tells you which.
-- **Your account is pending.** Most actions are locked until an admin approves your account; this usually takes <1 business day.
+- **Your account is pending.** The dashboard, and everything on it, unlocks the moment you verify your email; no admin is involved in that step. If you can browse the dashboard but can't upload, that's a separate, one-time [upload access](/web/upload-access/) grant an admin makes after you request it.

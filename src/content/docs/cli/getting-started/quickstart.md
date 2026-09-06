@@ -17,16 +17,15 @@ You'll be prompted to enter:
 - Email address
 - Password (min 12 characters)
 - GitHub username
-- ORCID iD (optional, for DOI metadata)
+- ORCID iD (optional, for DOI citation; backs at most one NEMAR account)
 - Description of why you need access
 
-:::note[Admin Approval Required]
-After signing up, verify your email and wait for admin approval.
-You'll receive a notification email once approved.
+:::note[Verify your email]
+After signing up, click the link in the verification email. That's it, no admin review, no waiting: verifying your email unlocks your API key, the dashboard, and sandbox training right away.
 :::
 ## 2. Retrieve Your API Key
 
-After approval, retrieve your API key using your email and password:
+Once your email is verified, retrieve your API key using your email and password:
 
 ```bash
 nemar auth retrieve-key
@@ -53,9 +52,19 @@ Before uploading real datasets, complete sandbox training:
 nemar sandbox
 ```
 
-This verifies your git-annex and GitHub setup by uploading a small test dataset.
+This verifies your git-annex and GitHub setup by uploading a small test dataset. It needs only a verified email, no admin action.
 
-## 5. Validate Your Dataset
+## 5. Request Upload Access
+
+Uploading a real dataset needs one more thing: a one-time admin grant. Ask for it once your username, name, GitHub handle, city, and country are set (see [Account settings](/web/account-settings/)):
+
+```bash
+nemar auth request-upload-access
+```
+
+You'll get an email once an admin grants it; check any time with `nemar auth status --refresh`. See [Upload access](/web/upload-access/) for what the review looks at.
+
+## 6. Validate Your Dataset
 
 Before uploading, validate your BIDS dataset:
 
@@ -65,7 +74,7 @@ nemar dataset validate ./my-dataset
 
 Fix any errors before proceeding. Warnings are acceptable but should be reviewed.
 
-## 6. Upload Your Dataset
+## 7. Upload Your Dataset
 
 Upload your validated dataset:
 
@@ -75,7 +84,7 @@ nemar dataset upload ./my-dataset
 
 The dataset name defaults to the BIDS Name field in dataset_description.json (or the directory name as fallback).
 
-## 7. Check Status
+## 8. Check Status
 
 Monitor your dataset:
 

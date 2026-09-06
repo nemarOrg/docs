@@ -2,18 +2,18 @@
 title: "Getting started on the web"
 ---
 
-NEMAR (Neuroelectromagnetic Data Archive and Resource) is where neuroscience teams archive, share, and process EEG, MEG, and iEEG datasets. This page walks you through the everyday flow: signing in, getting an account, and uploading your first dataset.
+NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is where neuroscience teams archive, share, and process EEG, MEG, and iEEG datasets. This page walks you through the everyday flow: signing in, getting an account, and uploading your first dataset.
 
 ## Signing up (CLI for now)
 
-Creating a NEMAR account asks for your email, an ORCID, a GitHub handle, and a couple of consent confirmations. The CLI runs the full flow in about two minutes:
+Creating a NEMAR account asks for your email, an ORCID iD (Open Researcher and Contributor ID), a GitHub handle, and a couple of consent confirmations. The CLI runs the full flow in about two minutes:
 
 ```
 bun install -g @nemar/cli
 nemar auth signup
 ```
 
-The CLI opens a browser tab for ORCID authorization, collects the rest, and submits your account for a short admin review (typically same-day). See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown.
+The CLI opens a browser tab for ORCID authorization and collects the rest. Verify your email from the link NEMAR sends, and your account is immediately usable: no admin review at sign-up. See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown, and [Upload access](/web/upload-access/) for the one thing an admin still has to grant before you can upload a real dataset.
 
 A web sign-up flow is on the way. Until then, returning users sign in here with their existing email; the web and CLI share the same backend account.
 
@@ -25,7 +25,7 @@ Passwordless web sign-in is planned for **July 2026**. Until it launches, authen
 
 Once web sign-in launches, you'll sign in at the [login page](https://nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
 
-Uploads and publication requests unlock when your account is in the `active` state. The dashboard tells you which state you're in.
+Browsing, the dashboard, and [account settings](/web/account-settings/) are all available the moment your email is verified; no admin is involved. Uploading and publication requests need one more thing: a one-time [upload access](/web/upload-access/) grant from an admin, requested from Settings once your profile is complete.
 
 ## The dashboard at a glance
 
