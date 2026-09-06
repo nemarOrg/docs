@@ -57,7 +57,7 @@ Settings and these CLI commands enforce [one person, one account](/web/account-s
 | `username_taken` | Someone else already holds that username (compared without regard to case). | Pick a different username; this isn't an identity conflict, just a name already in use. |
 
 Every one of these is the self-service fix on the account you're keeping, never a merge.
-Moving datasets, DOIs, or collaborator access between two accounts' owners is a manual admin operation; see [One person, one account](/web/account-settings/#one-person-one-account).
+Moving datasets, DOIs (Digital Object Identifiers), or collaborator access between two accounts' owners is a manual admin operation; see [One person, one account](/web/account-settings/#one-person-one-account).
 
 ## `nemar auth request-upload-access`
 

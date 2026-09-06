@@ -17,7 +17,7 @@ You'll be prompted to enter:
 - Email address
 - Password (min 12 characters)
 - GitHub username
-- ORCID iD (required: it's how NEMAR gets your name for DOI citation; backs at most one NEMAR account)
+- ORCID iD (Open Researcher and Contributor ID) (required: it's how NEMAR gets your name for DOI citation; backs at most one NEMAR account)
 - City (required for export-control screening)
 - Country (required for export-control screening)
 - Description of why you need access

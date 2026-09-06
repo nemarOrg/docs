@@ -28,7 +28,7 @@ Your GitHub handle is how collaborators are invited to your datasets and how NEM
 
 ## Link, re-link, or unlink your ORCID iD
 
-Linking ORCID (Open Researcher and Contributor ID) ties your NEMAR account to your public researcher record, and is how NEMAR reads your name for dataset citation (see [Your name](#your-name) below).
+Linking ORCID ties your NEMAR account to your public researcher record, and is how NEMAR reads your name for dataset citation (see [Your name](#your-name) below).
 
 - **Link.** From Settings, start the ORCID authorization flow and approve it on orcid.org. This is only ever started by a click, never by loading a page, so nothing gets linked by accident.
 - **Re-link.** Use this if your ORCID record has changed (for example, your name became public) and you want NEMAR to re-read it. Re-linking cannot take an iD away from another account: if the iD you authorize is already linked elsewhere, the re-link is refused.
@@ -42,13 +42,13 @@ Settings suggests a default built from your name (your first initial plus your f
 
 A username must be unique, compared without regard to case: `Ada` and `ada` are the same username as far as NEMAR is concerned.
 
-If you never set a username while onboarding, NEMAR assigns you one automatically the next time you sign in on the web, using the same first-initial-plus-family-name rule, so your account can never be left with no handle at all — a username is what your datasets and DOIs are attributed to. You will see a one-time notice that a username was chosen for you, and can change it here until an admin grants your account upload access.
+If you never set a username while onboarding, NEMAR assigns you one automatically the next time you sign in on the web, using the same first-initial-plus-family-name rule, so your account can never be left with no handle at all — a username is what your datasets and DOIs (Digital Object Identifiers) are attributed to. You will see a one-time notice that a username was chosen for you, and can change it here until an admin grants your account upload access.
 
 **The lock is on changing a username, not on having one.** If you don't have a username yet, you can set one for the first time whatever state your account is in, including after you're approved for upload access — this is what lets the accounts that predate usernames get one at all. What's locked, once you're approved, is changing a username you already have to a different one; re-saving your current username alongside other changes still works.
 
 ## Your name
 
-Your given name and family name are what NEMAR cites you by on any DOI (Digital Object Identifier) minted for a dataset you deposit.
+Your given name and family name are what NEMAR cites you by on any DOI minted for a dataset you deposit.
 NEMAR never cites a DOI by your NEMAR username.
 
 - **If you have a verified ORCID iD linked,** your name is read from your ORCID record every time you sign in, and Settings will not accept a typed edit; that keeps your NEMAR name and your ORCID record from drifting apart. If your ORCID record does not publish a name, make it public at orcid.org, then sign in again so NEMAR can re-read it.

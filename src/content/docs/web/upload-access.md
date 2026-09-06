@@ -47,7 +47,7 @@ Past that, here is what an incomplete profile blocks and where each field is set
 | Field | Blocks | Set on the web | Set on the CLI |
 |-------|--------|-----------------|-----------------|
 | Username | Upload access request | Settings | `nemar auth profile set-username` |
-| Given name | Upload access request, publication | Settings, or your ORCID record at orcid.org (then sign in again) if a verified ORCID iD is linked | `nemar auth profile set-name`, or none while a verified iD is linked |
+| Given name | Upload access request, publication | Settings, or your ORCID (Open Researcher and Contributor ID) record at orcid.org (then sign in again) if a verified ORCID iD is linked | `nemar auth profile set-name`, or none while a verified iD is linked |
 | Family name | Upload access request, publication | Same as given name | Same as given name |
 | GitHub handle | Upload access request, publication | Settings | `nemar auth profile set-github` |
 | City | Upload access request | Settings | `nemar auth profile set-location` |
