@@ -146,6 +146,11 @@ and a refresh that fails reports the same rather than showing yesterday's list a
 Sandbox training (`nemar sandbox`) appears in this same block when it isn't done yet, but only here.
 It is a CLI-only step with no equivalent in Settings,
 so it never appears in a web-side gap list or in an upload-access refusal.
+On a machine whose config has never recorded the answer (a fresh install or a reset config),
+`nemar dataset upload` asks the server once before blocking,
+so training you already completed elsewhere is not requested again.
+If the server cannot be reached, the block reads
+`Sandbox training could not be confirmed with the server. Run \`nemar sandbox status --refresh\`, then \`nemar sandbox\` if it is still outstanding.`
 
 ### Coming: a verified ORCID iD will also be a gap
 
