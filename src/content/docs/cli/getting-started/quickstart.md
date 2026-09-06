@@ -23,7 +23,9 @@ You'll be prompted to enter:
 - Description of why you need access
 
 :::note[Verify your email]
-After signing up, click the link in the verification email. That's it, no admin review, no waiting: verifying your email unlocks your API key, the dashboard, and sandbox training right away.
+After signing up, click the link in the verification email.
+That's it, no admin review, no waiting:
+verifying your email unlocks your API key, the dashboard, and sandbox training right away.
 :::
 ## 2. Retrieve Your API Key
 
@@ -54,17 +56,22 @@ Before uploading real datasets, complete sandbox training:
 nemar sandbox
 ```
 
-This verifies your git-annex and GitHub setup by uploading a small test dataset. It needs only a verified email, no admin action.
+This verifies your git-annex and GitHub setup by uploading a small test dataset.
+It needs only a verified email, no admin action.
 
 ## 5. Request Upload Access
 
-Uploading a real dataset needs one more thing: a one-time admin grant. Ask for it once your username, name, GitHub handle, city, and country are set (see [Account settings](/web/account-settings/)):
+Uploading a real dataset needs one more thing:
+a one-time admin grant.
+Ask for it once your username, name, GitHub handle, city, and country are set (see [Account settings](/web/account-settings/)):
 
 ```bash
 nemar auth request-upload-access
 ```
 
-You'll get an email once an admin grants it; check any time with `nemar auth status --refresh`. See [Upload access](/web/upload-access/) for what the review looks at.
+You'll get an email once an admin grants it;
+check any time with `nemar auth status --refresh`.
+See [Upload access](/web/upload-access/) for what the review looks at.
 
 ## 6. Validate Your Dataset
 
