@@ -26,6 +26,10 @@ User must verify their email address first; approval cannot skip the inbox check
 
 An ORCID (Open Researcher and Contributor ID) sign-up no longer substitutes for that check: ORCID proves the person, the email code proves the inbox, and both are required before an account is approvable at all. `nemar admin users --pending` lists accounts still waiting on their own email confirmation; there is nothing for an admin to do for those until the user acts.
 
+## `nemar admin revoke` voids an open request too
+
+Revoking a user clears the upload-access grant and, in the same statement, any open upload-access request the account was holding. A revoked-then-reinstated account does not come back with an old request still sitting in the queue; it has to submit a new one from scratch, which is also why it drops out of `--awaiting-approval` the moment it's revoked rather than lingering there.
+
 ## `nemar admin users` filters and the tier column
 
 ```bash
@@ -33,7 +37,7 @@ nemar admin users --awaiting-approval    # accounts with an open upload-access r
 nemar admin users --no-upload-access     # every account without the upload grant, requested or not
 ```
 
-`--awaiting-approval` means exactly what it says: an account that submitted an upload access request and has not yet been granted it. `--no-upload-access` is the wider set — every account without the grant, whether or not anyone has asked for one.
+`--awaiting-approval` means exactly what it says: a **verified** account that submitted an upload access request and has not yet been granted it — a pending or revoked account cannot have an open request, so this filter never surfaces one. `--no-upload-access` is the wider set — every account without the grant, whether or not anyone has asked for one.
 
 Each row also reports a tier:
 
@@ -71,7 +75,7 @@ nemar admin backfill-usernames --apply   # assign a username derived from the na
 
 `backfill-names` reads each account's own public ORCID record and fills `given_name`/`family_name` only when both parts are published there; an account whose ORCID record publishes only one part is reported as `no_public_name` and left alone; nothing is guessed.
 
-`backfill-usernames` derives a username from an account's given and family name (first initial plus family name, ASCII-folded and lowercased, with `-2`/`-3` appended on a collision) and, for every account it actually assigns one to, sends that person a single verification-code email so they can sign in and use it. An account with only one name part on record is reported as `single_name` and skipped — run `backfill-names` first.
+`backfill-usernames` derives a username from an account's given and family name (first initial plus family name, ASCII-folded and lowercased, with `-2`/`-3` appended on a collision) and, for every account it actually assigns one to, sends that person a single verification-code email so they can sign in and use it. An account with only one name part on record is reported as `single_name` and skipped — run `backfill-names` first. Each run also retries the verification email for any *previously assigned* account whose message never went out, reported separately from the current batch's assignments so a failed send doesn't quietly stay failed.
 
 Neither backfill derives anything from an email address: a handle or a name nobody chose is worse than a row left for a human.
 

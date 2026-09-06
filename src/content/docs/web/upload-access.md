@@ -35,6 +35,8 @@ Once your account is verified, request upload access either of two ways:
 Before the request can be submitted, your account needs a complete profile: a username, your given and family name, a GitHub handle that exists, and your city and country.
 If any of these are missing, the request tells you exactly which ones, so you can fill them in from [Account settings](/web/account-settings/) and try again.
 
+Your GitHub handle also has to resolve on GitHub at the moment you submit. If GitHub itself is briefly unreachable, NEMAR tells you to try again in a few minutes rather than claiming your handle doesn't exist; nothing about your profile needs fixing in that case.
+
 ## What the request needs
 
 Alongside your profile, the request asks for a short explanation, 20 to 500 characters, of what you intend to upload.
@@ -45,8 +47,12 @@ This, together with your name, GitHub handle, city, and country, is what an admi
 Your request goes into one email to the NEMAR admins with every field above on it, so a single admin can review and act without having to look you up separately.
 You get an email of your own only once a decision is made; there is no email just for submitting the request.
 
-Asking again while your first request is still open does nothing new: NEMAR reports that you already have an open request instead of sending a second one.
+Asking again while your first request is still open normally does nothing new: NEMAR reports that you already have an open request instead of mailing a second one. The one exception is if that first email never reached an admin (a delivery problem on NEMAR's end, not something you did) — in that case, asking again retries the notification, since a request nobody was told about is no better than no request at all.
 You can check where things stand any time with `nemar auth status --refresh` or `nemar auth profile`.
+
+## If access is later revoked
+
+Upload access can be revoked, same as it can be granted. Revoking clears the grant and any open request together, so a reinstated account starts clean and has to submit a new request rather than finding an old one still pending.
 
 ## The CLI's extra step: sandbox training
 
