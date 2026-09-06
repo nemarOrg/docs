@@ -24,7 +24,7 @@ Approval is refused for an account whose email is not verified, whatever its sig
 User must verify their email address first; approval cannot skip the inbox check
 ```
 
-An ORCID (Open Researcher and Contributor ID) sign-up no longer substitutes for that check: ORCID proves the person, the email code proves the inbox, and both are required before an account is approvable at all. `nemar admin users --pending` lists accounts still waiting on their own email confirmation; there is nothing for an admin to do for those until the user acts.
+Email verification is always required. A web-origin, ORCID (Open Researcher and Contributor ID)-verified row that is still `pending` is approvable only once its email is also verified; a `verified` or `revoked` row needs no separate ORCID check. `nemar admin users --pending` lists accounts still waiting on their own email confirmation; there is nothing for an admin to do for those until the user acts.
 
 ## `nemar admin revoke` voids an open request too
 
