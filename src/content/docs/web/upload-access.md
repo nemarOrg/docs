@@ -34,8 +34,37 @@ Once your account is verified, request upload access either of two ways:
 
 Before the request can be submitted, your account needs a complete profile: a username, your given and family name, a GitHub handle that exists, and your city and country.
 If any of these are missing, the request tells you exactly which ones, so you can fill them in from [Account settings](/web/account-settings/) and try again.
+That list is the same wherever you meet it: the request's refusal, the dashboard's nudge, and `nemar auth status` or `nemar auth profile` on the CLI all compute it from the one place NEMAR keeps the rule.
+A field named as missing here is never absent from a CLI listing, or the reverse.
 
 Your GitHub handle also has to resolve on GitHub at the moment you submit. If GitHub itself is briefly unreachable, NEMAR tells you to try again in a few minutes rather than claiming your handle doesn't exist; nothing about your profile needs fixing in that case.
+
+### What each field blocks, and where to set it
+
+A verified email address comes first and blocks more than this one request: it is what separates the pending tier from the verified tier, so it stops browsing, the dashboard, and everything else, not just this request.
+Past that, here is what an incomplete profile blocks and where each field is set on both surfaces:
+
+| Field | Blocks | Set on the web | Set on the CLI |
+|-------|--------|-----------------|-----------------|
+| Username | Upload access request | Settings | `nemar auth profile set-username` |
+| Given name | Upload access request, publication | Settings, or your ORCID record at orcid.org (then sign in again) if a verified ORCID iD is linked | `nemar auth profile set-name`, or none while a verified iD is linked |
+| Family name | Upload access request, publication | Same as given name | Same as given name |
+| GitHub handle | Upload access request, publication | Settings | `nemar auth profile set-github` |
+| City | Upload access request | Settings | `nemar auth profile set-location` |
+| Country | Upload access request | Settings | `nemar auth profile set-location` |
+| What you intend to upload | Upload access request | The request form in Settings | `nemar auth request-upload-access` |
+
+Given and family name also block publication, separately from this request: a DOI (Digital Object Identifier) cites you by that name, so a dataset cannot be published without both parts on record, whichever surface you use to deposit it.
+A GitHub handle blocks publication too, since that is how collaborators and reviewers are attached to your dataset repository.
+
+This is the same table `nemar auth status` and `nemar auth profile` render on the CLI, word for word, because both surfaces read it from one place; see [What your profile still needs](/cli/reference/account-access/#what-your-profile-still-needs).
+
+:::note[Planned: a verified ORCID iD will join this list]
+Not yet in effect at this writing (tracked in [nemar-cli#1271](https://github.com/nemarOrg/nemar-cli/issues/1271)).
+Once it ships, a regular account will also need a verified ORCID iD before it can request upload access, fixed with "Connect your ORCID" in Settings or `nemar auth profile orcid link` on the CLI.
+Admin and owner accounts are exempt for now.
+A web account already always has a verified iD, since signing in with ORCID is the only way a web account gets created; this mainly affects CLI accounts that signed up without verifying one.
+:::
 
 ## What the request needs
 
