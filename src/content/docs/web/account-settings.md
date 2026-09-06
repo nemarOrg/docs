@@ -6,8 +6,7 @@ description: "Change your email, GitHub handle, and ORCID link, choose a usernam
 Settings on [nemar.org](https://nemar.org/settings) is where you manage the identifiers on your NEMAR account: your email, your GitHub handle, your ORCID iD (Open Researcher and Contributor ID), your username, and your name.
 Everything on this page is self-service; nothing here needs an admin.
 
-The CLI (command-line interface) can show you the same identifiers, but it cannot change them.
-Run `nemar auth profile` to see your current email, GitHub handle, ORCID link, username, name, and access tier, each with a note on where to change it.
+The CLI (command-line interface) can show you the same identifiers with `nemar auth profile`, each with a note on where to change it, and is gaining subcommands to change them directly in the same release as everything else on this page; see [Changing identifiers from the CLI](/cli/reference/account-access/#changing-identifiers-from-the-cli).
 
 ## Change your email
 
@@ -21,7 +20,7 @@ If the address you want is already attached to another account, the change is re
 ## Change your GitHub handle
 
 Enter the new handle in Settings.
-NEMAR checks that the handle actually exists on GitHub before accepting it.
+NEMAR checks that the handle actually exists on GitHub before accepting it; if GitHub itself is briefly unreachable when you save, NEMAR tells you to try again rather than claiming the handle doesn't exist.
 A GitHub handle can also back only one NEMAR account, so a handle already attached elsewhere is refused.
 
 Your GitHub handle is how collaborators are invited to your datasets and how NEMAR verifies you before adding you as a collaborator on someone else's, so keep it current if you change GitHub accounts.
@@ -38,11 +37,11 @@ An ORCID iD can back only one NEMAR account at a time, checked exactly (not case
 
 ## Choose or change your username
 
-You can set or change your username in Settings any time before an admin approves your account for upload access (see [Upload access](/web/upload-access/)).
-Settings suggests a default built from your name (your first initial plus your family name, for example `alovelace` for Ada Lovelace, with a number appended if that handle is already taken), but you can type your own instead.
+Settings suggests a default built from your name (your first initial plus your family name, for example `alovelace` for Ada Lovelace, with a number appended if that handle is already taken), but you can type your own instead. Occasionally there is no suggestion at all — you have no family name on record, or every variant of your default is already taken — and in that case the field is simply left for you to fill in by hand.
 
 A username must be unique, compared without regard to case: `Ada` and `ada` are the same username as far as NEMAR is concerned.
-Once your account is approved for upload access, your username is locked; re-saving the same username alongside other changes still works, but changing it to something else does not.
+
+**The lock is on changing a username, not on having one.** If you don't have a username yet, you can set one for the first time whatever state your account is in, including after you're approved for upload access — this is what lets the accounts that predate usernames get one at all. What's locked, once you're approved, is changing a username you already have to a different one; re-saving your current username alongside other changes still works.
 
 ## Your name
 
