@@ -140,7 +140,7 @@ Profile
 `nemar auth profile` always fetches this live.
 `nemar auth status` prints it from the local cache, refreshed with `--refresh`.
 Like the Upload access line, it is honest about not knowing:
-an account that has never refreshed shows `not checked — run 'nemar auth status --refresh'` rather than an empty (and misleadingly reassuring) list,
+an account that has never refreshed shows `not checked: run 'nemar auth status --refresh'` rather than an empty (and misleadingly reassuring) list,
 and a refresh that fails reports the same rather than showing yesterday's list as current.
 
 Sandbox training (`nemar sandbox`) appears in this same block when it isn't done yet, but only here.
