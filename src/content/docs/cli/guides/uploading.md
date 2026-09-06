@@ -13,6 +13,7 @@ Before uploading:
 - [ ] git-annex installed
 - [ ] GitHub CLI (`gh`) installed and authenticated
 - [ ] Sandbox training completed (`nemar sandbox`)
+- [ ] Upload access granted (`nemar auth request-upload-access`; see [Upload access](/web/upload-access/))
 
 :::caution[DataLad Users]
 NEMAR requires `main` as the default branch. DataLad's adjusted branch naming (e.g. `adjusted/master(unlocked)`) will cause CI and metadata pipelines to fail.
@@ -66,19 +67,22 @@ nemar dataset upload ./my-dataset
 
 The upload process:
 
-1. **Prerequisite Check** - Verifies required tools (git-annex, gh, aws) are installed with platform-specific install guidance if missing
-2. **Auth and Prerequisites** - Verifies login, GitHub authentication (HTTPS preferred, SSH as fallback)
-3. **BIDS Validation** - Runs the official BIDS validator (unless skipped)
-4. **File Manifest** - Collects files and co-author ORCIDs
-5. **License Enforcement** - Detects license from `dataset_description.json` or LICENSE file; prompts to select one if missing. Validates the license allows research redistribution (see [License Requirements](#license-requirements) below)
-6. **Data Provenance** - For derived datasets, collects source dataset DOIs and checks license compatibility
-7. **Confirmation** - Shows upload plan for review
-8. **Dataset Registration** - Creates dataset record and private GitHub repo
-9. **GitHub Invitation** - Accepts collaborator invitation to the repo
-10. **git-annex Init** - Initializes git-annex and configures S3 remote
-11. **Data Upload** - Uploads large files to S3 (uses AWS CLI fast-path when available)
-12. **Metadata and Push** - Writes metadata, commits, and pushes to GitHub
-13. **CI Deployment** - Deploys GitHub Actions workflows for validation
+1. **Authentication Check** - Verifies you're logged in (`nemar auth login`)
+2. **Sandbox Training Check** - Confirms `nemar sandbox` has been completed. This is a hard stop for the CLI, with no equivalent on the web
+3. **Upload Access Check** - Confirms upload access is granted, and lists anything else your profile is still missing, before anything expensive runs. A missing grant stops the run here; `--dry-run` continues anyway, since it uploads nothing. See [What your profile still needs](/cli/reference/account-access/#what-your-profile-still-needs)
+4. **Prerequisite Check** - Verifies required tools (git-annex, gh, aws) are installed with platform-specific install guidance if missing
+5. **GitHub Authentication** - Verifies GitHub authentication (HTTPS preferred, SSH as fallback)
+6. **BIDS Validation** - Runs the official BIDS validator (unless skipped)
+7. **File Manifest** - Collects files and co-author ORCIDs
+8. **License Enforcement** - Detects license from `dataset_description.json` or LICENSE file; prompts to select one if missing. Validates the license allows research redistribution (see [License Requirements](#license-requirements) below)
+9. **Data Provenance** - For derived datasets, collects source dataset DOIs and checks license compatibility
+10. **Confirmation** - Shows upload plan for review
+11. **Dataset Registration** - Creates dataset record and private GitHub repo
+12. **GitHub Invitation** - Accepts collaborator invitation to the repo
+13. **git-annex Init** - Initializes git-annex and configures S3 remote
+14. **Data Upload** - Uploads large files to S3 (uses AWS CLI fast-path when available)
+15. **Metadata and Push** - Writes metadata, commits, and pushes to GitHub
+16. **CI Deployment** - Deploys GitHub Actions workflows for validation
 
 ## License Requirements
 
