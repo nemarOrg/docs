@@ -25,8 +25,10 @@ You'll be prompted for:
 | Username | 3-30 characters, alphanumeric with - and _ |
 | Email | Valid email for verification |
 | Password | Minimum 12 characters |
-| GitHub Username | Required for PR collaboration |
+| GitHub Username | Required for PR collaboration. Backs at most one NEMAR account. |
 | ORCID iD | Required — it's how NEMAR gets your name for DOI citation, and where author matching starts. Backs at most one NEMAR account. |
+| City | Required for export-control screening |
+| Country | Required for export-control screening |
 | Description | Why you need NEMAR access (min 20 chars) |
 
 ## Logging In
