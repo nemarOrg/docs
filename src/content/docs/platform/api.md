@@ -70,7 +70,9 @@ Authorization: Bearer nemar_your_api_key
 ### Admin
 
 :::note
-Admin approval grants **upload access**; it does not gate sign-in, the API key, or the dashboard. Those unlock as soon as a user verifies their email (`POST /auth/retrieve-key`, `POST /auth/login` above already work at that point).
+Admin approval grants **upload access**;
+it does not gate sign-in, the API key, or the dashboard.
+Those unlock as soon as a user verifies their email (`POST /auth/retrieve-key`, `POST /auth/login` above already work at that point).
 :::
 
 | Method | Endpoint | Description |
