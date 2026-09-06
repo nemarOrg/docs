@@ -2,12 +2,16 @@
 title: "Authentication"
 ---
 
-NEMAR uses API key authentication. Verifying your email is what unlocks the key; admin approval is a separate, later step that only gates uploading real datasets.
+NEMAR uses API key authentication.
+Verifying your email is what unlocks the key;
+admin approval is a separate, later step that only gates uploading real datasets.
 
 ## Workflow Overview
 
 1. **Sign up** - Create an account with your details
-2. **Verify email** - Click the link in the verification email. This reaches the `verified` tier: browsing, the dashboard, sandbox training, and your API key all work from here, with no admin involved.
+2. **Verify email** - Click the link in the verification email.
+   This reaches the `verified` tier:
+   browsing, the dashboard, sandbox training, and your API key all work from here, with no admin involved.
 3. **Retrieve API key** - Use `nemar auth retrieve-key` with your email and password
 4. **Log in** - Use your API key to authenticate
 5. **Request upload access** - Before uploading a real dataset, run `nemar auth request-upload-access` and wait for the one-time admin review. See [Upload access](/web/upload-access/) and [Account Access](/cli/reference/account-access/).
@@ -62,7 +66,10 @@ nemar auth status
 nemar auth status --refresh
 ```
 
-`nemar auth status` prints an `Upload access` line alongside your cached account info. For the full set of identifiers on your account (username, name, email, GitHub handle, ORCID link), plus that same tier, run `nemar auth profile` instead; see [Account Access](/cli/reference/account-access/).
+`nemar auth status` prints an `Upload access` line alongside your cached account info.
+For the full set of identifiers on your account (username, name, email, GitHub handle, ORCID link),
+plus that same tier, run `nemar auth profile` instead;
+see [Account Access](/cli/reference/account-access/).
 
 ## Log Out
 
@@ -97,10 +104,15 @@ nemar auth resend-verification
 ## Planned: signing in with ORCID (not yet available)
 
 :::caution[Planned: nemar-cli epic #1272]
-Nothing below is implemented yet. `nemar auth login` and `nemar auth retrieve-key` remain the only way to sign in from the CLI today; do not rely on this until it ships.
+Nothing below is implemented yet.
+`nemar auth login` and `nemar auth retrieve-key` remain the only way to sign in from the CLI today;
+do not rely on this until it ships.
 :::
 
-A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships, plans to move CLI sign-in to ORCID, through the browser, with a device code, the same shape as `gh auth login`: the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
+A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships,
+plans to move CLI sign-in to ORCID, through the browser, with a device code,
+the same shape as `gh auth login`:
+the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
 No password is typed and no API key is pasted in.
 This note exists so the plan is visible ahead of the change, not so you can use it yet.
 
