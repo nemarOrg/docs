@@ -38,13 +38,13 @@ An ORCID iD can back only one NEMAR account at a time, checked exactly (not case
 
 ## Choose or change your username
 
-Settings suggests a default built from your name (your first initial plus your family name, for example `alovelace` for Ada Lovelace, with a number appended if that handle is already taken), but you can type your own instead. Occasionally there is no suggestion at all — you have no family name on record, or every variant of your default is already taken — and in that case the field is simply left for you to fill in by hand.
+Settings suggests a default built from your name (your first initial plus your family name, for example `alovelace` for Ada Lovelace, with a number appended if that handle is already taken), but you can type your own instead. Occasionally there is no suggestion at all: you have no family name on record, or every variant of your default is already taken, and in that case the field is simply left for you to fill in by hand.
 
 A username must be unique, compared without regard to case: `Ada` and `ada` are the same username as far as NEMAR is concerned.
 
-If you never set a username while onboarding, NEMAR assigns you one automatically the next time you sign in on the web, using the same first-initial-plus-family-name rule, so your account can never be left with no handle at all — a username is what your datasets and DOIs (Digital Object Identifiers) are attributed to. You will see a one-time notice that a username was chosen for you, and can change it here until an admin grants your account upload access.
+If you never set a username while onboarding, NEMAR assigns you one automatically the next time you sign in on the web, using the same first-initial-plus-family-name rule, so your account can never be left with no handle at all: a username is what your datasets and DOIs (Digital Object Identifiers) are attributed to. You will see a one-time notice that a username was chosen for you, and can change it here until an admin grants your account upload access.
 
-**The lock is on changing a username, not on having one.** If you don't have a username yet, you can set one for the first time whatever state your account is in, including after you're approved for upload access — this is what lets the accounts that predate usernames get one at all. What's locked, once you're approved, is changing a username you already have to a different one; re-saving your current username alongside other changes still works.
+**The lock is on changing a username, not on having one.** If you don't have a username yet, you can set one for the first time whatever state your account is in, including after you're approved for upload access: this is what lets the accounts that predate usernames get one at all. What's locked, once you're approved, is changing a username you already have to a different one; re-saving your current username alongside other changes still works.
 
 ## Your name
 

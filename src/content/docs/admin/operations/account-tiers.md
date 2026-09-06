@@ -7,7 +7,7 @@ description: "What nemar admin approve now grants, the users filters and tier co
 Everything on this page describes behavior in the `nemar-cli` account-tiers epic (issue [#1250](https://github.com/nemarOrg/nemar-cli/issues/1250)), not yet in a released CLI version. Confirm your CLI's version before relying on it; run `nemar admin --help-all` to see what your installed version actually supports.
 :::
 
-Three account states matter to admins: pending (email not verified — cannot be approved), verified (the base tier, needs no admin), and approved (an admin granted upload access, once). See [Upload access](/web/upload-access/) for the user-facing explanation.
+Three account states matter to admins: pending (email not verified, cannot be approved), verified (the base tier, needs no admin), and approved (an admin granted upload access, once). See [Upload access](/web/upload-access/) for the user-facing explanation.
 
 ## `nemar admin approve` grants upload access
 
@@ -37,7 +37,7 @@ nemar admin users --awaiting-approval    # accounts with an open upload-access r
 nemar admin users --no-upload-access     # every account without the upload grant, requested or not
 ```
 
-`--awaiting-approval` means exactly what it says: a **verified** account that submitted an upload access request and has not yet been granted it — a pending or revoked account cannot have an open request, so this filter never surfaces one. `--no-upload-access` is the wider set — every account without the grant, whether or not anyone has asked for one.
+`--awaiting-approval` means exactly what it says: a **verified** account that submitted an upload access request and has not yet been granted it. A pending or revoked account cannot have an open request, so this filter never surfaces one. `--no-upload-access` is the wider set: every account without the grant, whether or not anyone has asked for one.
 
 Each row also reports a tier:
 
@@ -45,11 +45,11 @@ Each row also reports a tier:
 |------|---------|
 | `browse` | Base tier: browse, dashboard, settings. No upload access. |
 | `upload` | An admin granted upload access; `nemar admin approve` is the grant. |
-| `unknown` | The API reported no tier for this account — a backend older than the tier split, or a rolling deploy. |
+| `unknown` | The API reported no tier for this account: a backend older than the tier split, or a rolling deploy. |
 
 ## `nemar admin duplicates`
 
-Reports live accounts that share an ORCID iD, an email address, or a GitHub handle — an identifier is meant to back exactly one account, and this is where a violation (existing before enforcement began, or one an admin needs to resolve) shows up.
+Reports live accounts that share an ORCID iD, an email address, or a GitHub handle: an identifier is meant to back exactly one account, and this is where a violation (existing before enforcement began, or one an admin needs to resolve) shows up.
 
 ```bash
 nemar admin duplicates
@@ -79,11 +79,11 @@ nemar admin backfill-usernames --apply   # assign a username derived from the na
 
 Neither backfill derives anything from an email address: a handle or a name nobody chose is worse than a row left for a human.
 
-`backfill-usernames` is the batch half of username assignment, for the accounts that already exist. It is no longer the only path: a web account whose username is still `NULL` also gets one assigned automatically, the same first-initial-plus-family-name rule, the next time it signs in — so a new sign-up that abandons onboarding without picking a username does not stay `NULL` until the next time someone remembers to run the sweep. Either path marks the row so the person sees a one-time "we chose this for you" notice and can change it before approval; `nemar admin duplicates` and the two backfills otherwise work exactly as documented above regardless of which path assigned a given row.
+`backfill-usernames` is the batch half of username assignment, for the accounts that already exist. It is no longer the only path: a web account whose username is still `NULL` also gets one assigned automatically, the same first-initial-plus-family-name rule, the next time it signs in, so a new sign-up that abandons onboarding without picking a username does not stay `NULL` until the next time someone remembers to run the sweep. Either path marks the row so the person sees a one-time "we chose this for you" notice and can change it before approval; `nemar admin duplicates` and the two backfills otherwise work exactly as documented above regardless of which path assigned a given row.
 
 ## Coming: a verified ORCID iD as a precondition for regular accounts
 
-:::note[Planned, not yet shipped — nemar-cli#1271]
+:::note[Planned, not yet shipped: nemar-cli#1271]
 The spec is settled but the code isn't merged as of this writing.
 :::
 
@@ -98,4 +98,4 @@ nemar admin backfill-names --apply
 nemar admin backfill-usernames --apply
 ```
 
-in that order — usernames are derived from names, so running them the other way round leaves every currently-nameless account without a username on the first pass. This is a one-time catch-up for the accounts that predate ORCID name capture and username assignment at sign-up; there is no cron for either; a fresh account is named and usernamed as normal at sign-up from this release forward, and needs neither.
+in that order: usernames are derived from names, so running them the other way round leaves every currently-nameless account without a username on the first pass. This is a one-time catch-up for the accounts that predate ORCID name capture and username assignment at sign-up; there is no cron for either; a fresh account is named and usernamed as normal at sign-up from this release forward, and needs neither.

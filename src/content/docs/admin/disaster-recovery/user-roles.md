@@ -133,7 +133,7 @@ Date:   Sat Jan 18 18:30:00 2026 +0000
 
 1. User submits registration via CLI
 2. Email verification sent
-3. User verifies email — account is active (browse, dashboard, CLI API key, sandbox training); no admin action needed for this step
+3. User verifies email: account is active (browse, dashboard, CLI API key, sandbox training); no admin action needed for this step
 4. User requests upload access (Settings on nemar.org, or `nemar auth request-upload-access`)
 5. **nemarAdmin** reviews and grants the upload-access request
 6. User receives an upload-access-granted email

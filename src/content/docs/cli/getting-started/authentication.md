@@ -26,7 +26,7 @@ You'll be prompted for:
 | Email | Valid email for verification |
 | Password | Minimum 12 characters |
 | GitHub Username | Required for PR collaboration. Backs at most one NEMAR account. |
-| ORCID iD (Open Researcher and Contributor ID) | Required — it's how NEMAR gets your name for DOI citation, and where author matching starts. Backs at most one NEMAR account. |
+| ORCID iD (Open Researcher and Contributor ID) | Required: it's how NEMAR gets your name for DOI citation, and where author matching starts. Backs at most one NEMAR account. |
 | City | Required for export-control screening |
 | Country | Required for export-control screening |
 | Description | Why you need NEMAR access (min 20 chars) |
@@ -62,7 +62,7 @@ nemar auth status
 nemar auth status --refresh
 ```
 
-`nemar auth status` prints an `Upload access` line alongside your cached account info. For the full set of identifiers on your account — username, name, email, GitHub handle, ORCID link — plus that same tier, run `nemar auth profile` instead; see [Account Access](/cli/reference/account-access/).
+`nemar auth status` prints an `Upload access` line alongside your cached account info. For the full set of identifiers on your account (username, name, email, GitHub handle, ORCID link), plus that same tier, run `nemar auth profile` instead; see [Account Access](/cli/reference/account-access/).
 
 ## Log Out
 
@@ -96,11 +96,11 @@ nemar auth resend-verification
 
 ## Planned: signing in with ORCID (not yet available)
 
-:::caution[Planned — nemar-cli epic #1272]
+:::caution[Planned: nemar-cli epic #1272]
 Nothing below is implemented yet. `nemar auth login` and `nemar auth retrieve-key` remain the only way to sign in from the CLI today; do not rely on this until it ships.
 :::
 
-A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships, plans to move CLI sign-in to ORCID, through the browser, with a device code — the same shape as `gh auth login`: the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
+A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships, plans to move CLI sign-in to ORCID, through the browser, with a device code, the same shape as `gh auth login`: the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
 No password is typed and no API key is pasted in.
 This note exists so the plan is visible ahead of the change, not so you can use it yet.
 

@@ -3,11 +3,11 @@ title: "Account Access"
 description: "nemar auth profile, nemar auth request-upload-access, and the Upload access line in nemar auth status."
 ---
 
-Three account states apply to every NEMAR account: pending (email not verified), verified (the base tier — browse, dashboard, CLI API key, sandbox training), and approved (an admin granted upload access, once). See [Upload access](/web/upload-access/) for the full explanation; this page covers the CLI commands that show and request it.
+Three account states apply to every NEMAR account: pending (email not verified), verified (the base tier: browse, dashboard, CLI API key, sandbox training), and approved (an admin granted upload access, once). See [Upload access](/web/upload-access/) for the full explanation; this page covers the CLI commands that show and request it.
 
 ## `nemar auth profile`
 
-Prints every identifier on your account — username, name, email, GitHub username, ORCID iD (Open Researcher and Contributor ID) — with the verification state of your email and your ORCID link, your access tier, and whether upload access has been granted. Each line also says where to change it.
+Prints every identifier on your account: username, name, email, GitHub username, ORCID iD (Open Researcher and Contributor ID), with the verification state of your email and your ORCID link, your access tier, and whether upload access has been granted. Each line also says where to change it.
 
 ```bash
 nemar auth profile
@@ -38,7 +38,7 @@ The only difference is the credential: a bearer API key here, Settings' session 
 | `nemar auth profile set-location --city <city> --country <country>` | Set your city and country. |
 | `nemar auth profile orcid <link\|relink\|unlink>` | Link, re-link, or unlink your ORCID iD. `link` and `relink` print a URL and try to open it in a browser (`--no-open` prints the URL only), then poll your account until the iD appears or `--timeout <seconds>` runs out (default 300); a headless machine just needs the URL copied elsewhere. `unlink` is immediate (confirm with `-y`, decline with `-n`) and clears the iD from your account. |
 
-Each command prints the same typed refusal message the backend returns — the same wording you'd see from Settings — plus where else the change can be made, so a CLI refusal never reads differently from a web one.
+Each command prints the same typed refusal message the backend returns, the same wording you'd see from Settings, plus where else the change can be made, so a CLI refusal never reads differently from a web one.
 
 ### ORCID linking is a signed, account-bound handoff
 
@@ -82,7 +82,7 @@ Your account needs a username, a given and family name, a GitHub username that e
   Settings: https://nemar.org/settings
 ```
 
-Running the command again while a request is still open reports that you already have one open, rather than mailing a second one — unless the first email never reached an admin, in which case the repeat call retries that notification instead of doing nothing. Once granted, you cannot request again — there is nothing left to ask for.
+Running the command again while a request is still open reports that you already have one open, rather than mailing a second one, unless the first email never reached an admin, in which case the repeat call retries that notification instead of doing nothing. Once granted, you cannot request again. There is nothing left to ask for.
 
 If your upload access is later revoked, the open request (or the grant) is cleared along with it; requesting again after that starts a fresh request, not a re-opened old one.
 
@@ -106,7 +106,7 @@ It is a CLI-only step with no equivalent in Settings, so it never appears in a w
 
 ### Coming: a verified ORCID iD will also be a gap
 
-:::note[Planned, not yet shipped — nemar-cli#1271]
+:::note[Planned, not yet shipped: nemar-cli#1271]
 Not yet implemented at this writing; the spec is settled but the code isn't merged. Once it ships, a **regular** account without a verified ORCID iD will see it listed as a gap blocking the upload access request, fixed with `nemar auth profile orcid link` (or "Connect your ORCID" in Settings). Admin and owner accounts are exempt for now. This doesn't change CLI signup, which already collects and verifies an iD; it only affects accounts that skipped or never verified one. A web account always has a verified iD already, because signing in with ORCID is the only way a web account is created.
 :::
 
@@ -128,4 +128,4 @@ This is read from the local cache by default, refreshed from the server whenever
 nemar auth status --refresh
 ```
 
-An account that has never been refreshed since this field was introduced reports `unknown` rather than guessing — a stale "not granted" answer would send someone who already holds the grant off to ask for it again, which is worse than saying nothing.
+An account that has never been refreshed since this field was introduced reports `unknown` rather than guessing: a stale "not granted" answer would send someone who already holds the grant off to ask for it again, which is worse than saying nothing.

@@ -15,7 +15,7 @@ NEMAR_DEBUG=1 nemar dataset upload ./my-dataset
 
 ## What the log contains
 
-- **Environment.** CLI version, operating system and architecture, the Bun (or Node) runtime version, your active account (username, API URL, role, whether sandbox training is complete — never your API key), and the versions of the external tools NEMAR uses (git, git-annex, `gh`, `aws`, Deno).
+- **Environment.** CLI version, operating system and architecture, the Bun (or Node) runtime version, your active account (username, API URL, role, whether sandbox training is complete, never your API key), and the versions of the external tools NEMAR uses (git, git-annex, `gh`, `aws`, Deno).
 - **Every NEMAR API request the run made.** Method, URL, status code, duration, request headers, and request and response bodies, in order.
 - **The failing step,** when the command is one of the dataset-upload steps that reports one; other commands show `(none recorded)` rather than a guess.
 - **The exit code** the command finished with.
@@ -32,7 +32,7 @@ Redaction happens as each request is recorded, before anything is held in memory
 - The signature, security token, and credential query parameters on a presigned S3 URL (for example, inside an `upload_url` field).
 - Email addresses, masked to their first character plus the domain (`j***@example.org`).
 
-A secret passed as a command-line flag — `-k <key>`, `--key=<key>`, `--password <value>` — is stripped from the log's command line and from the log's filename, in every spelling the CLI accepts for that flag.
+A secret passed as a command-line flag (`-k <key>`, `--key=<key>`, `--password <value>`) is stripped from the log's command line and from the log's filename, in every spelling the CLI accepts for that flag.
 
 Bodies are truncated to 2 KB after redaction.
 If a request body defeats redaction (for example, one nested far deeper than any real NEMAR API response), that entry is replaced with a note saying so rather than failing the command it belongs to; `--debug` is never allowed to change whether a command succeeds or what it prints beyond the log itself.
@@ -75,4 +75,4 @@ If you just want the environment section, without re-running a failing command o
 nemar doctor --report
 ```
 
-This prints the same environment block the debug log embeds — CLI and runtime versions, your active account (no API key), and external tool versions — as plain text you can paste directly into an issue.
+This prints the same environment block the debug log embeds (CLI and runtime versions, your active account with no API key, and external tool versions) as plain text you can paste directly into an issue.

@@ -1,6 +1,6 @@
 ---
 title: NEMAR CLI
-description: The command-line interface for managing NEMAR datasets — install it, authenticate, then upload, validate, version, and download BIDS datasets.
+description: The command-line interface for managing NEMAR datasets. Install it, authenticate, then upload, validate, version, and download BIDS datasets.
 ---
 
 The NEMAR CLI is the terminal client for the NEMAR platform. It wraps dataset validation,
@@ -9,9 +9,9 @@ git-annex + S3 data handling, GitHub metadata versioning, and DOI workflows behi
 
 ## Start here
 
-- [Installation](/cli/getting-started/installation/) — install with Bun and check your environment.
-- [Quick Start](/cli/getting-started/quickstart/) — sign up, verify your email, and upload your first dataset.
-- [Authentication](/cli/getting-started/authentication/) — API keys, accounts, and requesting upload access.
+- [Installation](/cli/getting-started/installation/): install with Bun and check your environment.
+- [Quick Start](/cli/getting-started/quickstart/): sign up, verify your email, and upload your first dataset.
+- [Authentication](/cli/getting-started/authentication/): API keys, accounts, and requesting upload access.
 
 ## Guides
 
@@ -23,7 +23,7 @@ git-annex + S3 data handling, GitHub metadata versioning, and DOI workflows behi
 
 ## Reference
 
-- [Command reference](/cli/commands/) — generated from `nemar … --help`.
+- [Command reference](/cli/commands/): generated from `nemar … --help`.
 - [Configuration](/cli/reference/configuration/) and [Environment variables](/cli/reference/environment/).
-- [Account Access](/cli/reference/account-access/) — `nemar auth profile`, requesting upload access, and your access tier.
-- [Debugging and Bug Reports](/cli/reference/debugging/) — the `--debug` flag and filing an issue.
+- [Account Access](/cli/reference/account-access/): `nemar auth profile`, requesting upload access, and your access tier.
+- [Debugging and Bug Reports](/cli/reference/debugging/): the `--debug` flag and filing an issue.

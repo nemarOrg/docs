@@ -76,7 +76,7 @@ This, together with your name, GitHub handle, city, and country, is what an admi
 Your request goes into one email to the NEMAR admins with every field above on it, so a single admin can review and act without having to look you up separately.
 You get an email of your own only once a decision is made; there is no email just for submitting the request.
 
-Asking again while your first request is still open normally does nothing new: NEMAR reports that you already have an open request instead of mailing a second one. The one exception is if that first email never reached an admin (a delivery problem on NEMAR's end, not something you did) — in that case, asking again retries the notification, since a request nobody was told about is no better than no request at all.
+Asking again while your first request is still open normally does nothing new: NEMAR reports that you already have an open request instead of mailing a second one. The one exception is if that first email never reached an admin (a delivery problem on NEMAR's end, not something you did): in that case, asking again retries the notification, since a request nobody was told about is no better than no request at all.
 You can check where things stand any time with `nemar auth status --refresh` or `nemar auth profile`.
 
 ## If access is later revoked
