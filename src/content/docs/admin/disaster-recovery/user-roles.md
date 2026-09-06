@@ -12,7 +12,7 @@ NEMAR system uses dedicated service accounts for different operational tasks:
 | Account | Email | Role | Responsibilities |
 |---------|-------|------|------------------|
 | **Owner** | `yahya@osc.earth` | Super User | System ownership, full access, policy decisions |
-| **nemarAdmin** | `nemarAdmin@osc.earth` | Administrator | User approval, dataset creation, routine admin |
+| **nemarAdmin** | `nemarAdmin@osc.earth` | Administrator | Upload-access approval, dataset creation, routine admin |
 | **nemarRestore** | `nemarRestore@osc.earth` | Restore Agent | Dataset restoration, git commits for recovered data |
 
 ---
@@ -48,7 +48,7 @@ NEMAR system uses dedicated service accounts for different operational tasks:
 **Purpose:** Day-to-day administrative operations
 
 **Responsibilities:**
-- Approve new user registrations
+- Grant upload access to verified users (one-time, on request)
 - Create dataset repositories
 - Manage user permissions
 - Create concept DOIs for datasets
@@ -64,7 +64,7 @@ NEMAR system uses dedicated service accounts for different operational tasks:
 
 **Typical Operations:**
 ```bash
-# Approve pending user
+# Grant upload access (does not affect sign-in, which only needs a verified email)
 nemar admin approve <username>
 
 # Create concept DOI
@@ -133,10 +133,10 @@ Date:   Sat Jan 18 18:30:00 2026 +0000
 
 1. User submits registration via CLI
 2. Email verification sent
-3. **nemarAdmin** receives notification
-4. **nemarAdmin** reviews and approves
-5. System generates credentials
-6. User receives approval email
+3. User verifies email — account is active (browse, dashboard, CLI API key, sandbox training); no admin action needed for this step
+4. User requests upload access (Settings on nemar.org, or `nemar auth request-upload-access`)
+5. **nemarAdmin** reviews and grants the upload-access request
+6. User receives an upload-access-granted email
 
 ### Dataset Creation
 

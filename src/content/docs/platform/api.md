@@ -69,11 +69,15 @@ Authorization: Bearer nemar_your_api_key
 
 ### Admin
 
+:::note
+Admin approval grants **upload access**; it does not gate sign-in, the API key, or the dashboard. Those unlock as soon as a user verifies their email (`POST /auth/retrieve-key`, `POST /auth/login` above already work at that point).
+:::
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /admin/users | List users (includes pending approvals) |
+| GET | /admin/users | List users (statuses, tiers, and open upload-access requests) |
 | GET | /admin/users/:username | Get a single user |
-| POST | /admin/approve/:username | Approve a pending user |
+| POST | /admin/approve/:username | Grant upload access to a verified user |
 | POST | /admin/revoke/:username | Revoke a user's access |
 | GET | /admin/datasets/:id/doi | Get DOI info for a dataset |
 | POST | /admin/datasets/:id/doi/concept | Create concept DOI |
