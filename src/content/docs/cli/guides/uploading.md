@@ -68,8 +68,13 @@ nemar dataset upload ./my-dataset
 The upload process:
 
 1. **Authentication Check** - Verifies you're logged in (`nemar auth login`)
-2. **Sandbox Training Check** - Confirms `nemar sandbox` has been completed. This is a hard stop for the CLI, with no equivalent on the web
-3. **Upload Access Check** - Confirms upload access is granted, and lists anything else your profile is still missing, before anything expensive runs. A missing grant stops the run here; `--dry-run` continues anyway, since it uploads nothing. See [What your profile still needs](/cli/reference/account-access/#what-your-profile-still-needs)
+2. **Sandbox Training Check** - Confirms `nemar sandbox` has been completed.
+   This is a hard stop for the CLI, with no equivalent on the web
+3. **Upload Access Check** - Confirms upload access is granted,
+   and lists anything else your profile is still missing, before anything expensive runs.
+   A missing grant stops the run here;
+   `--dry-run` continues anyway, since it uploads nothing.
+   See [What your profile still needs](/cli/reference/account-access/#what-your-profile-still-needs)
 4. **Prerequisite Check** - Verifies required tools (git-annex, gh, aws) are installed with platform-specific install guidance if missing
 5. **GitHub Authentication** - Verifies GitHub authentication (HTTPS preferred, SSH as fallback)
 6. **BIDS Validation** - Runs the official BIDS validator (unless skipped)
