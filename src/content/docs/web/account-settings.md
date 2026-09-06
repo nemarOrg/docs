@@ -6,7 +6,8 @@ description: "Change your email, GitHub handle, and ORCID link, choose a usernam
 Settings on [nemar.org](https://nemar.org/settings) is where you manage the identifiers on your NEMAR account: your email, your GitHub handle, your ORCID iD (Open Researcher and Contributor ID), your username, and your name.
 Everything on this page is self-service; nothing here needs an admin.
 
-The CLI (command-line interface) can show you the same identifiers with `nemar auth profile`, each with a note on where to change it, and is gaining subcommands to change them directly in the same release as everything else on this page; see [Changing identifiers from the CLI](/cli/reference/account-access/#changing-identifiers-from-the-cli).
+The CLI (command-line interface) can show you the same identifiers with `nemar auth profile`, each with a note on where to change it.
+Once the epic that adds it ships, it can change them directly, too, with subcommands under `nemar auth profile`; see [Changing identifiers from the CLI](/cli/reference/account-access/#changing-identifiers-from-the-cli).
 
 ## Change your email
 
@@ -41,6 +42,8 @@ Settings suggests a default built from your name (your first initial plus your f
 
 A username must be unique, compared without regard to case: `Ada` and `ada` are the same username as far as NEMAR is concerned.
 
+If you never set a username while onboarding, NEMAR assigns you one automatically the next time you sign in on the web, using the same first-initial-plus-family-name rule, so your account can never be left with no handle at all — a username is what your datasets and DOIs are attributed to. You will see a one-time notice that a username was chosen for you, and can change it here until an admin grants your account upload access.
+
 **The lock is on changing a username, not on having one.** If you don't have a username yet, you can set one for the first time whatever state your account is in, including after you're approved for upload access — this is what lets the accounts that predate usernames get one at all. What's locked, once you're approved, is changing a username you already have to a different one; re-saving your current username alongside other changes still works.
 
 ## Your name
@@ -57,6 +60,9 @@ An account with only half a name set (a given name with no family name, or the r
 
 An ORCID iD, an email address, or a GitHub handle backs at most one live NEMAR account.
 This is enforced by the database, not just by convention, so a sign-up or a link that would create a second account on any of the three is refused with a message telling you which identifier is already taken and where to fix it, rather than silently creating a duplicate.
+The refusal carries a stable code alongside its sentence: `email_in_use`, `github_in_use`, or `orcid_in_use`, plus `identity_conflict_remains` if an admin tries to clear a flagged account before the underlying collision is actually gone.
+See [Refusal codes you might see](/cli/reference/account-access/#refusal-codes-you-might-see) for the full table.
+A username that is merely already taken (`username_taken`) is not one of these three; it just needs a different username, not an identifier freed up elsewhere.
 
 ### If you already created two accounts
 
