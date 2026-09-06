@@ -19,11 +19,7 @@ A web sign-up flow is on the way. Until then, returning users sign in here with 
 
 ## Signing in
 
-:::caution[Coming soon — planned July 2026]
-Passwordless web sign-in is planned for **July 2026**. Until it launches, authenticate with the [CLI](/cli/getting-started/installation/) (`nemar auth login`); the web and CLI share the same backend account.
-:::
-
-Once web sign-in launches, you'll sign in at the [login page](https://nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
+At the [login page](https://nemar.org/login), sign in with ORCID, or enter your email and use the one-time 6-digit code NEMAR sends you; either way you land on your dashboard with no password. The web and CLI share the same backend account, so `nemar auth login` works too.
 
 Browsing, the dashboard, and [account settings](/web/account-settings/) are all available the moment your email is verified; no admin is involved. Uploading and publication requests need one more thing: a one-time [upload access](/web/upload-access/) grant from an admin, requested from Settings once your profile is complete.
 
