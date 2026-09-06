@@ -26,7 +26,7 @@ You'll be prompted for:
 | Email | Valid email for verification |
 | Password | Minimum 12 characters |
 | GitHub Username | Required for PR collaboration |
-| ORCID iD | Optional; used for DOI citation and author matching. Backs at most one NEMAR account. |
+| ORCID iD | Required — it's how NEMAR gets your name for DOI citation, and where author matching starts. Backs at most one NEMAR account. |
 | Description | Why you need NEMAR access (min 20 chars) |
 
 ## Logging In
@@ -91,6 +91,16 @@ If you didn't receive the verification email:
 ```bash
 nemar auth resend-verification
 ```
+
+## Planned: signing in with ORCID (not yet available)
+
+:::caution[Planned — nemar-cli epic #1272]
+Nothing below is implemented yet. `nemar auth login` and `nemar auth retrieve-key` remain the only way to sign in from the CLI today; do not rely on this until it ships.
+:::
+
+A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships, plans to move CLI sign-in to ORCID (Open Researcher and Contributor ID), through the browser, with a device code — the same shape as `gh auth login`: the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
+No password is typed and no API key is pasted in.
+This note exists so the plan is visible ahead of the change, not so you can use it yet.
 
 ## Security Notes
 
