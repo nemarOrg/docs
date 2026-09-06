@@ -150,7 +150,7 @@ On a machine whose config has never recorded the answer (a fresh install or a re
 `nemar dataset upload` asks the server once before blocking,
 so training you already completed elsewhere is not requested again.
 If the server cannot be reached, the block reads
-`Sandbox training could not be confirmed with the server. Run \`nemar sandbox status --refresh\`, then \`nemar sandbox\` if it is still outstanding.`
+``Sandbox training could not be confirmed with the server. Run `nemar sandbox status --refresh`, then `nemar sandbox` if it is still outstanding.``
 
 ### Coming: a verified ORCID iD will also be a gap
 
