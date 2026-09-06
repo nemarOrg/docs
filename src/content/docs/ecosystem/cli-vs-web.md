@@ -9,8 +9,7 @@ difference is workflow style, not capability.
 
 ## What the web is best for
 
-- **Signing up.** Web sign-in and sign-up are planned for **July 2026**; until then, create your
-  account and authenticate with the CLI (`nemar auth signup` / `nemar auth login`).
+- **Signing up.** Sign in with ORCID or a one-time email code at [nemar.org/login](https://nemar.org/login); a first ORCID sign-in creates your account as part of that flow, no separate form and no admin review. The CLI's own `nemar auth signup` / `nemar auth login` work the same account either way. See [Getting started on the web](/web/getting-started/).
 - **Browsing and exploring.** [Discover](https://nemar.org/discover), dataset detail pages,
   READMEs, and the citation dashboard live there.
 - **One-off uploads.** Drop a folder, walk through validation, request publication. No tooling
