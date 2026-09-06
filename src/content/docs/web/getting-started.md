@@ -2,15 +2,21 @@
 title: "Getting started on the web"
 ---
 
-NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is where neuroscience teams archive, share, and process EEG, MEG, and iEEG datasets. This page walks you through the everyday flow: signing in, getting an account, and uploading your first dataset.
+NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is where neuroscience teams archive, share, and process EEG, MEG, and iEEG datasets.
+This page walks you through the everyday flow:
+signing in, getting an account, and uploading your first dataset.
 
 ## Getting an account
 
 There are two ways to get a NEMAR account, and both share the same backend account model.
 
-On the web, there is no separate sign-up form: authorizing with ORCID (Open Researcher and Contributor ID) at the [login page](https://nemar.org/login) for the first time creates your account as part of that same flow.
-You enter your email, city, and country during that authorization; NEMAR then emails you a verification code to confirm the address.
-Your account is created right away, without a username or password, and reaches the base tier once you confirm that code; no admin review is involved either way.
+On the web, there is no separate sign-up form:
+authorizing with ORCID (Open Researcher and Contributor ID) at the [login page](https://nemar.org/login) for the first time creates your account as part of that same flow.
+You enter your email, city, and country during that authorization;
+NEMAR then emails you a verification code to confirm the address.
+Your account is created right away, without a username or password,
+and reaches the base tier once you confirm that code;
+no admin review is involved either way.
 
 On the CLI, creating a NEMAR account asks for your email, an ORCID iD, a GitHub handle, and a couple of consent confirmations. The CLI runs the full flow in about two minutes:
 
@@ -19,13 +25,26 @@ bun install -g @nemar/cli
 nemar auth signup
 ```
 
-The CLI opens a browser tab for ORCID authorization and collects the rest. Verify your email from the link NEMAR sends, and your account reaches the base tier: no admin review at sign-up. See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown, and [Upload access](/web/upload-access/) for the one thing an admin still has to grant before you can upload a real dataset.
+The CLI opens a browser tab for ORCID authorization and collects the rest.
+Verify your email from the link NEMAR sends, and your account reaches the base tier:
+no admin review at sign-up.
+See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown,
+and [Upload access](/web/upload-access/) for the one thing an admin still has to grant before you can upload a real dataset.
 
 ## Signing in
 
-At the [login page](https://nemar.org/login), sign in with ORCID, or enter your email and use the one-time 6-digit code NEMAR sends you; either way you land on your dashboard with no password. The web and CLI share the same backend account, so `nemar auth login` works too. Signing in with ORCID for the first time is also how a web account gets created; see above.
+At the [login page](https://nemar.org/login), sign in with ORCID,
+or enter your email and use the one-time 6-digit code NEMAR sends you;
+either way you land on your dashboard with no password.
+The web and CLI share the same backend account,
+so `nemar auth login` works too.
+Signing in with ORCID for the first time is also how a web account gets created;
+see above.
 
-Browsing, the dashboard, and [account settings](/web/account-settings/) are all available the moment your email is verified; no admin is involved. Uploading and publication requests need one more thing: a one-time [upload access](/web/upload-access/) grant from an admin, requested from Settings once your profile is complete.
+Browsing, the dashboard, and [account settings](/web/account-settings/) are all available the moment your email is verified;
+no admin is involved.
+Uploading and publication requests need one more thing:
+a one-time [upload access](/web/upload-access/) grant from an admin, requested from Settings once your profile is complete.
 
 ## The dashboard at a glance
 
