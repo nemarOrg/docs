@@ -51,6 +51,8 @@ export default defineConfig({
 						{ label: 'Uploading a Dataset', slug: 'web/uploading' },
 						{ label: 'Managing Your Datasets', slug: 'web/managing-datasets' },
 						{ label: 'Publication Review', slug: 'web/publication-review' },
+						{ label: 'Account Settings', slug: 'web/account-settings' },
+						{ label: 'Upload Access', slug: 'web/upload-access' },
 					],
 				},
 				{
