@@ -88,10 +88,12 @@ export default defineConfig({
 							],
 						},
 						{
-							label: 'Configuration',
+							label: 'Reference',
 							items: [
 								{ label: 'Configuration', slug: 'cli/reference/configuration' },
 								{ label: 'Environment Variables', slug: 'cli/reference/environment' },
+								{ label: 'Account Access', slug: 'cli/reference/account-access' },
+								{ label: 'Debugging and Bug Reports', slug: 'cli/reference/debugging' },
 							],
 						},
 					],
