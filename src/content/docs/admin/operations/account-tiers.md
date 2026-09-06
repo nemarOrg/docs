@@ -79,6 +79,16 @@ nemar admin backfill-usernames --apply   # assign a username derived from the na
 
 Neither backfill derives anything from an email address: a handle or a name nobody chose is worse than a row left for a human.
 
+`backfill-usernames` is the batch half of username assignment, for the accounts that already exist. It is no longer the only path: a web account whose username is still `NULL` also gets one assigned automatically, the same first-initial-plus-family-name rule, the next time it signs in — so a new sign-up that abandons onboarding without picking a username does not stay `NULL` until the next time someone remembers to run the sweep. Either path marks the row so the person sees a one-time "we chose this for you" notice and can change it before approval; `nemar admin duplicates` and the two backfills otherwise work exactly as documented above regardless of which path assigned a given row.
+
+## Coming: a verified ORCID iD as a precondition for regular accounts
+
+:::note[Planned, not yet shipped — nemar-cli#1271]
+The spec is settled but the code isn't merged as of this writing.
+:::
+
+Once this lands, a regular account without a verified ORCID iD will be unable to submit an upload access request until it links and verifies one (`nemar auth profile orcid link`, or "Connect your ORCID" in Settings). **Admin and owner accounts are exempt for now.** This mostly affects CLI-originated accounts that skipped ORCID at signup or never completed verification; a web account is always ORCID-verified already, since ORCID sign-in is the only way a web account is created.
+
 ## Run both backfills once after this release
 
 Once the release that ships this epic is live, run:
