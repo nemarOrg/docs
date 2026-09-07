@@ -51,6 +51,8 @@ export default defineConfig({
 						{ label: 'Uploading a Dataset', slug: 'web/uploading' },
 						{ label: 'Managing Your Datasets', slug: 'web/managing-datasets' },
 						{ label: 'Publication Review', slug: 'web/publication-review' },
+						{ label: 'Account Settings', slug: 'web/account-settings' },
+						{ label: 'Upload Access', slug: 'web/upload-access' },
 					],
 				},
 				{
@@ -86,10 +88,12 @@ export default defineConfig({
 							],
 						},
 						{
-							label: 'Configuration',
+							label: 'Reference',
 							items: [
 								{ label: 'Configuration', slug: 'cli/reference/configuration' },
 								{ label: 'Environment Variables', slug: 'cli/reference/environment' },
+								{ label: 'Account Access', slug: 'cli/reference/account-access' },
+								{ label: 'Debugging and Bug Reports', slug: 'cli/reference/debugging' },
 							],
 						},
 					],
