@@ -41,9 +41,10 @@ instrumentation, SSR contracts) in `nemar-cli` `AGENTS.md`, not here.
 Two scripts keep content in sync with the CLI; both are pure Bun/TypeScript (no Python):
 
 - **`scripts/generate-commands.ts`** — regenerates the command reference
-  (`commands/{auth,dataset,sandbox}.mdx`, `admin/commands.mdx`) by recursively
-  parsing the live `nemar … --help` tree. Run it after CLI changes. It expects
-  `nemar-cli` checked out as a sibling at `../nemar-cli`.
+  (`cli/commands/{auth,dataset,sandbox}.mdx`, `admin/commands.mdx`) by
+  recursively parsing the live `nemar … --help-all` tree. Run it after CLI
+  changes. It expects `nemar-cli` checked out as a sibling at `../nemar-cli`
+  by default; set `NEMAR_CLI_ENTRY` to point at a different checkout instead.
 - **`scripts/migrate-from-mkdocs.ts`** — one-time MkDocs → Starlight port
   (frontmatter, admonitions → asides, link fixups). Kept for reference; not part
   of the normal build.

@@ -23,7 +23,7 @@ git-annex + S3 data handling, GitHub metadata versioning, and DOI workflows behi
 
 ## Reference
 
-- [Command reference](/cli/commands/): generated from `nemar … --help`.
+- [Command reference](/cli/commands/): generated from `nemar … --help-all`.
 - [Configuration](/cli/reference/configuration/) and [Environment variables](/cli/reference/environment/).
 - [Account Access](/cli/reference/account-access/): `nemar auth profile`, requesting upload access, and your access tier.
 - [Debugging and Bug Reports](/cli/reference/debugging/): the `--debug` flag and filing an issue.
