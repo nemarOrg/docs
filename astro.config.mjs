@@ -12,6 +12,7 @@ export default defineConfig({
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
+			lastUpdated: true,
 			logo: {
 				light: './src/assets/nemar-logo-light.svg',
 				dark: './src/assets/nemar-logo-dark.svg',
@@ -23,6 +24,7 @@ export default defineConfig({
 			components: {
 				Footer: './src/components/Footer.astro',
 				Header: './src/components/Header.astro',
+				LastUpdated: './src/components/LastUpdated.astro',
 			},
 			plugins: [
 				starlightLinksValidator({

@@ -1,0 +1,54 @@
+---
+// Override of Starlight's default LastUpdated (registered as
+// `components.LastUpdated` in astro.config.mjs). Renders in the same footer
+// meta slot the default component uses (see
+// node_modules/@astrojs/starlight/components/Footer.astro), adding a
+// "Created" date ahead of Starlight's own last-updated line. Date formatting
+// matches the stock component exactly (see
+// node_modules/@astrojs/starlight/components/LastUpdated.astro).
+//
+// Sources:
+// - Last updated: `Astro.locals.starlightRoute.lastUpdated`, which already
+//   honors a frontmatter `lastUpdated: <date>` override and `lastUpdated: false`
+//   (see `@astrojs/starlight/utils/routing/data.ts`'s `getLastUpdated`).
+// - Created: the frontmatter `created` field when present, otherwise the
+//   file's oldest add commit via `../utils/page-dates`.
+//
+// Shallow-clone guard: in a shallow clone every file's first and last commit
+// collapse onto the graft boundary, so Starlight's own `lastUpdated` (and any
+// git lookup here) would be silently wrong rather than absent. When the repo
+// is shallow, render ONLY frontmatter-provided dates and ignore both git
+// sources entirely, deferring to `isRepositoryShallow()`'s once-per-build
+// warning.
+import { getCreatedDate, isRepositoryShallow } from '../utils/page-dates';
+
+const { lang, entry, lastUpdated } = Astro.locals.starlightRoute;
+
+const shallow = isRepositoryShallow();
+
+const created = entry.data.created ?? (shallow ? undefined : getCreatedDate(entry.filePath));
+
+const lastUpdatedDate = shallow
+	? entry.data.lastUpdated instanceof Date
+		? entry.data.lastUpdated
+		: undefined
+	: lastUpdated;
+
+const formatDate = (date: Date) => date.toLocaleDateString(lang, { dateStyle: 'medium', timeZone: 'UTC' });
+---
+
+{
+	created && (
+		<p>
+			Created <time datetime={created.toISOString()}>{formatDate(created)}</time>
+		</p>
+	)
+}
+{
+	lastUpdatedDate && (
+		<p>
+			{Astro.locals.t('page.lastUpdated')}{' '}
+			<time datetime={lastUpdatedDate.toISOString()}>{formatDate(lastUpdatedDate)}</time>
+		</p>
+	)
+}
