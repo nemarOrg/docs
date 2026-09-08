@@ -24,6 +24,7 @@ export default defineConfig({
 			components: {
 				Footer: './src/components/Footer.astro',
 				Header: './src/components/Header.astro',
+				LastUpdated: './src/components/LastUpdated.astro',
 			},
 			plugins: [
 				starlightLinksValidator({
