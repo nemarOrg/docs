@@ -11,7 +11,7 @@ git-annex + S3 data handling, GitHub metadata versioning, and DOI workflows behi
 
 - [Installation](/cli/getting-started/installation/): install with Bun and check your environment.
 - [Quick Start](/cli/getting-started/quickstart/): sign up, verify your email, and upload your first dataset.
-- [Authentication](/cli/getting-started/authentication/): API keys, accounts, and requesting upload access.
+- [Authentication](/cli/getting-started/authentication/): sign in with your browser, the headless case, and a named key per machine.
 
 ## Guides
 
