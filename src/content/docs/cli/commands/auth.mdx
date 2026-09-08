@@ -5,7 +5,7 @@ title: "auth"
 Authentication and account management.
 
 :::note
-This page is generated from `nemar auth --help`. Run `generate-commands.ts` to refresh it.
+This page is generated from `nemar auth --help-all`. Run `generate-commands.ts` to refresh it.
 :::
 
 ## auth
@@ -16,25 +16,135 @@ Usage: nemar auth [options] [command]
 Authentication management
 
 Options:
-  -h, --help           display help for command
+  -h, --help                       display help for command
 
 Commands:
-  help [command]       display help for command
-  login [options]      Authenticate with your NEMAR API key
-  logout [options]     Remove the active account (use --all to remove all)
-  regenerate-key       Request a new API key (revokes current key, requires
-                       email verification)
-  resend-verification  Resend email verification link
-  retrieve-key         Retrieve your API key after account approval (requires
-                       email and password)
-  setup-ssh [options]  Configure SSH access for GitHub (optional, gh CLI
-                       preferred)
-  signup               Register for a new NEMAR account
-  status [options]     Check current authentication status
-  switch [username]    Switch between stored accounts
-  whoami [options]     Show current user (alias for status)
+  help [command]                   display help for command
+  keys                             List, create, or revoke this account's named
+                                   API keys
+  login [options]                  Sign in with your browser (opens NEMAR's
+                                   device sign-in page)
+  logout [options]                 Remove the active account (use --all to
+                                   remove all)
+  profile                          Show your account identifiers and where to
+                                   change each
+  regenerate-key                   Request a new API key (revokes current key,
+                                   requires email verification)
+  request-upload-access [options]  Ask an admin for upload access (one-time)
+  resend-verification              Resend email verification link
+  retrieve-key                     Retrieve your API key once your email is
+                                   verified (requires email and password)
+  setup-ssh [options]              Configure SSH access for GitHub (optional,
+                                   gh CLI preferred)
+  signup [options]                 Create or continue your NEMAR account
+                                   (browser sign-in, then a few questions)
+  status [options]                 Check current authentication status
+  switch [username]                Switch between stored accounts
+  whoami [options]                 Show current user (alias for status)
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Manage your NEMAR account authentication. New users sign in with their
+  browser (ORCID creates the account); that activates it (browse, download,
+  API key, sandbox training). Uploading datasets additionally needs upload
+  access, a one-time admin approval 'nemar auth signup' requests for you
+  once your profile is complete.
+
+Workflow:
+  1. nemar auth signup   - Browser sign-in; ORCID creates the account, then
+                            a few questions for whatever is still missing
+  2. Verify your email   - Click the link NEMAR sends you
+  3. nemar sandbox        - Complete sandbox training before your first upload
+
+Keys:
+  Every browser-based 'nemar auth login' names a key for the machine it
+  runs on (list/create/revoke the whole set with 'nemar auth keys'); the
+  -k/--key or NEMAR_API_KEY path stores the key you paste and mints
+  nothing new. 'retrieve-key' and 'regenerate-key' still work for a
+  password-era account but are deprecated; 'nemar auth login' is the
+  replacement for both.
+
+Examples:
+  $ nemar auth signup                    # Sign in with your browser; complete your profile
+  $ nemar auth login                     # Sign in with your browser
+  $ nemar auth login -k <api-key>        # Paste an existing key instead
+  $ nemar auth keys                      # List this account's named keys
+  $ nemar auth status --refresh          # Check authentication status
+  $ nemar auth whoami                    # Alias for status
+  $ nemar auth switch                    # Switch between accounts
+  $ nemar auth logout                    # Clear active account
+  $ nemar auth logout --all              # Clear all accounts
+```
+
+### auth keys
+
+```text
+Usage: nemar auth keys [options] [command]
+
+List, create, or revoke this account's named API keys
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  create <name>         Mint a named key -- the paste-key fallback for a
+                        machine without a browser
+  list                  List this account's live keys (same as 'nemar auth
+                        keys')
+  revoke <idOrCurrent>  Revoke a key by id, or 'current' for this machine's own
+
+Description:
+  Every named key on this account: one minted per machine by a
+  browser-based 'nemar auth login' (the -k/--key or NEMAR_API_KEY path
+  stores the key you paste and mints nothing new), plus any created here
+  for a machine that cannot open a browser.
+
+  'nemar auth login'/'logout' already cover the common case -- this
+  machine's own key; use this group to look at or manage the whole set.
+
+Examples:
+  $ nemar auth keys                       # List (default action)
+  $ nemar auth keys create build-box      # Mint a key for a headless host
+  $ nemar auth keys revoke 12             # Revoke by id
+  $ nemar auth keys revoke current        # Revoke this machine's own key
+```
+
+#### auth keys create
+
+```text
+Usage: nemar auth keys create [options] <name>
+
+Mint a named key -- the paste-key fallback for a machine without a browser
+
+Arguments:
+  name        A name for the machine this key is for
+
+Options:
+  -h, --help  display help for command
+```
+
+#### auth keys list
+
+```text
+Usage: nemar auth keys list [options]
+
+List this account's live keys (same as 'nemar auth keys')
+
+Options:
+  -h, --help  display help for command
+```
+
+#### auth keys revoke
+
+```text
+Usage: nemar auth keys revoke [options] <idOrCurrent>
+
+Revoke a key by id, or 'current' for this machine's own
+
+Arguments:
+  idOrCurrent  A key id, or 'current'
+
+Options:
+  -h, --help   display help for command
 ```
 
 ### auth login
@@ -42,15 +152,34 @@ Commands:
 ```text
 Usage: nemar auth login [options]
 
-Authenticate with your NEMAR API key
+Sign in with your browser (opens NEMAR's device sign-in page)
 
 Options:
-  -k, --key <key>  API key (alternative: set NEMAR_API_KEY env var)
+  -k, --key <key>  Paste an existing API key instead (alternative:
+                   NEMAR_API_KEY)
+  --no-open        Print the sign-in link instead of trying to open a browser
   -y, --yes        Skip confirmation and proceed
   -n, --no         Skip confirmation and decline
   -h, --help       display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Prints a link and a code, tries to open your browser to it, then waits
+  for you to authorize this machine there. The link and code are the real
+  mechanism -- on a headless or remote host, copy the link into any
+  browser; the browser attempt is only a convenience.
+
+  Use --key (or set NEMAR_API_KEY) to paste an existing key instead, for a
+  host that cannot poll or open a browser at all. It is validated with the
+  backend before anything is written.
+
+Environment Variables:
+  NEMAR_API_KEY      An API key to use with --key
+  NEMAR_NO_BROWSER=1 Never try to open a browser (same as --no-open)
+
+Examples:
+  $ nemar auth login                     # Browser sign-in
+  $ nemar auth login --no-open           # Print the link only (headless)
+  $ nemar auth login -k nemar_abc123...  # Paste an existing key
 ```
 
 ### auth logout
@@ -61,10 +190,264 @@ Usage: nemar auth logout [options]
 Remove the active account (use --all to remove all)
 
 Options:
-  -y, --yes   Skip confirmation and proceed
-  -n, --no    Skip confirmation and decline
-  --all       Remove all stored accounts
+  -y, --yes        Skip confirmation and proceed
+  -n, --no         Skip confirmation and decline
+  --all            Remove all stored accounts
+  --revoke-key     Revoke this machine's key even if it may be shared
+  --no-revoke-key  Never revoke the key server-side, only clear it locally
+  -h, --help       display help for command
+
+Description:
+  Clears the active account's credential from this machine. A key this
+  machine's own 'nemar auth login' minted (device sign-in) is also revoked
+  server-side by default, since it is not used anywhere else; a pasted or
+  password-era key may be shared with other machines and is kept -- revoke
+  it deliberately with 'nemar auth keys revoke' or in Settings on nemar.org.
+
+Examples:
+  $ nemar auth logout                # Remove the active account
+  $ nemar auth logout --no-revoke-key # Clear locally, keep the key valid
+  $ nemar auth logout --all          # Remove every stored account
+```
+
+### auth profile
+
+```text
+Usage: nemar auth profile [options] [command]
+
+Show your account identifiers and where to change each
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  orcid [options] <action>       Link, re-link, or unlink your ORCID iD (link
+                                 opens a browser)
+  set-email <address>            Start an email change: mails a confirmation
+                                 code to the new address
+  set-github <handle>            Set the GitHub username on your account
+  set-location [options]         Set the city and country on your account
+  set-name [options]             Set the given and family name your DOIs cite
+  set-username <name>            Set your NEMAR username (locked once an admin
+                                 approves the account)
+  verify-email [options] <code>  Finish an email change with the code sent to
+                                 the new address
+
+Description:
+  Prints the identifiers on your account — username, name, email, GitHub
+  username, ORCID iD — with the verification state of the email and the
+  ORCID link, your access tier, and whether upload access has been granted.
+
+  Always fetched from the server, never from the local config cache: this is
+  the command you run before changing something, so a stale answer is worse
+  than no answer.
+
+  Each of the ORCID iD, the email address, and the GitHub username backs at
+  most one NEMAR account. A second sign-up with any of them is refused rather
+  than creating a duplicate; the fix is to change the identifier on the
+  account that already holds it.
+
+Subcommands (the same changes Settings on nemar.org makes):
+  set-email <address>     mail a code to a new address, then verify-email
+  verify-email <code>     finish the change
+  set-username <name>     set your NEMAR handle (locked once approved)
+  set-name                --given / --family (ORCID wins when a verified iD is linked)
+  set-github <handle>     set the GitHub username (checked against GitHub)
+  set-location            --city / --country
+  orcid link|relink|unlink   opens a browser for ORCID's consent screen
+
+Examples:
+  $ nemar auth profile
+  $ nemar auth profile set-email ada@lab.example.org
+  $ nemar auth profile orcid link
+```
+
+#### auth profile orcid
+
+```text
+Usage: nemar auth profile orcid [options] <action>
+
+Link, re-link, or unlink your ORCID iD (link opens a browser)
+
+Options:
+  --no-open            Print the URL instead of opening a browser
+  --timeout <seconds>  How long to wait for the browser flow to finish
+                       (default: 300)
+  -y, --yes            Skip the confirmation prompt (unlink)
+  -n, --no             Decline the confirmation prompt (unlink)
+  -h, --help           display help for command
+
+Description:
+  ORCID stays a browser flow: the consent screen is ORCID's, and no NEMAR
+  command should ever ask for an ORCID password. This mints a short-lived link
+  for THIS account, opens it if it can, and then waits for the iD to appear.
+
+  link     attach an ORCID iD to an account that has none
+  relink   replace the linked iD with a different one
+  unlink   remove the link (and the iD this account claims)
+
+  An iD backs at most one NEMAR account. If it is already linked elsewhere,
+  unlink it there first.
+
+  The link URL is printed whether or not a browser opens, so a headless or
+  remote machine is a copy-and-paste rather than a dead end. Pass --no-open,
+  or set NEMAR_NO_BROWSER=1, to stop the CLI reaching for a browser at all.
+
+  Opening the link shows a NEMAR page naming the account it will link to
+  before it sends you to ORCID. If that account is not yours, close the tab:
+  the link was made by somebody else and would attach YOUR iD to THEIR
+  account. A link can only be used once.
+
+  --timeout is a whole number of seconds (default 300); the wait stops early
+  if your credentials stop working or the API becomes unreachable.
+
+Examples:
+  $ nemar auth profile orcid link
+  $ nemar auth profile orcid relink --no-open
+  $ nemar auth profile orcid unlink --yes
+```
+
+#### auth profile set-email
+
+```text
+Usage: nemar auth profile set-email [options] <address>
+
+Start an email change: mails a confirmation code to the new address
+
+Options:
   -h, --help  display help for command
+
+Description:
+  Step one of changing the email address your NEMAR account signs in with.
+  A 6-digit code goes to the NEW address; nothing changes until you enter it
+  with 'nemar auth profile verify-email'. The old address is told once the
+  change lands, so a change you did not make is visible to you.
+
+  An address that already belongs to a NEMAR account is refused: one person,
+  one account. Change it on the account that holds it instead.
+
+  Your API key keeps working across the change -- it is tied to the account,
+  not to the address.
+
+Examples:
+  $ nemar auth profile set-email ada@lab.example.org
+  $ nemar auth profile verify-email 123456
+```
+
+#### auth profile set-github
+
+```text
+Usage: nemar auth profile set-github [options] <handle>
+
+Set the GitHub username on your account
+
+Options:
+  -h, --help  display help for command
+
+Description:
+  Sets the GitHub username your dataset repositories are shared with. The
+  handle must EXIST on GitHub -- it is looked up before it is stored -- and it
+  may back only one NEMAR account.
+
+  Ownership is not proved here: what matters for a review is that the account
+  an admin will add as a collaborator resolves.
+
+Examples:
+  $ nemar auth profile set-github octocat
+```
+
+#### auth profile set-location
+
+```text
+Usage: nemar auth profile set-location [options]
+
+Set the city and country on your account
+
+Options:
+  --city <city>        City
+  --country <country>  Country
+  -h, --help           display help for command
+
+Description:
+  City and country are required for the export-control screening an admin
+  does before granting upload access, so an upload-access request is refused
+  without them. Neither may be blank.
+
+Examples:
+  $ nemar auth profile set-location --city "San Diego" --country USA
+```
+
+#### auth profile set-name
+
+```text
+Usage: nemar auth profile set-name [options]
+
+Set the given and family name your DOIs cite
+
+Options:
+  --given <name>   Given (first) name
+  --family <name>  Family (last) name
+  -h, --help       display help for command
+
+Description:
+  The name a DOI cites you by. Both halves are required before a dataset can
+  be published, which is why this is settable at all.
+
+  It is refused while a VERIFIED ORCID iD is linked: ORCID is canonical there
+  and its record is re-read on every sign-in, so an edit here would be
+  silently overwritten. Change it at orcid.org and sign in again, or unlink
+  the iD first.
+
+Examples:
+  $ nemar auth profile set-name --given Ada --family Lovelace
+```
+
+#### auth profile set-username
+
+```text
+Usage: nemar auth profile set-username [options] <name>
+
+Set your NEMAR username (locked once an admin approves the account)
+
+Options:
+  -h, --help  display help for command
+
+Description:
+  Your NEMAR handle: what 'nemar admin approve <username>' addresses and what
+  the dataset repositories you own are attributed to.
+
+  It can be set while it is empty at any time, and CHANGED until an admin
+  approves your account -- after that a rename needs an admin, because other
+  records already point at it.
+
+Examples:
+  $ nemar auth profile set-username alovelace
+```
+
+#### auth profile verify-email
+
+```text
+Usage: nemar auth profile verify-email [options] <code>
+
+Finish an email change with the code sent to the new address
+
+Options:
+  --email <address>  The address the code was sent to (defaults to the last
+                     requested)
+  -h, --help         display help for command
+
+Description:
+  Step two of an email change. The code is bound to BOTH the new address and
+  your account, so a code from someone else's request cannot be redeemed here,
+  and five wrong guesses invalidate it -- request a new one with
+  'nemar auth profile set-email'.
+
+  The address is remembered from the set-email step; pass --email if you are
+  finishing a change started on another machine.
+
+Examples:
+  $ nemar auth profile verify-email 123456
+  $ nemar auth profile verify-email 123456 --email ada@lab.example.org
 ```
 
 ### auth regenerate-key
@@ -77,7 +460,50 @@ Request a new API key (revokes current key, requires email verification)
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Deprecated: password sign-in is being removed in favor of 'nemar auth
+  login' (browser device sign-in). This command still works for a
+  password-era account in the meantime.
+
+  If you lost your API key or it was compromised, use this command to
+  request a new one. A verification email will be sent to confirm the
+  request. Clicking the link will:
+
+  1. Revoke your current API key ON EVERY MACHINE, not just this one --
+     use 'nemar auth keys revoke' instead to remove only one machine's key
+  2. Generate a new API key (shown in the browser)
+  3. You will need to login again with the new key
+
+Examples:
+  $ nemar auth regenerate-key
+```
+
+### auth request-upload-access
+
+```text
+Usage: nemar auth request-upload-access [options]
+
+Ask an admin for upload access (one-time)
+
+Options:
+  --why <text>  What you intend to upload (20-500 characters)
+  -h, --help    display help for command
+
+Description:
+  Uploading datasets needs upload access: a one-time grant an admin makes
+  after reviewing who you are and where you are. Verifying your email is
+  not enough on its own, and nothing grants it automatically.
+
+  Before asking, your account needs a username, your given and family name,
+  a GitHub username that exists, and your city and country. Set them in
+  Settings on nemar.org; the request tells you which ones are missing.
+
+  Asking twice does nothing: while a request is open the command reports
+  that and no second message reaches the admins.
+
+Examples:
+  $ nemar auth request-upload-access
+  $ nemar auth request-upload-access --why "Sharing our lab's 64-channel EEG study of motor imagery"
 ```
 
 ### auth resend-verification
@@ -96,12 +522,26 @@ Options:
 ```text
 Usage: nemar auth retrieve-key [options]
 
-Retrieve your API key after account approval (requires email and password)
+Retrieve your API key once your email is verified (requires email and password)
 
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Deprecated: password sign-in is being removed in favor of 'nemar auth
+  login' (browser device sign-in). This command still works for a
+  password-era account in the meantime.
+
+  Once you have verified your email address, use this command to securely
+  retrieve your API key. You will need the email and password you used
+  during signup. No admin approval is needed for the key; approval is the
+  separate, one-time grant that lets you upload datasets.
+
+  API keys are not sent via email for security. This is the only way
+  to obtain your key.
+
+Examples:
+  $ nemar auth retrieve-key
 ```
 
 ### auth setup-ssh
@@ -115,7 +555,18 @@ Options:
   -f, --force  Regenerate SSH key even if one exists
   -h, --help   display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Configures SSH access for GitHub as an alternative to gh CLI (HTTPS).
+  Most users should use 'gh auth login' instead; SSH is only needed if
+  you cannot use the GitHub CLI.
+
+  1. Generate a dedicated Ed25519 SSH key for NEMAR (~/.ssh/nemar_ed25519)
+  2. Configure SSH to use this key for GitHub
+  3. Verify the connection (prompts you to add the key to GitHub if needed)
+
+Examples:
+  $ nemar auth setup-ssh          # Set up SSH access
+  $ nemar auth setup-ssh --force  # Regenerate key even if exists
 ```
 
 ### auth signup
@@ -123,10 +574,36 @@ Options:
 ```text
 Usage: nemar auth signup [options]
 
-Register for a new NEMAR account
+Create or continue your NEMAR account (browser sign-in, then a few questions)
 
 Options:
-  -h, --help  display help for command
+  --username <name>    Username to set, or to change to
+  --github <handle>    GitHub username
+  --city <city>        City
+  --country <country>  Country
+  --why <text>         What you intend to upload (20-500 characters)
+  --no-upload-access   Skip the upload-access request
+  --no-open            Print the sign-in link instead of trying to open a
+                       browser
+  -y, --yes            Skip confirmation and proceed
+  -n, --no             Skip confirmation and decline
+  -h, --help           display help for command
+
+Description:
+  Signs in with your browser like 'nemar auth login' -- ORCID creates a
+  brand-new account the first time, or signs into an existing one. Then
+  asks only what 'profile_gaps' says is still missing: a username (kept or
+  changed if the server already assigned one), a GitHub handle, city, and
+  country. Anything the CLI cannot set -- a name under a verified ORCID iD,
+  for instance -- is reported, never prompted for.
+
+  Ends by requesting upload access, unless --no-upload-access.
+
+Examples:
+  $ nemar auth signup
+  $ nemar auth signup --no-open
+  $ nemar auth signup --github octocat --city "San Diego" --country USA \
+      --why "Sharing our lab's 64-channel EEG study of motor imagery"
 ```
 
 ### auth status
@@ -151,7 +628,16 @@ Switch between stored accounts
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Switch the active NEMAR account. You can specify a NEMAR username or
+  GitHub username. If no username is given, an interactive picker is shown.
+
+  Switching also updates the GitHub CLI (gh) to the matching account.
+
+Examples:
+  $ nemar auth switch              # Interactive picker
+  $ nemar auth switch yahya        # Switch by NEMAR username
+  $ nemar auth switch cool-vibers  # Switch by GitHub username
 ```
 
 ### auth whoami

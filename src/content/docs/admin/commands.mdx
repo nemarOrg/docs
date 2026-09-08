@@ -5,7 +5,7 @@ title: "admin"
 Administrative operations (requires admin privileges).
 
 :::note
-This page is generated from `nemar admin --help`. Run `generate-commands.ts` to refresh it.
+This page is generated from `nemar admin --help-all`. Run `generate-commands.ts` to refresh it.
 :::
 
 ## admin
@@ -19,46 +19,155 @@ Options:
   -h, --help                                  display help for command
 
 Commands:
-  approve [options] <username>                Approve a pending user
+  approve [options] [username]                Approve a pending user
+  availability-report [options] [dataset-id]  Report how much of a dataset's declared data is present in S3, and exactly which files are missing + why (#1000). Dry-run by default. --all backfills every managed dataset (#1001).
+  backfill-names [options]                    Fill missing researcher names from users' public ORCID records (dry run by default)
+  backfill-usernames [options]                Give username-less accounts a username from their name (dry run by default)
   bulk-delete [options] <dataset-ids>         Delete multiple phantom/orphaned datasets at once (owner only)
   ci                                          CI workflow management
+  data-integrity-sweep [options]              Audit datasets against their version manifest and backfill data_complete / bytes_present (epic #967 Phase 3, #970)
   delete-dataset [options] <dataset-id>       Delete a dataset and all associated resources (GitHub, S3, D1)
+  doctor                                      Diagnose and heal stuck-dataset patterns (e.g. missing S3 version manifests)
   doi                                         DOI management
+  duplicates [options]                        Report live accounts sharing an ORCID iD, email, or GitHub handle
   e2e-test [options]                          Run end-to-end test against nm099999 (admin only)
   email-preferences                           Manage email notification preferences
+  exemplar                                    Clone public nm/on datasets into staging exemplars (xx099900-xx099999)
+  fleet                                       Governance drift reporting and enforcement (epic #713)
+  hed-sweep [options]                         Backfill HED detection (has_hed / hed_version) for existing datasets (#869)
   help [command]                              display help for command
+  import                                      View and recover OpenNeuro import jobs
   import-openneuro [options] <openneuro-ids>  Import an OpenNeuro dataset into NEMAR
+  keys                                        Manage API keys for service/test accounts (owner only)
+  kind [options] <username> <kind>            Change a user's account kind (owner only)
   make-public <dataset-id>                    Publish a dataset (make repository and data public) - PERMANENT
   notice                                      Manage system notices displayed to CLI users
   notify [options]                            Send an email to a group or a single user
   publish                                     Publication workflow management
-  reindex [options] [dataset-id]              Refresh dataset metadata: enrichment + nemar.org sync + first-class D1 columns
+  recording-stats-sweep [options]             Backfill dataset-level recording duration/count/channel-range stats from each dataset's zarr index (migration 0070, #1146)
+  recover [options] [ids...]                  Re-copy epic #967 OpenNeuro imports published with 0-byte content, whose upstream is accessible (Phase 5, #972). Dry-run by default.
+  reindex [options] [dataset-id]              Refresh dataset metadata: enrichment + first-class D1 columns
   repo                                        Repository visibility management
+  restore [options] [ids...]                  Reverse a withdrawal: make a dataset public again and restore its EZID DOIs (concept + every version). Dry-run by default.
   revert [options] <dataset-id> [version]     Revert a dataset to a previous version (creates PR for review)
-  revoke [options] <username>                 Revoke user access
+  revoke [options] [username]                 Revoke user access
   role [options] <username> <role>            Change a user's role (owner only)
   s3                                          S3 and IAM credential management
+  signal-defaults-sweep [options]             Backfill BIDS signal defaults (sampling frequency, power line frequency, EEG reference, placement scheme) from each dataset's exemplar sidecar (migrations 0072/0073, #1153)
   summary                                     summary.json coverage across published dataset versions
-  sync                                        Sync dataset metadata to nemar.org datapipeline
   users [options]                             List NEMAR users
+  withdraw [options] [ids...]                 Withdraw a broken published dataset: make it private and tombstone its EZID DOIs (concept + every version). Dry-run by default.
+  zarr-catalog                                Top-level Zarr discovery catalog (zarr-catalog.json)
+  zarr-fidelity-sweep [options]               Re-verify published Zarr stores against their dataset's own BIDS metadata (#1068)
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Administrative commands for managing NEMAR users and datasets.
+  These commands require admin privileges.
+
+User Management:
+  users          - List users and their status
+  approve        - Approve a pending user registration
+  revoke         - Revoke user access
+  role           - Change a user's role (owner only: owner > admin > member)
+
+Dataset Management:
+  repo            - Manage repository visibility (public/private)
+  ci              - Manage CI workflows (check status, deploy)
+  s3              - S3/IAM credential management
+  doi             - Create and manage DOIs for datasets
+  publish         - Publication workflow management
+  revert          - Revert dataset to previous version (via PR)
+  make-public     - Publish a dataset (permanent, irreversible)
+  delete-dataset    - Delete a dataset and all associated resources
+  import-openneuro  - Import an OpenNeuro dataset into NEMAR
+  withdraw          - Withdraw a broken published dataset (private + DOI tombstone), reversible
+  restore           - Reverse a withdrawal (public + DOI restore)
+
+Examples:
+  $ nemar admin users --verified           # List users awaiting approval
+  $ nemar admin users --role admin         # List all admins
+  $ nemar admin approve john_doe           # Approve a user
+  $ nemar admin approve --id 123           # Approve a web/ORCID user (no username)
+  $ nemar admin role john_doe admin        # Promote user to admin (owner only)
+  $ nemar admin repo public nm000104       # Make dataset repo public
+  $ nemar admin ci check nm000104          # Check CI status
+  $ nemar admin s3 regenerate-iam john_doe # Regenerate AWS credentials
+  $ nemar admin doi create nm000104        # Create concept DOI
 ```
 
 ### admin approve
 
 ```text
-Usage: nemar admin approve [options] <username>
+Usage: nemar admin approve [options] [username]
 
 Approve a pending user
 
 Arguments:
-  username    Username to approve
+  username    Username to approve (CLI accounts)
 
 Options:
+  --id <id>   Approve by numeric user id (web/ORCID accounts have no username)
   -y, --yes   Skip confirmation and proceed
   -n, --no    Skip confirmation and decline
   -h, --help  display help for command
+```
+
+### admin availability-report
+
+```text
+Usage: nemar admin availability-report [options] [dataset-id]
+
+Report how much of a dataset's declared data is present in S3, and exactly
+which files are missing + why (#1000). Dry-run by default. --all backfills
+every managed dataset (#1001).
+
+Arguments:
+  dataset-id      Dataset ID (e.g., nm000103)
+
+Options:
+  --write         Commit the report to .nemar/availability-report.json on main
+                  (default: preview only)
+  --all           Backfill every managed dataset instead of a single one
+                  (#1001)
+  --missing-only  With --all, sweep only datasets already known incomplete
+                  (data_complete=0)
+  --limit <n>     With --all, datasets per batch (server clamps to [1,10])
+                  (default: "10")
+  --reset         With --all, clear every stamped sweep row so it re-sweeps
+                  from scratch
+  --verbose       With --all, print per-batch progress
+  --json          Output raw JSON
+  -h, --help      display help for command
+```
+
+### admin backfill-names
+
+```text
+Usage: nemar admin backfill-names [options]
+
+Fill missing researcher names from users' public ORCID records (dry run by
+default)
+
+Options:
+  --apply      Write the names (without this flag, only report what would
+               change)
+  --limit <n>  Users per batch (server clamps to [1,100]) (default: "25")
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
+```
+
+### admin backfill-usernames
+
+```text
+Usage: nemar admin backfill-usernames [options]
+
+Give username-less accounts a username from their name (dry run by default)
+
+Options:
+  --apply      Write the usernames and send verification messages
+  --limit <n>  Users per batch (server clamps to [1,100]) (default: "25")
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
 ```
 
 ### admin bulk-delete
@@ -162,6 +271,30 @@ Options:
   -h, --help  display help for command
 ```
 
+### admin data-integrity-sweep
+
+```text
+Usage: nemar admin data-integrity-sweep [options]
+
+Audit datasets against their version manifest and backfill data_complete /
+bytes_present (epic #967 Phase 3, #970)
+
+Options:
+  --limit <n>          Datasets per batch (server clamps to [1,30]) (default:
+                       "15")
+  --older-than <days>  Also re-audit rows checked more than N days ago
+                       (periodic re-audit, not just the one-shot drain)
+  --reaudit            Re-verify every already-checked row using an anchored
+                       cutoff so the sweep fully converges to 0 (unlike
+                       --older-than's moving now()-relative window, which never
+                       reaches 0 on its own)
+  --reset              Clear every audited row so a corrected verifier can
+                       re-sweep
+  --verbose            Print per-batch progress
+  --json               Output raw JSON instead of the human summary
+  -h, --help           display help for command
+```
+
 ### admin delete-dataset
 
 ```text
@@ -175,6 +308,56 @@ Arguments:
 Options:
   --force     Force deletion of published datasets with DOIs (owner only)
   -h, --help  display help for command
+```
+
+### admin doctor
+
+```text
+Usage: nemar admin doctor [options] [command]
+
+Diagnose and heal stuck-dataset patterns (e.g. missing S3 version manifests)
+
+Options:
+  -h, --help                          display help for command
+
+Commands:
+  fix [options] <check> [dataset-id]  Apply a check's remediation (writes; use
+                                      --dry-run first)
+  help [command]                      display help for command
+  scan [options] [dataset-id]         Run diagnostic checks (read-only)
+```
+
+#### admin doctor fix
+
+```text
+Usage: nemar admin doctor fix [options] <check> [dataset-id]
+
+Apply a check's remediation (writes; use --dry-run first)
+
+Arguments:
+  check       Check name (see: nemar admin doctor scan)
+  dataset-id  Narrow to one dataset
+
+Options:
+  --dry-run   List what would be fixed without writing
+  --json      Output raw JSON instead of the human summary
+  -h, --help  display help for command
+```
+
+#### admin doctor scan
+
+```text
+Usage: nemar admin doctor scan [options] [dataset-id]
+
+Run diagnostic checks (read-only)
+
+Arguments:
+  dataset-id      Narrow the scan to one dataset
+
+Options:
+  --check <name>  Run a single check (default: all checks)
+  --json          Output raw JSON instead of the human summary
+  -h, --help      display help for command
 ```
 
 ### admin doi
@@ -261,11 +444,29 @@ Arguments:
 
 Options:
   --make-public  Transition DOI from reserved to public (permanent)
+  --unavailable  Tombstone the concept DOI (EZID _status=unavailable);
+                 concept-only, reversible via --make-public. For a full
+                 withdrawal (visibility + every version DOI) use 'nemar admin
+                 withdraw' instead.
   --refresh      Refresh metadata from dataset_description.json and
                  .nemar/metadata.json
   -y, --yes      Skip confirmation and proceed
   -n, --no       Skip confirmation and decline
   -h, --help     display help for command
+```
+
+### admin duplicates
+
+```text
+Usage: nemar admin duplicates [options]
+
+Report live accounts sharing an ORCID iD, email, or GitHub handle
+
+Options:
+  --json        Output raw JSON instead of the human report
+  --clear <id>  Clear one account's identity-conflict flag (refuses while the
+                collision remains)
+  -h, --help    display help for command
 ```
 
 ### admin e2e-test
@@ -281,7 +482,28 @@ Options:
   --skip-cleanup  Keep temp directories after test
   -h, --help      display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Runs a full upload/download/update cycle against the test dataset nm099999.
+  Tests the complete git-annex S3 remote workflow with real infrastructure.
+
+Steps:
+   1. Reset nm099999          6. Push to GitHub
+   2. Prepare upload           7. Clone fresh
+   3. Init git + annex         8. Download + verify
+   4. Configure remotes        9. Update cycle
+   5. Upload to S3            10. Cleanup
+
+Requirements:
+  - Admin privileges (API role check)
+  - git-annex installed
+  - GitHub CLI authenticated (gh auth login)
+  - Active nemar auth session
+
+Examples:
+  $ nemar admin e2e-test                    # Full test
+  $ nemar admin e2e-test --verbose          # With detailed output
+  $ nemar admin e2e-test --skip-cleanup     # Keep temp dirs for inspection
+  $ nemar admin e2e-test --skip-reset       # Reuse existing nm099999 state
 ```
 
 ### admin email-preferences
@@ -296,7 +518,7 @@ Options:
 
 Commands:
   help [command]    display help for command
-  show              Show current email notification preferences
+  show [options]    Show email notification preferences
   update [options]  Update email notification preferences
 ```
 
@@ -305,10 +527,11 @@ Commands:
 ```text
 Usage: nemar admin email-preferences show [options]
 
-Show current email notification preferences
+Show email notification preferences
 
 Options:
-  -h, --help  display help for command
+  --user <username>  (owner only) show another user's preferences
+  -h, --help         display help for command
 ```
 
 #### admin email-preferences update
@@ -324,7 +547,256 @@ Options:
                                 notifications
   --announcements <bool>        Enable/disable announcement emails
   --all <bool>                  Enable/disable all notifications
+  --user <username>             (owner only) update another user's preferences
   -h, --help                    display help for command
+```
+
+### admin exemplar
+
+```text
+Usage: nemar admin exemplar [options] [command]
+
+Clone public nm/on datasets into staging exemplars (xx099900-xx099999)
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  create [options] [xx-id]  Clone a public NEMAR dataset into a staging
+                            exemplar
+  help [command]            display help for command
+  remint-dois <xx-id>       Re-mint an exemplar's sandbox concept DOI
+                            (idempotent)
+  status [options]          Show which fleet entries have been cloned and their
+                            current state
+```
+
+#### admin exemplar create
+
+```text
+Usage: nemar admin exemplar create [options] [xx-id]
+
+Clone a public NEMAR dataset into a staging exemplar
+
+Arguments:
+  xx-id                Exemplar dataset id (e.g., xx099900); omit with --all
+
+Options:
+  --source <id>        Source nm/on dataset id to clone (overrides the fleet
+                       file)
+  --all                Clone every entry in the fleet file
+  --fleet-file <path>  Path to the fleet JSON (default:
+                       scripts/exemplar-fleet.json)
+  --publish            Request and approve publication after data lands (mints
+                       a sandbox DOI)
+  --include-derived    Also copy zarr/, archives/, and records.json derived
+                       artifacts
+  -h, --help           display help for command
+```
+
+#### admin exemplar remint-dois
+
+```text
+Usage: nemar admin exemplar remint-dois [options] <xx-id>
+
+Re-mint an exemplar's sandbox concept DOI (idempotent)
+
+Arguments:
+  xx-id       Exemplar dataset id (e.g., xx099900)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin exemplar status
+
+```text
+Usage: nemar admin exemplar status [options]
+
+Show which fleet entries have been cloned and their current state
+
+Options:
+  --fleet-file <path>  Path to the fleet JSON (default:
+                       scripts/exemplar-fleet.json)
+  -h, --help           display help for command
+```
+
+### admin fleet
+
+```text
+Usage: nemar admin fleet [options] [command]
+
+Governance drift reporting and enforcement (epic #713)
+
+Options:
+  -h, --help                         display help for command
+
+Commands:
+  drift [options]                    Report dataset repos that are off the
+                                     governance spec
+  enforce [options] [dataset-id]     Bring dataset repos to the governance spec
+                                     (single or --all). Dry-run by default.
+  help [command]                     display help for command
+  revalidate [options] [dataset-id]  Re-run BIDS validation on main HEAD for
+                                     unprotected datasets, then optionally
+                                     enforce (epic #713)
+```
+
+#### admin fleet drift
+
+```text
+Usage: nemar admin fleet drift [options]
+
+Report dataset repos that are off the governance spec
+
+Options:
+  --prefix <prefix>   Filter datasets by id prefix (e.g. nm, on)
+  --visibility <vis>  Filter by visibility: public or private
+  --limit <n>         Max repos to scan (default 25, max 50) (default: "25")
+  --json              Output raw JSON
+  -h, --help          display help for command
+```
+
+#### admin fleet enforce
+
+```text
+Usage: nemar admin fleet enforce [options] [dataset-id]
+
+Bring dataset repos to the governance spec (single or --all). Dry-run by
+default.
+
+Arguments:
+  dataset-id          Dataset to enforce (omit when using --all)
+
+Options:
+  --all               Bulk enforce across a filtered set (owner-only)
+  --apply             Actually apply changes (default is a dry run)
+  --prefix <prefix>   Bulk: filter by id prefix
+  --visibility <vis>  Bulk: filter by visibility (public|private)
+  --limit <n>         Bulk: max repos (default 25, max 50) (default: "25")
+  --json              Output raw JSON
+  -h, --help          display help for command
+```
+
+#### admin fleet revalidate
+
+```text
+Usage: nemar admin fleet revalidate [options] [dataset-id]
+
+Re-run BIDS validation on main HEAD for unprotected datasets, then optionally
+enforce (epic #713)
+
+Arguments:
+  dataset-id         Dataset to revalidate (omit when using --all/--prefix)
+
+Options:
+  --all              Revalidate across unprotected public datasets
+  --prefix <prefix>  Filter by id prefix (with --all), e.g. nm000 / on
+  --enforce          After a dataset goes green, run enforce (dry-run unless
+                     --apply)
+  --apply            With --enforce, actually apply the ruleset (default is a
+                     dry run)
+  --force            Override the live-dataset guard (nm000103-107)
+  --limit <n>        Max repos for --all/--prefix (default 25) (default: "25")
+  --json             Output raw JSON
+  -h, --help         display help for command
+```
+
+### admin hed-sweep
+
+```text
+Usage: nemar admin hed-sweep [options]
+
+Backfill HED detection (has_hed / hed_version) for existing datasets (#869)
+
+Options:
+  --limit <n>  Datasets per batch (server clamps to [1,30]) (default: "15")
+  --reset      Clear every probed HED row so a corrected detector can re-sweep
+  --verbose    Print per-batch progress
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
+```
+
+### admin import
+
+```text
+Usage: nemar admin import [options] [command]
+
+View and recover OpenNeuro import jobs
+
+Options:
+  -h, --help                     display help for command
+
+Commands:
+  help [command]                 display help for command
+  retry <dataset-id>             Reset a failed/quarantined import to
+                                 'preparing' for re-dispatch
+  rollback <dataset-id>          Roll back a failed/quarantined import (deletes
+                                 repo + S3 + D1)
+  status [options] [dataset-id]  Show OpenNeuro import job state
+                                 (failed/quarantined first)
+  verify <dataset-id>            Force a per-key S3 integrity check now (seeds
+                                 the retry lane or confirms health)
+```
+
+#### admin import retry
+
+```text
+Usage: nemar admin import retry [options] <dataset-id>
+
+Reset a failed/quarantined import to 'preparing' for re-dispatch
+
+Arguments:
+  dataset-id  NEMAR dataset id (e.g., on007523)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin import rollback
+
+```text
+Usage: nemar admin import rollback [options] <dataset-id>
+
+Roll back a failed/quarantined import (deletes repo + S3 + D1)
+
+Arguments:
+  dataset-id  NEMAR dataset id (e.g., on007523)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin import status
+
+```text
+Usage: nemar admin import status [options] [dataset-id]
+
+Show OpenNeuro import job state (failed/quarantined first)
+
+Arguments:
+  dataset-id             Filter to one dataset id (e.g., on007523)
+
+Options:
+  -s, --status <status>  Filter by status (failed, quarantined, incomplete,
+                         ...)
+  -b, --blocklisted      Only show retry-engine blocklisted rows
+  -h, --help             display help for command
+```
+
+#### admin import verify
+
+```text
+Usage: nemar admin import verify [options] <dataset-id>
+
+Force a per-key S3 integrity check now (seeds the retry lane or confirms
+health)
+
+Arguments:
+  dataset-id  NEMAR dataset id (e.g., on007523)
+
+Options:
+  -h, --help  display help for command
 ```
 
 ### admin import-openneuro
@@ -347,7 +819,109 @@ Options:
                     poll, fall back to skip_ci_check=true at approval.
                     OpenNeuro data is pre-validated upstream so this is the
                     recommended setting for OpenNeuro imports (#431).
+  --phase <phase>   Run a single import phase in-process
+                    (prepare|copy|finalize) for the sharded CI workflow. State
+                    passes between phases via S3 staging. Implies in-process
+                    execution.
+  --shard <i/N>     Copy-phase only: process shard i of N (0-indexed), e.g.
+                    0/8. Required with --phase copy.
   -h, --help        display help for command
+```
+
+### admin keys
+
+```text
+Usage: nemar admin keys [options] [command]
+
+Manage API keys for service/test accounts (owner only)
+
+Options:
+  -h, --help                display help for command
+
+Commands:
+  create <username> <name>  Mint a key for a service/test account
+  help [command]            display help for command
+  list <username>           List a target account's live keys
+  revoke <username> <id>    Revoke one of a target account's keys
+```
+
+#### admin keys create
+
+```text
+Usage: nemar admin keys create [options] <username> <name>
+
+Mint a key for a service/test account
+
+Arguments:
+  username    Username of the service/test account
+  name        Name for the key (e.g. the machine or job it authenticates)
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin keys list
+
+```text
+Usage: nemar admin keys list [options] <username>
+
+List a target account's live keys
+
+Arguments:
+  username    Username of the account
+
+Options:
+  -h, --help  display help for command
+```
+
+#### admin keys revoke
+
+```text
+Usage: nemar admin keys revoke [options] <username> <id>
+
+Revoke one of a target account's keys
+
+Arguments:
+  username    Username of the account
+  id          Key row id (from 'nemar admin keys list')
+
+Options:
+  -h, --help  display help for command
+```
+
+### admin kind
+
+```text
+Usage: nemar admin kind [options] <username> <kind>
+
+Change a user's account kind (owner only)
+
+Arguments:
+  username    Username to change the kind for
+  kind        New kind: person, service, or test
+
+Options:
+  -y, --yes   Skip confirmation and proceed
+  -n, --no    Skip confirmation and decline
+  -h, --help  display help for command
+
+Kinds:
+  person  - a human's own account (the default)
+  service - operational automation; no human signs in to it directly, keys
+            are owner-minted with 'nemar admin keys create'
+  test    - a human's secondary persona; signs in and uploads like a person,
+            but on production may only own xx sandbox datasets
+
+Rules:
+  - Only owners can change account kinds
+  - You cannot change your own account kind
+  - A verified ORCID iD blocks a move to service/test (unlink it first)
+  - Keys are not revoked on a kind change
+
+Examples:
+  $ nemar admin kind cool-vibers test      # Mark a persona account
+  $ nemar admin kind nemarAdmin service    # Mark an operational account
+  $ nemar admin kind cool-vibers person -y # Revert (skip confirm)
 ```
 
 ### admin make-public
@@ -363,7 +937,36 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Publish a dataset by making both the GitHub repository and S3 data publicly accessible.
+
+  WARNING: This operation is PERMANENT and IRREVERSIBLE
+
+  Once published:
+  - GitHub repository will be publicly visible
+  - S3 data files will be publicly downloadable
+  - git-annex will use public URLs for downloads
+
+  Publishing cannot be undone because:
+  - Data may be cached, indexed, or linked externally
+  - Unpublishing would create broken links
+  - Aligns with DOI permanence principles
+
+  Use this when:
+  - Dataset has been reviewed and validated
+  - Ready for public release and citation
+  - Associated with a DOI (concept or version)
+
+Requirements:
+  - Dataset must not be a sandbox dataset
+  - Dataset must have a GitHub repository
+  - Admin only; owners request publication via 'nemar dataset publish request'
+
+Examples:
+  $ nemar admin make-public nm000104
+
+  This will prompt for confirmation by requiring you to type
+  the dataset ID to confirm the permanent action.
 ```
 
 ### admin notice
@@ -416,8 +1019,8 @@ Create a new system notice
 
 Options:
   -m, --message <text>      Notice message text
-  -l, --level <level>       Notice level: info, warning, critical (default:
-                            "info")
+  -l, --level <level>       Notice level: tip, announcement, maintenance,
+                            warning, critical (default: "tip")
   -s, --scope <scope>       Target scope: all, admins, members (default: "all")
   -e, --expires <datetime>  Expiry datetime (ISO 8601)
   -h, --help                display help for command
@@ -478,7 +1081,52 @@ Options:
   -n, --no         Skip confirmation and decline
   -h, --help       display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Approve a publication request and run the automated 16-step orchestrator
+  to make the dataset publicly accessible with a permanent DOI.
+
+  WARNING: This action is PERMANENT. Published datasets cannot be unpublished.
+  Once a DOI is assigned, it is permanent and cannot be deleted.
+
+Orchestrator Steps (execution order; shared/publication-steps.ts):
+   1. CI Check          - Verify BIDS validation passes, deploy workflows if missing
+   2. Enrichment Check  - Verify metadata pipeline has run (warn-only, non-blocking)
+   3. S3 Public Read    - Grant public read access to S3 data
+   4. Make Public       - Change GitHub repository visibility to public
+   5. Tag Protection    - Enable tag protection rules
+   6. Create DOI        - Create concept DOI via EZID (or Zenodo if configured)
+   7. Update Metadata   - Update dataset metadata from BIDS description
+   8. Update README     - Add DOI badge and citation info to README
+   9. Create Tag        - Create version tag (e.g., v1.0.0)
+  10. Create Release    - Create GitHub release from tag
+  11. Upload to Zenodo  - Legacy Zenodo upload (disabled; kept for step history)
+  12. Publish DOI       - Make DOI public and findable (permanent, irreversible)
+  13. Version DOI       - Mint the version DOI for this release
+  14. S3 Lock           - Enable S3 Object Lock (prevents data deletion)
+  15. Sync NEMAR        - Legacy nemar.org sync (no-op, retired)
+  16. Notify User       - Send publication confirmation email
+
+  (Archive zip generation is not an orchestrator step; the version-DOI
+  workflow dispatches it separately.)
+
+Resume Capability:
+  If a step fails, the orchestrator saves progress. Use --resume to retry
+  from the failed step without re-running successful steps.
+
+  The orchestrator is idempotent - safe to run multiple times. Completed
+  steps are automatically skipped.
+
+Examples:
+  $ nemar admin publish approve nm000104                    # Run full orchestrator
+  $ nemar admin publish approve nm000104 --resume           # Resume from failed step
+  $ nemar admin publish approve nm000104 --skip-ci-check    # Override BIDS validation
+  $ nemar admin publish approve nm000104 --yes              # Skip confirmation
+
+After Approval:
+  - User receives email with DOI and public dataset link
+  - Dataset is publicly visible on GitHub
+  - Tags are protected (prevents version manipulation)
+  - Data is protected by S3 Object Lock
 ```
 
 #### admin publish deny
@@ -497,7 +1145,22 @@ Options:
   -n, --no               Skip confirmation and decline
   -h, --help             display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Deny a user's publication request with a specific reason.
+  The user will receive an email notification with your reason.
+
+  A clear, actionable reason helps users understand what to fix
+  before resubmitting their publication request.
+
+Requirements:
+  - Must provide a reason for denial
+  - Reason will be sent to the user via email
+  - User can fix issues and submit a new request
+
+Examples:
+  $ nemar admin publish deny nm000104 --reason "BIDS validation failing"
+  $ nemar admin publish deny nm000104 -r "Dataset incomplete - missing subjects"
+  $ nemar admin publish deny nm000104    # Prompts for reason interactively
 ```
 
 #### admin publish list
@@ -512,7 +1175,112 @@ Options:
                          denied)
   -h, --help             display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  List all publication requests from users, with optional filtering by status.
+  Shows dataset ID, status, requesting user, and current progress.
+
+Filter Options:
+  requested  - Pending requests awaiting admin action
+  approving  - Currently being processed by orchestrator
+  published  - Successfully published datasets
+  denied     - Denied requests with reasons
+
+Examples:
+  $ nemar admin publish list                # All requests
+  $ nemar admin publish list --status requested   # Pending only
+  $ nemar admin publish list --status approving   # In progress
+  $ nemar admin publish list --status denied      # View denied
+```
+
+### admin recording-stats-sweep
+
+```text
+Usage: nemar admin recording-stats-sweep [options]
+
+Backfill dataset-level recording duration/count/channel-range stats from each
+dataset's zarr index (migration 0070, #1146)
+
+Options:
+  --limit <n>  Datasets per batch (server clamps to [1,200]) (default: "50")
+  --reset      Clear every stamped recording-stats row so it re-sweeps from
+               scratch
+  --verbose    Print per-batch progress
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
+```
+
+### admin recover
+
+```text
+Usage: nemar admin recover [options] [command] [ids...]
+
+Re-copy epic #967 OpenNeuro imports published with 0-byte content, whose
+upstream is accessible (Phase 5, #972). Dry-run by default.
+
+Arguments:
+  ids                        Dataset id(s) to recover (omit when using --all)
+
+Options:
+  --all                      Target every entry in the checked-in
+                             recover-datasets list
+  --execute                  Actually verify + dispatch the re-copy (default is
+                             a dry run)
+  --force                    Allow a dataset id that is not on the checked-in
+                             recover-datasets list
+  --recover-file <path>      Path to the recover-datasets JSON (default:
+                             scripts/recover-datasets.json)
+  -y, --yes                  Skip confirmation and proceed
+  -n, --no                   Skip confirmation and decline
+  --json                     Output raw JSON
+  -h, --help                 display help for command
+
+Commands:
+  status [options] [ids...]  Report data_complete/bytes_present progress for
+                             recover targets
+
+Description:
+  Re-dispatches the hardened OpenNeuro copy path (epic #967 Phases 1-3) for
+  datasets published with 0-byte content whose OpenNeuro upstream is still
+  accessible today. A direct re-dispatch onto a still-'complete' import_jobs
+  row silently no-ops the status callback (only a non-terminal row accepts
+  an update), so --execute FIRST forces a per-key S3 verify on every target
+  (reclassifying a stale 'complete' row to 'incomplete'), THEN dispatches
+  ONE batch 'gh workflow run onboard-openneuro.yml' for the whole set.
+  Afterward, treat 'nemar admin recover status' (datasets.data_complete) as
+  the completion oracle, not import_jobs.status.
+
+  The actual re-copy is production-only IN PRACTICE: outside production the
+  target on###### ids have no import_jobs row (dev D1 is exemplars-only), so
+  source-id resolution fails loudly before any dispatch. But verifyImport
+  itself is NOT environment-gated -- --execute's reclassify step ('complete'
+  -> 'incomplete') runs against whatever backend the CLI is pointed at, so
+  only ever run --execute against production. A target already
+  quarantined/blocklisted by the Phase 2 retry engine is not un-stuck by
+  this reclassify (which only flips complete -> incomplete); trust
+  datasets.data_complete, not import_jobs.status. Acceptance audit: run
+  'nemar admin data-integrity-sweep --reaudit' after the batch lands
+  (--older-than 0 does NOT converge here -- its cutoff is relative to an
+  ever-advancing now(), so a just-stamped row re-qualifies on the very next
+  batch; --reaudit anchors the cutoff once so remaining reaches 0, #980).
+```
+
+#### admin recover status
+
+```text
+Usage: nemar admin recover status [options] [ids...]
+
+Report data_complete/bytes_present progress for recover targets
+
+Arguments:
+  ids                    Dataset id(s) to check (omit when using --all)
+
+Options:
+  --all                  Check every entry in the checked-in recover-datasets
+                         list
+  --recover-file <path>  Path to the recover-datasets JSON (default:
+                         scripts/recover-datasets.json)
+  --json                 Output raw JSON
+  -h, --help             display help for command
 ```
 
 ### admin reindex
@@ -520,7 +1288,7 @@ Options:
 ```text
 Usage: nemar admin reindex [options] [dataset-id]
 
-Refresh dataset metadata: enrichment + nemar.org sync + first-class D1 columns
+Refresh dataset metadata: enrichment + first-class D1 columns
 
 Arguments:
   dataset-id           Dataset ID to reindex (e.g., nm000103)
@@ -533,7 +1301,7 @@ Options:
   --older-than <days>  Threshold in days. Default 30 for --stale, 1 (24h) for
                        --missing-metadata recency guard.
   --skip-enrichment    Skip the LLM enrichment step
-  --skip-sync          Skip the nemar.org sync + D1 column refresh step
+  --skip-sync          Skip the D1 metadata-column refresh step
   --ref <ref>          Ref to enrich from (single-dataset only; default: main)
   --dry-run            List matched datasets without firing the reindex (bulk
                        only)
@@ -588,6 +1356,29 @@ Options:
   -h, --help  display help for command
 ```
 
+### admin restore
+
+```text
+Usage: nemar admin restore [options] [ids...]
+
+Reverse a withdrawal: make a dataset public again and restore its EZID DOIs
+(concept + every version). Dry-run by default.
+
+Arguments:
+  ids                      Dataset id(s) to restore (omit when using --all)
+
+Options:
+  --all                    Target every entry in the checked-in
+                           withdrawn-datasets list
+  --execute                Actually apply the restore (default is a dry run)
+  --withdrawn-file <path>  Path to the withdrawn-datasets JSON (default:
+                           scripts/withdrawn-datasets.json)
+  -y, --yes                Skip confirmation and proceed
+  -n, --no                 Skip confirmation and decline
+  --json                   Output raw JSON
+  -h, --help               display help for command
+```
+
 ### admin revert
 
 ```text
@@ -612,14 +1403,15 @@ Options:
 ### admin revoke
 
 ```text
-Usage: nemar admin revoke [options] <username>
+Usage: nemar admin revoke [options] [username]
 
 Revoke user access
 
 Arguments:
-  username    Username to revoke
+  username    Username to revoke (CLI accounts)
 
 Options:
+  --id <id>   Revoke by numeric user id (web/ORCID accounts have no username)
   -y, --yes   Skip confirmation and proceed
   -n, --no    Skip confirmation and decline
   -h, --help  display help for command
@@ -640,7 +1432,21 @@ Options:
   -y, --yes   Skip confirmation prompt
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Permission Model:
+  owner  - Full access: can manage users, roles, datasets, DOIs, and system settings
+  admin  - Can approve/revoke users, manage datasets and DOIs
+  member - Can upload and manage their own datasets only
+
+Rules:
+  - Only owners can change roles
+  - You cannot change your own role (prevents self-lockout)
+  - The last owner cannot be demoted (prevents total lockout)
+  - Demoting a user revokes their tokens (they must re-login)
+
+Examples:
+  $ nemar admin role john_doe admin        # Promote to admin
+  $ nemar admin role john_doe member       # Demote to member
+  $ nemar admin role jane_doe owner -y     # Promote to owner (skip confirm)
 ```
 
 ### admin s3
@@ -693,6 +1499,24 @@ Options:
   -h, --help  display help for command
 ```
 
+### admin signal-defaults-sweep
+
+```text
+Usage: nemar admin signal-defaults-sweep [options]
+
+Backfill BIDS signal defaults (sampling frequency, power line frequency, EEG
+reference, placement scheme) from each dataset's exemplar sidecar (migrations
+0072/0073, #1153)
+
+Options:
+  --limit <n>  Datasets per batch (server clamps to [1,30]) (default: "15")
+  --reset      Clear every stamped signal-defaults row so it re-sweeps from
+               scratch
+  --verbose    Print per-batch progress
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
+```
+
 ### admin summary
 
 ```text
@@ -730,47 +1554,6 @@ Options:
   -h, --help      display help for command
 ```
 
-### admin sync
-
-```text
-Usage: nemar admin sync [options] [command]
-
-Sync dataset metadata to nemar.org datapipeline
-
-Options:
-  -h, --help        display help for command
-
-Commands:
-  help [command]    display help for command
-  run <dataset-id>  Sync a dataset to nemar.org
-  status            Show nemar.org sync status for all published datasets
-```
-
-#### admin sync run
-
-```text
-Usage: nemar admin sync run [options] <dataset-id>
-
-Sync a dataset to nemar.org
-
-Arguments:
-  dataset-id  Dataset ID (e.g., nm000103)
-
-Options:
-  -h, --help  display help for command
-```
-
-#### admin sync status
-
-```text
-Usage: nemar admin sync status [options]
-
-Show nemar.org sync status for all published datasets
-
-Options:
-  -h, --help  display help for command
-```
-
 ### admin users
 
 ```text
@@ -779,13 +1562,97 @@ Usage: nemar admin users [options]
 List NEMAR users
 
 Options:
-  --pending      Show only pending approval
-  --verified     Show only verified (awaiting approval)
-  --approved     Show only approved users
-  --revoked      Show only revoked users
-  --role <role>  Filter by role: owner, admin, or member
-  -h, --help     display help for command
+  --pending            Show only pending approval
+  --verified           Show only verified (base tier: browse, no upload access)
+  --approved           Show only approved users
+  --revoked            Show only revoked users
+  --no-upload-access   Show only accounts without upload access
+  --awaiting-approval  Show accounts with an open upload-access request
+  --role <role>        Filter by role: owner, admin, or member
+  --kind <kind>        Filter by account kind: person, service, or test
+  -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Tiers (ADR 0040):
+  browse   base tier: browse, dashboard, settings (CLI key and sandbox
+           follow in Phase 2)
+  upload   an admin granted upload access; 'nemar admin approve' is the grant
+  unknown  the API reported no tier for this account (a backend older than
+           the tier split, or a rolling deploy)
+
+Examples:
+  $ nemar admin users                    # List all users
+  $ nemar admin users --awaiting-approval # Open upload-access requests
+  $ nemar admin users --no-upload-access # Every account without the upload grant
+  $ nemar admin users --role admin       # List all admins
+  $ nemar admin users --role owner       # List all owners
+  $ nemar admin users --approved --role member  # Approved regular users
+```
+
+### admin withdraw
+
+```text
+Usage: nemar admin withdraw [options] [ids...]
+
+Withdraw a broken published dataset: make it private and tombstone its EZID
+DOIs (concept + every version). Dry-run by default.
+
+Arguments:
+  ids                      Dataset id(s) to withdraw (omit when using --all)
+
+Options:
+  --all                    Target every entry in the checked-in
+                           withdrawn-datasets list
+  --reason <reason>        Withdrawal reason (default: the list entry's own
+                           reason)
+  --execute                Actually apply the withdrawal (default is a dry run)
+  --force                  Allow a dataset id that is not on the checked-in
+                           withdrawn-datasets list
+  --withdrawn-file <path>  Path to the withdrawn-datasets JSON (default:
+                           scripts/withdrawn-datasets.json)
+  -y, --yes                Skip confirmation and proceed
+  -n, --no                 Skip confirmation and decline
+  --json                   Output raw JSON
+  -h, --help               display help for command
+```
+
+### admin zarr-catalog
+
+```text
+Usage: nemar admin zarr-catalog [options] [command]
+
+Top-level Zarr discovery catalog (zarr-catalog.json)
+
+Options:
+  -h, --help      display help for command
+
+Commands:
+  help [command]  display help for command
+  publish         Rebuild and republish zarr-catalog.json to this environment's
+                  bucket
+```
+
+#### admin zarr-catalog publish
+
+```text
+Usage: nemar admin zarr-catalog publish [options]
+
+Rebuild and republish zarr-catalog.json to this environment's bucket
+
+Options:
+  -h, --help  display help for command
+```
+
+### admin zarr-fidelity-sweep
+
+```text
+Usage: nemar admin zarr-fidelity-sweep [options]
+
+Re-verify published Zarr stores against their dataset's own BIDS metadata
+(#1068)
+
+Options:
+  --limit <n>  Datasets per batch (server clamps to [1,25]) (default: "25")
+  --json       Output raw JSON instead of the human summary
+  -h, --help   display help for command
 ```
 
