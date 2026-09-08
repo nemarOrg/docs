@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What personal information NEMAR collects from registered users, why, how long it is kept, and the rights you have over it.
 ---
 
-Effective date: 2026-08-17.
+Effective date: 2026-09-08.
 
 NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is a research data archive.
 This policy covers the personal information NEMAR holds about its registered users.
