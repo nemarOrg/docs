@@ -3,13 +3,6 @@ title: "Account Tiers and Upload Access"
 description: "What nemar admin approve now grants, the users filters and tier column, duplicate-account cleanup, and the name/username backfills."
 ---
 
-:::caution[Ships with nemar-cli epic #1250]
-Everything on this page describes behavior in the `nemar-cli` account-tiers epic (issue [#1250](https://github.com/nemarOrg/nemar-cli/issues/1250)),
-not yet in a released CLI version.
-Confirm your CLI's version before relying on it;
-run `nemar admin --help-all` to see what your installed version actually supports.
-:::
-
 Three account states matter to admins:
 pending (email not verified, cannot be approved), verified (the base tier, needs no admin), and approved (an admin granted upload access, once).
 See [Upload access](/web/upload-access/) for the user-facing explanation.
@@ -128,17 +121,21 @@ so a new sign-up that abandons onboarding without picking a username does not st
 Either path marks the row so the person sees a one-time "we chose this for you" notice and can change it before approval;
 `nemar admin duplicates` and the two backfills otherwise work exactly as documented above regardless of which path assigned a given row.
 
-## Coming: a verified ORCID iD as a precondition for regular accounts
+## A verified ORCID iD is a precondition for regular accounts
 
-:::note[Planned, not yet shipped: nemar-cli#1271]
-The spec is settled but the code isn't merged as of this writing.
-:::
+A `person` account without a verified ORCID (Open Researcher and Contributor ID) iD cannot submit an upload access request until it links and verifies one
+(`nemar auth profile orcid link`, or "Connect your ORCID" in Settings):
 
-Once this lands,
-a regular account without a verified ORCID iD will be unable to submit an upload access request until it links and verifies one (`nemar auth profile orcid link`, or "Connect your ORCID" in Settings).
-**Admin and owner accounts are exempt for now.**
-This mostly affects CLI-originated accounts that skipped ORCID at signup or never completed verification;
-a web account is always ORCID-verified already, since ORCID sign-in is the only way a web account is created.
+```text
+Verified ORCID iD is missing: needed to request upload access. Set it in Settings or run `nemar auth profile orcid link`.
+```
+
+This mostly affects CLI-originated accounts that skipped ORCID before browser sign-in shipped, or never completed verification;
+a web account, and any account signed in through the CLI's browser sign-in, is always ORCID-verified already, since ORCID is the one identity root for both surfaces.
+
+**The exemption is by account kind, not by role.** `service` and `test` accounts (epic #1272 phase 4; ADR 0048) never see this gap, whatever their role;
+an admin or owner who holds a `person` kind is not exempt.
+See [Account Kinds](/admin/operations/account-kinds/) for the full picture: who sets a kind, the sign-in refusal for `service`/`test`, and the migrated operational accounts.
 
 ## Run both backfills once after this release
 

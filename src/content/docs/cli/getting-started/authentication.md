@@ -1,136 +1,152 @@
 ---
 title: "Authentication"
+description: "Sign in to the NEMAR CLI with your browser, the headless case, the paste-key fallback, and managing a named key per machine."
 ---
 
-NEMAR uses API key authentication.
-Verifying your email is what unlocks the key;
-admin approval is a separate, later step that only gates uploading real datasets.
-
-## Workflow Overview
-
-1. **Sign up** - Create an account with your details
-2. **Verify email** - Click the link in the verification email.
-   This reaches the `verified` tier:
-   browsing, the dashboard, sandbox training, and your API key all work from here, with no admin involved.
-3. **Retrieve API key** - Use `nemar auth retrieve-key` with your email and password
-4. **Log in** - Use your API key to authenticate
-5. **Request upload access** - Before uploading a real dataset, run `nemar auth request-upload-access` and wait for the one-time admin review. See [Upload access](/web/upload-access/) and [Account Access](/cli/reference/account-access/).
-
-## Creating an Account
-
-```bash
-nemar auth signup
-```
-
-You'll be prompted for:
-
-| Field | Description |
-|-------|-------------|
-| Username | 3-30 characters, alphanumeric with - and _ |
-| Email | Valid email for verification |
-| Password | Minimum 12 characters |
-| GitHub Username | Required for PR collaboration. Backs at most one NEMAR account. |
-| ORCID iD (Open Researcher and Contributor ID) | Required: it's how NEMAR gets your name for DOI citation, and where author matching starts. Backs at most one NEMAR account. |
-| City | Required for export-control screening |
-| Country | Required for export-control screening |
-| Description | Why you need NEMAR access (min 20 chars) |
-
-## Logging In
-
-### Interactive
+The NEMAR CLI signs you in through your browser. One command, on any machine:
 
 ```bash
 nemar auth login
 ```
 
-### With API Key
+This works whether you already have a NEMAR account or not:
+ORCID (Open Researcher and Contributor ID) creates a brand-new account the first time,
+or signs you into the one you already have.
+It activates the account either way:
+browsing, the dashboard, sandbox training, and an API key all work from there, with no admin involved.
+If you're setting up a brand-new account and want the CLI to also collect your username, GitHub handle, city, and country and request upload access,
+run `nemar auth signup` instead;
+see [Quick Start](/cli/getting-started/quickstart/).
+Uploading a real dataset needs one more thing on top of either command:
+a one-time admin grant.
+See [Upload access](/web/upload-access/) and [Account Access](/cli/reference/account-access/).
 
-```bash
-nemar auth login -k nemar_your_api_key_here
+## The walk-through
+
+Running `nemar auth login` prints a link and a code, then waits:
+
+```text
+  https://app.nemar.org/cli/authorize?code=XXXX-XXXX
+  Code: XXXX-XXXX
+  (if the page asks for it)
 ```
 
-### Environment Variable
+1. Open that link in any browser, on any device; it doesn't have to be the machine you ran the command on.
+2. Sign in to NEMAR with ORCID if you're not already, then confirm on the page once it names your account and this machine.
+3. The terminal finishes on its own. It's polling in the background and picks up your new key the moment you confirm.
+
+The link and code are the whole mechanism.
+The CLI also tries to open a browser for you as a convenience, but nothing waits on whether that attempt worked;
+if it didn't, the printed link above is exactly what you'd have clicked anyway.
+
+`nemar.org/cli/authorize` redirects to the `app.nemar.org` link above, keeping the code:
+this is the one place in these docs where "the website" means `app.nemar.org` rather than `nemar.org`,
+because the authorize page itself is served from the authenticated app host.
+
+## On a machine with no browser at all
+
+A compute cluster, a container, or an SSH session with no display is the CLI's normal case here, not a fallback.
+Skip the local browser attempt outright:
+
+```bash
+nemar auth login --no-open
+```
+
+(equivalently, set `NEMAR_NO_BROWSER=1`).
+This prints the link and code only.
+Copy the link into a browser on your laptop or phone, sign in and confirm there,
+and the original terminal still finishes on its own the moment you do; it never stops polling.
+
+## The paste-key fallback
+
+For a host that can't reach the network to poll while you're confirming elsewhere, or a CI runner, mint a key ahead of time instead:
+
+- In Settings on nemar.org (see [Account settings](/web/account-settings/)), or
+- From another machine that can sign in: `nemar auth keys create <name>`.
+
+Then paste it on the host that needs it:
+
+```bash
+nemar auth login --key nemar_your_api_key_here
+```
+
+or set it in the environment first:
 
 ```bash
 export NEMAR_API_KEY=nemar_your_api_key_here
 nemar auth login
 ```
 
-## Check Status
+`NEMAR_API_KEY` is read only by `nemar auth login`;
+nothing else in the CLI consults it per request, so a script or CI job has to run `login` once before any other command.
+A pasted key is validated with the backend before anything is written to your config, and mints nothing new;
+it's the key you already had, not a fresh one for this machine.
+
+## Check status
 
 ```bash
-# View cached credentials
 nemar auth status
-
-# Refresh from server
 nemar auth status --refresh
 ```
 
-`nemar auth status` prints an `Upload access` line alongside your cached account info.
-For the full set of identifiers on your account (username, name, email, GitHub handle, ORCID link),
-plus that same tier, run `nemar auth profile` instead;
-see [Account Access](/cli/reference/account-access/).
+`--refresh` fetches your current role, account kind (only shown when it isn't the default `person`), upload-access grant, and profile gaps from the server;
+without it, `status` reads the local cache so it stays usable offline.
+Status also prints a `Key:` line describing this machine's stored credential:
+the machine name and sign-in date for a browser-minted key, `pasted key` for one supplied with `--key`/`NEMAR_API_KEY`,
+or a note that a password-era key predates both and can be replaced by running `nemar auth login` once.
 
-## Log Out
+For the full set of identifiers on your account (username, name, email, GitHub handle, ORCID link) plus that same tier,
+run `nemar auth profile` instead; see [Account Access](/cli/reference/account-access/).
+
+## Log out
 
 ```bash
-# Remove the active account
 nemar auth logout
-
-# Remove all stored accounts
 nemar auth logout --all
 ```
 
-## Switch Accounts
-
-If you have multiple NEMAR accounts:
-
-```bash
-# Interactive account picker
-nemar auth switch
-
-# Switch to a specific account
-nemar auth switch <username>
-```
-
-## Resend Verification Email
-
-If you didn't receive the verification email:
+By default, logging out also revokes this machine's own key server-side, since a browser-minted key is not used anywhere else.
+A pasted or password-era key may be shared with other machines, so logout keeps it valid;
+revoke it deliberately with `nemar auth keys revoke` or in Settings on nemar.org when you actually mean to kill it.
 
 ```bash
-nemar auth resend-verification
+nemar auth logout --revoke-key      # revoke this machine's key even if it may be shared
+nemar auth logout --no-revoke-key   # clear locally only, never touch the key server-side
 ```
 
-## Planned: signing in with ORCID (not yet available)
+## Switch accounts
 
-:::caution[Planned: nemar-cli epic #1272]
-Nothing below is implemented yet.
-`nemar auth login` and `nemar auth retrieve-key` remain the only way to sign in from the CLI today;
-do not rely on this until it ships.
+```bash
+nemar auth switch              # interactive picker
+nemar auth switch <username>   # or a GitHub username
+```
+
+Switching also updates the GitHub CLI (`gh`) to the matching account.
+
+## Keys per machine
+
+Every browser-based `nemar auth login` names a key for the machine it runs on.
+`nemar auth keys` manages the whole set on your account, not just the active one:
+
+```bash
+nemar auth keys                    # list your live keys
+nemar auth keys create build-box   # mint a key for a machine that can't open a browser
+nemar auth keys revoke 12          # revoke by id
+nemar auth keys revoke current     # revoke this machine's own key
+```
+
+`nemar auth login`/`logout` already cover the common case, this machine's own key;
+reach for `nemar auth keys` to look at or manage the whole set, or to mint one for a headless host ahead of time (the paste-key fallback above).
+
+## Password sign-in is deprecated
+
+:::caution[Deprecated in v0.10.0, removed in the next release]
+`nemar auth retrieve-key` and `nemar auth regenerate-key` still work for a password-era account, and print this before their first prompt:
+
+> Deprecated: password sign-in is being removed in favor of `nemar auth login` (browser device sign-in). This command still works for a password-era account in the meantime.
+
+`nemar auth login` is the replacement for both.
+Existing password-era keys keep working; `nemar auth status` shows `Key: password-era key` until you run `nemar auth login` once, which replaces it with a machine-named key.
+To rotate a password-era key without a browser, mint a fresh named key with `nemar auth keys create <name>` and revoke the old one with `nemar auth keys revoke <id>`.
+`nemar auth regenerate-key` still works too, but revokes the key on every machine at once, not just the one you meant to rotate.
 :::
-
-A follow-up epic (nemar-cli#1272), starting after the account-tiers epic above ships,
-plans to move CLI sign-in to ORCID, through the browser, with a device code,
-the same shape as `gh auth login`:
-the CLI shows a code, you open a link, approve it on orcid.org, and the CLI picks up a session on its own.
-No password is typed and no API key is pasted in.
-This note exists so the plan is visible ahead of the change, not so you can use it yet.
-
-## Security Notes
-
-:::caution[Keep Your API Key Secure]
-- Never commit your API key to version control
-- Use environment variables in scripts
-- Don't share your API key with others
-:::
-Your API key is linked to:
-- Your GitHub Personal Access Token (for repository operations)
-- Your S3 credentials (for data upload/download)
-
-If you suspect your key is compromised, regenerate it immediately:
-
-```bash
-nemar auth regenerate-key
-```
-
-This sends a verification email and revokes the old key upon confirmation.

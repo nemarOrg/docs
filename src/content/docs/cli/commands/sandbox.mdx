@@ -5,7 +5,7 @@ title: "sandbox"
 Sandbox training (required before uploading).
 
 :::note
-This page is generated from `nemar sandbox --help`. Run `generate-commands.ts` to refresh it.
+This page is generated from `nemar sandbox --help-all`. Run `generate-commands.ts` to refresh it.
 :::
 
 ## sandbox
@@ -23,7 +23,18 @@ Commands:
   reset [options]   Reset sandbox training status for re-training
   status [options]  Check sandbox training completion status
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Sandbox training verifies your setup and familiarizes you with the upload
+  workflow. You must complete sandbox training before uploading real datasets.
+
+  The training creates a placeholder BIDS dataset (~500KB) and uploads it to
+  the sandbox environment, testing your git-annex and SSH setup.
+
+Examples:
+  $ nemar sandbox             # Run sandbox training
+  $ nemar sandbox --verbose   # Run with full subprocess output (debug stuck runs)
+  $ nemar sandbox status      # Check if training is completed
+  $ nemar sandbox reset       # Reset for re-training
 ```
 
 ### sandbox reset

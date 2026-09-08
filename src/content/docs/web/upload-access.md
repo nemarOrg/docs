@@ -83,15 +83,15 @@ This is the same table `nemar auth status` and `nemar auth profile` render on th
 because both surfaces read it from one place;
 see [What your profile still needs](/cli/reference/account-access/#what-your-profile-still-needs).
 
-:::note[Planned: a verified ORCID iD will join this list]
-Not yet in effect at this writing (tracked in [nemar-cli#1271](https://github.com/nemarOrg/nemar-cli/issues/1271)).
-Once it ships,
-a regular account will also need a verified ORCID iD before it can request upload access,
+:::note[A verified ORCID iD joins this list too]
+A regular (`person`-kind) account also needs a verified ORCID (Open Researcher and Contributor ID) iD before it can request upload access,
 fixed with "Connect your ORCID" in Settings or `nemar auth profile orcid link` on the CLI.
-Admin and owner accounts are exempt for now.
+The exemption is by account kind, not by role: `service` and `test` accounts are exempt, whatever their role, but an admin or owner who holds a `person` kind is not.
+See [Account Kinds](/admin/operations/account-kinds/).
 A web account already always has a verified iD,
 since signing in with ORCID is the only way a web account gets created;
-this mainly affects CLI accounts that signed up without verifying one.
+signing in through the CLI's browser sign-in leaves the same guarantee.
+This mainly affects accounts that predate browser sign-in and signed up without verifying an iD.
 :::
 
 ## What the request needs

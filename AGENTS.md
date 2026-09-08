@@ -44,7 +44,7 @@ bun run gen:commands   # regenerate the CLI command reference (needs ../nemar-cl
 ```
 
 ## Generators (keep docs in sync with the CLI)
-- **`scripts/generate-commands.ts`** recursively parses `nemar … --help` to emit the command-reference pages (`cli/commands/*.mdx`, `admin/commands.mdx`). It expects `nemar-cli` checked out as a sibling at `../nemar-cli`. Re-run after CLI changes; do not hand-edit the generated command pages.
+- **`scripts/generate-commands.ts`** recursively parses `nemar … --help-all` to emit the command-reference pages (`cli/commands/*.mdx`, `admin/commands.mdx`). It expects `nemar-cli` checked out as a sibling at `../nemar-cli` by default; set `NEMAR_CLI_ENTRY` to point at a different checkout (a worktree whose branch hasn't merged yet). Re-run after CLI changes; do not hand-edit the generated command pages.
 - **`scripts/migrate-from-mkdocs.ts`** and **`scripts/restructure-ecosystem.ts`** are one-time scripts retained for provenance; they are not part of the normal build.
 
 ## Content Conventions

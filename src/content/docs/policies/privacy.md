@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What personal information NEMAR collects from registered users, why, how long it is kept, and the rights you have over it.
 ---
 
-Effective date: 2026-08-17.
+Effective date: 2026-09-08.
 
 NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is a research data archive.
 This policy covers the personal information NEMAR holds about its registered users.
@@ -18,13 +18,13 @@ Contact for anything in this policy: **privacy@nemar.org**.
 When you create a NEMAR account, we collect:
 
 - name and email address;
-- username and, where provided, ORCID iD, GitHub username, affiliation, city, and country;
-- a password hash for command-line accounts (we never store plaintext passwords).
+- username and, where provided, ORCID (Open Researcher and Contributor ID) iD, GitHub username, affiliation, city, and country;
+- a password hash, but only for command-line accounts created before browser sign-in shipped (we never store plaintext passwords); a new account, on the web or the command line, has no password at all, since sign-in is through ORCID.
 
 While you use the service, we also process:
 
-- credentials we issue to you (an API token, storage credentials, and a GitHub access token), which exist so you can upload and manage datasets;
-- short-lived email verification and login codes;
+- credentials we issue to you (one or more named API keys, one per machine, storage credentials, and a GitHub access token), which exist so you can upload and manage datasets; each key is listed and revocable in [Settings](/web/account-settings/);
+- short-lived email verification and login codes, and, for command-line sign-in, a device code and a one-time confirmation code valid for ten minutes, stored hashed together with the name of the machine that requested it;
 - operational logs of requests to our services, used for reliability and abuse prevention;
 - your email notification preferences.
 
