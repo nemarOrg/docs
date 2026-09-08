@@ -25,7 +25,7 @@ nemar auth signup
 ```
 
 :::note
-Already have a password-era account? `nemar auth retrieve-key` and `nemar auth regenerate-key` still work but are deprecated in v0.9.17 and removed in the next release. `nemar auth login` replaces both.
+Already have a password-era account? `nemar auth retrieve-key` and `nemar auth regenerate-key` still work but are deprecated in v0.10.0 and removed in the next release. `nemar auth login` replaces both.
 :::
 
 ## 2. Complete Sandbox Training

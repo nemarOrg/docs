@@ -74,7 +74,7 @@ Every device-flow and key route above that refuses answers `{ "error": <code>, "
 
 ### Auth: password-era (deprecated)
 
-:::caution[Deprecated in v0.9.17, removed in the next release]
+:::caution[Deprecated in v0.10.0, removed in the next release]
 These routes still exist for accounts created before browser sign-in, but `nemar auth login` /
 `nemar auth signup` (above) are the replacement for all of them. `POST /auth/login` is the one
 exception: it still validates a pasted key for `nemar auth login --key`, and is not going away.

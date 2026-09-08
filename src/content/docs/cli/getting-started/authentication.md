@@ -140,7 +140,7 @@ reach for `nemar auth keys` to look at or manage the whole set, or to mint one f
 
 ## Password sign-in is deprecated
 
-:::caution[Deprecated in v0.9.17, removed in the next release]
+:::caution[Deprecated in v0.10.0, removed in the next release]
 `nemar auth retrieve-key` and `nemar auth regenerate-key` still work for a password-era account, and print this before their first prompt:
 
 > Deprecated: password sign-in is being removed in favor of `nemar auth login` (browser device sign-in). This command still works for a password-era account in the meantime.
