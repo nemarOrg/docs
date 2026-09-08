@@ -324,6 +324,8 @@ Commands:
   fix [options] <check> [dataset-id]  Apply a check's remediation (writes; use
                                       --dry-run first)
   help [command]                      display help for command
+  kinds                               Check that operational accounts carry
+                                      their expected account kind (read-only)
   scan [options] [dataset-id]         Run diagnostic checks (read-only)
 ```
 
@@ -341,6 +343,17 @@ Arguments:
 Options:
   --dry-run   List what would be fixed without writing
   --json      Output raw JSON instead of the human summary
+  -h, --help  display help for command
+```
+
+#### admin doctor kinds
+
+```text
+Usage: nemar admin doctor kinds [options]
+
+Check that operational accounts carry their expected account kind (read-only)
+
+Options:
   -h, --help  display help for command
 ```
 
@@ -915,7 +928,8 @@ Kinds:
 Rules:
   - Only owners can change account kinds
   - You cannot change your own account kind
-  - A verified ORCID iD blocks a move to service/test (unlink it first)
+  - A verified ORCID iD blocks a move to service/test -- run
+    'nemar auth profile orcid unlink' on that account first, then retry
   - Keys are not revoked on a kind change
 
 Examples:
@@ -1573,8 +1587,8 @@ Options:
   -h, --help           display help for command
 
 Tiers (ADR 0040):
-  browse   base tier: browse, dashboard, settings (CLI key and sandbox
-           follow in Phase 2)
+  browse   base tier: browse, dashboard, settings, CLI API key, and sandbox
+           training (ADR 0040 phase 2, landed)
   upload   an admin granted upload access; 'nemar admin approve' is the grant
   unknown  the API reported no tier for this account (a backend older than
            the tier split, or a rolling deploy)
@@ -1586,6 +1600,7 @@ Examples:
   $ nemar admin users --role admin       # List all admins
   $ nemar admin users --role owner       # List all owners
   $ nemar admin users --approved --role member  # Approved regular users
+  $ nemar admin users --kind test        # List every test-kind account
 ```
 
 ### admin withdraw
