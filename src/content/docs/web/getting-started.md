@@ -18,16 +18,22 @@ Your account is created right away, without a username or password,
 and reaches the base tier once you confirm that code;
 no admin review is involved either way.
 
-On the CLI, creating a NEMAR account asks for your email, an ORCID iD, a GitHub handle, and a couple of consent confirmations. The CLI runs the full flow in about two minutes:
+On the CLI, creating a NEMAR account starts with the same ORCID sign-in the web uses:
 
 ```
 bun install -g @nemar/cli
 nemar auth signup
 ```
 
-The CLI opens a browser tab for ORCID authorization and collects the rest.
+`nemar auth signup` opens a browser to NEMAR's sign-in page, the same one the login page above uses;
+ORCID creates your account there, collecting your email, city, and country as part of that authorization, the same as on the web.
+Back in the terminal, it then asks only for whatever is still missing, typically a username and your GitHub handle,
+and ends by requesting upload access for you.
 Verify your email from the link NEMAR sends, and your account reaches the base tier:
 no admin review at sign-up.
+A headless machine (no browser available) is a normal case, not a fallback:
+the command prints a link and a code to copy into a browser anywhere;
+see [Authentication](/cli/getting-started/authentication/).
 See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown,
 and [Upload access](/web/upload-access/) for the one thing an admin still has to grant before you can upload a real dataset.
 

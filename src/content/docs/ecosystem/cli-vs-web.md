@@ -11,7 +11,8 @@ difference is workflow style, not capability.
 
 - **Signing up.** Sign in with ORCID (Open Researcher and Contributor ID) or a one-time email code at [nemar.org/login](https://nemar.org/login);
   a first ORCID sign-in creates your account as part of that flow, no separate form and no admin review.
-  The CLI's own `nemar auth signup` / `nemar auth login` work the same account either way.
+  ORCID is the one identity root for both surfaces: the CLI's `nemar auth login` / `nemar auth signup` open a browser to the same
+  ORCID sign-in, at `app.nemar.org/cli/authorize`, and land on the same account either way.
   See [Getting started on the web](/web/getting-started/).
 - **Browsing and exploring.** [Discover](https://nemar.org/discover), dataset detail pages,
   READMEs, and the citation dashboard live there.
@@ -39,13 +40,16 @@ back and forth is fine.
 
 ## Accounts and permissions
 
-The CLI and the web share state through the same backend. Signing in on the CLI issues a
-long-lived API token tied to your account; signing in on the web issues a cookie-backed session.
-Both honor the same admin role, dataset ownership, and collaborator permissions.
+The CLI and the web share state through the same backend. Signing in on the web issues a
+cookie-backed session; signing in on the CLI opens a browser to that same sign-in and, once you
+confirm, issues an API key instead, named for the machine it was minted on. A laptop and a
+compute cluster can each hold their own live key for the same account at once; manage the whole
+set with `nemar auth keys` (see [Authentication](/cli/getting-started/authentication/)). Both
+surfaces honor the same admin role, dataset ownership, and collaborator permissions.
 
 ```bash
 # Quick start with the CLI (see the full guide under CLI > Getting Started)
-nemar auth login          # authenticate with your API key
+nemar auth login          # sign in with your browser
 nemar dataset list --mine # show your datasets
 nemar dataset upload ./my-dataset
 ```
