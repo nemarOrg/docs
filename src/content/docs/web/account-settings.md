@@ -8,8 +8,7 @@ your email, your GitHub handle, your ORCID iD (Open Researcher and Contributor I
 Everything on this page is self-service; nothing here needs an admin.
 
 The CLI (command-line interface) can show you the same identifiers with `nemar auth profile`,
-each with a note on where to change it.
-Once the epic that adds it ships, it can change them directly, too, with subcommands under `nemar auth profile`;
+each with a note on where to change it, and change them directly too, with subcommands under `nemar auth profile`;
 see [Changing identifiers from the CLI](/cli/reference/account-access/#changing-identifiers-from-the-cli).
 
 ## Change your email
@@ -52,6 +51,16 @@ and is how NEMAR reads your name for dataset citation (see [Your name](#your-nam
 An ORCID iD can back only one NEMAR account at a time,
 checked exactly (not case-insensitively, since a check-digit ORCID iD only ever differs in whether that digit is a lowercase or uppercase `X`,
 and NEMAR normalizes it to uppercase on every write).
+
+## Your CLI keys
+
+The **CLI keys** card in Settings lists every named API key on your account: one per machine that has run `nemar auth login`, plus any minted here or with `nemar auth keys create` for a machine that can't open a browser.
+
+- **List.** Each row shows the key's name (the machine it's for), when it was created, and when it was last used.
+- **Create.** Use this only for a machine that can't run the browser sign-in itself, such as a remote server with no way to open a link and confirm from there. The key is shown once, at creation; NEMAR never displays it again, so copy it somewhere safe before leaving the page.
+- **Revoke.** Removes one key immediately. A key revoked here stops working the next time that machine tries to use it.
+
+This is the same set `nemar auth keys` manages from the CLI; see [Authentication](/cli/getting-started/authentication/#keys-per-machine).
 
 ## Choose or change your username
 

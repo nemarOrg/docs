@@ -23,7 +23,7 @@ it never reads the local config cache.
 Run it right before you change an identifier,
 since a cached answer is exactly the wrong thing to act on there.
 
-Every identifier is self-service, in Settings on nemar.org (see [Account settings](/web/account-settings/)) and, once the epic below ships, from the CLI directly;
+Every identifier is self-service, in Settings on nemar.org (see [Account settings](/web/account-settings/)) and from the CLI directly;
 see [Changing identifiers from the CLI](#changing-identifiers-from-the-cli) below.
 
 Below the identifiers, `nemar auth profile` also prints a **Profile** block:
@@ -31,14 +31,6 @@ one line per field your account is still missing, in the same wording Settings a
 See [What your profile still needs](#what-your-profile-still-needs).
 
 ## Changing identifiers from the CLI
-
-:::caution[Ships with nemar-cli epic #1250]
-Everything in this section describes behavior in the `nemar-cli` account-tiers epic (issue [#1250](https://github.com/nemarOrg/nemar-cli/issues/1250)),
-not yet in a released CLI version.
-Confirm your CLI's version before relying on it;
-run `nemar auth profile --help-all` to see what your installed version actually supports.
-Until it ships, change these identifiers in Settings on nemar.org instead (see [Account settings](/web/account-settings/)).
-:::
 
 `nemar auth profile` has subcommands that make every identifier it displays editable from the CLI,
 through the same handler and the same rules Settings uses.
@@ -152,20 +144,16 @@ so training you already completed elsewhere is not requested again.
 If the server cannot be reached, the block reads
 ``Sandbox training could not be confirmed with the server. Run `nemar sandbox status --refresh`, then `nemar sandbox` if it is still outstanding.``
 
-### Coming: a verified ORCID iD will also be a gap
+### A verified ORCID iD is also a gap
 
-:::note[Planned, not yet shipped: nemar-cli#1271]
-Not yet implemented at this writing;
-the spec is settled but the code isn't merged.
-Once it ships,
-a **regular** account without a verified ORCID iD will see it listed as a gap blocking the upload access request,
+A `person` account without a verified ORCID iD sees it listed as a gap blocking the upload access request,
 fixed with `nemar auth profile orcid link` (or "Connect your ORCID" in Settings).
-Admin and owner accounts are exempt for now.
-This doesn't change CLI signup, which already collects and verifies an iD;
-it only affects accounts that skipped or never verified one.
-A web account always has a verified iD already,
-because signing in with ORCID is the only way a web account is created.
-:::
+The exemption is by account kind, not by role (ADR 0048):
+`service` and `test` accounts never see this gap, whatever their role, but an admin or owner who holds a `person` kind is not exempt.
+This mostly affects accounts that predate browser sign-in and skipped or never verified an iD;
+signing in through the CLI's browser sign-in, like signing in on the web, always leaves a verified iD on the account,
+because ORCID is the one identity root both surfaces share.
+See [Account Kinds](/admin/operations/account-kinds/) for the full picture.
 
 ## `nemar auth status`'s Upload access line
 
