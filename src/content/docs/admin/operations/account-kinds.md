@@ -26,14 +26,21 @@ nemar admin kind cool-vibers person -y # revert (skip confirm)
 ```
 
 Kinds are never inferred from role, email, or anything else.
-An owner cannot change their own account's kind, and a change is refused with `409 same_kind` if the account already holds the target kind or was changed by a concurrent request.
+A change can be refused with one of four typed codes (`{ error, message }`):
+
+| Code | HTTP | Means |
+|------|------|-------|
+| `own_account` | 400 | You cannot change your own account kind; ask another owner. |
+| `same_kind` | 409 | The account already has that kind. |
+| `orcid_linked` | 409 | The account has a verified ORCID iD linked (see below). |
+| `kind_changed_concurrently` | 409 | The account's kind changed between the read and the write; re-check and retry. |
 
 ## The ORCID exemption
 
-A verified ORCID (Open Researcher and Contributor ID) iD identifies a person: an account with one already proven blocks a move to `service`/`test`.
+A verified ORCID (Open Researcher and Contributor ID) iD identifies a person: an account with one already proven blocks a move to `service`/`test`, refused with `orcid_linked`:
 
 ```text
-An ORCID iD identifies a person; unlink it before making this a service or test account.
+An ORCID iD identifies a person, and this account has one verified and linked. Run `nemar auth profile orcid unlink` on that account first, then retry.
 ```
 
 Moving `person` to `service`/`test` is fine for an account with no verified iD linked;
@@ -84,6 +91,15 @@ None of the four holds an ORCID iD, and none ever will.
 Five accounts moved to `test`: `cool-vibers` (an owner's own persona account for exercising the regular-user experience) and the seeded fixtures `test-user`, `test-pending`, `test-verified`, `test-revoked`.
 
 **`test-web` stays a `person`.** It is the shared web-QA account (#1008) that has to reach the ORCID authorize page and the Settings key form the way a real person would; moving it to `test` would exempt it from exactly the flows it exists to exercise.
+
+### Checking the migrated accounts stayed put
+
+```bash
+nemar admin doctor kinds
+```
+
+Read-only: it checks each of the nine accounts above against its expected kind and reports a mismatch or an absent account, without changing anything.
+Fix a finding the normal way, with `nemar admin kind <username> <kind>`.
 
 ## What the website doesn't show yet
 
