@@ -245,7 +245,7 @@ so a reader learns which `view/*` paths exist without probing for a missing obje
 The same fields are hoisted into the dataset's `index.json` per group
 (`n_view_levels`, `view_chunk_columns`, `chunk_samples`, `shard_samples`, `source_rate_hz`),
 so an agent can compute a full read recipe from the index alone;
-see [Index contract: `layout`](/platform/zarr/index-contract/#layout) and [ADR 0025](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0025-inference-compute-runs-on-device-mcp-is-a-stateless-broker.md).
+see [Index contract: `layout`](/platform/zarr/index-contract/#layout) and [ADR 0049](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0049-compute-runs-in-the-browser-osa-owns-the-runtime-only-hpc-is-gated.md).
 
 ## `channels_tsv_units` and `bids_unit`
 

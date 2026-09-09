@@ -135,13 +135,17 @@ The same arithmetic on a longer, higher-density recording reaches gigabyte scale
 an 8-hour, 256-channel recording at the EEG cap (250 Hz) is `256 × 7,200,000 × 2` bytes ≈ 3.7 GB uncompressed, roughly 2.4 GB at that same compression ratio.
 Read it in shard-sized (300 s) sequential windows, not the whole array at once, unless you actually need the whole recording in memory.
 
-## Recipe-first guidance for agents (ADR 0025)
+## Recipe-first guidance for agents (ADR 0049)
 
-NEMAR's platform design for agent-facing tooling ([ADR 0025](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0025-inference-compute-runs-on-device-mcp-is-a-stateless-broker.md)) treats bulk signal bytes as something that never passes through a broker:
-any future NEMAR tool server returns a **recipe** —
+NEMAR's platform design for agent-facing tooling ([ADR 0049](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0049-compute-runs-in-the-browser-osa-owns-the-runtime-only-hpc-is-gated.md), which supersedes ADR 0025) treats bulk signal bytes as something that never passes through a broker:
+a NEMAR tool server returns a **recipe** —
 an S3 URI, region, anonymous flag, group name, level, chunk or sample slice, and the `scale`/`offset` needed to dequantize —
 computed from `index.json`, and the actual read happens directly against S3 from the caller's own device.
-The two examples below are that recipe, worked by hand:
+
+**This is no longer hypothetical.** `read_window` on the
+[MCP server](/platform/for-agents/#read_window-a-recipe-by-default-a-taste-on-request) computes
+exactly that recipe for a dataset, recording and time window, including the seconds-to-samples
+conversion at the served rate. The two examples below are the same recipe worked by hand:
 fetch `index.json`, pick a store and group, open the level-0 array, dequantize.
 
 ### Python (`zarr` + anonymous S3)

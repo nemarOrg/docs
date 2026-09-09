@@ -108,7 +108,7 @@ so a client that wants one hardcodable URL can build it from `contract_base` ins
 The templates are declared `const` in the schema — a client may hardcode them once it has checked `format_version`,
 and changing the layout is therefore a schema change (a new `format_version`), never a silent one.
 This is what makes a read recipe computable from `index.json` plus one array-metadata fetch, with no probing,
-which is the shape [ADR 0025](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0025-inference-compute-runs-on-device-mcp-is-a-stateless-broker.md) commits any future agent-facing tooling to;
+which is the shape [ADR 0049](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0049-compute-runs-in-the-browser-osa-owns-the-runtime-only-hpc-is-gated.md) the agent-facing MCP server implements;
 see the [cost ladder page](/platform/zarr/cost-ladder/) for a worked recipe.
 
 ## Store entries
@@ -285,7 +285,7 @@ Its existence is never guessed: `events_parquet` and `events_row_count` are pres
 Every store's own signal array can be opened and its `events` group read individually (see [Store contract](/platform/zarr/store-contract/)),
 but that costs one round trip per store to find out where every event lands.
 `events.parquet` answers "every event in this dataset, with its exact sample index" in one file,
-which is what a training loader planning epochs across thousands of stores — or the recipe-first agent tooling [ADR 0025](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0025-inference-compute-runs-on-device-mcp-is-a-stateless-broker.md) commits to — actually wants:
+which is what a training loader planning epochs across thousands of stores — or the recipe-first MCP tooling [ADR 0049](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0049-compute-runs-in-the-browser-osa-owns-the-runtime-only-hpc-is-gated.md) commits to — actually wants:
 a bulk table to filter and join, not thousands of small store-metadata fetches.
 See the [cost ladder page](/platform/zarr/cost-ladder/#eventsparquet) for worked Python and duckdb examples.
 

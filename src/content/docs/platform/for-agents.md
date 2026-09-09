@@ -30,6 +30,7 @@ metadata, and the streaming copy each live on a different host:
 | `api.nemar.org` | Catalog search and per-dataset metadata (the backend API). |
 | `data.nemar.org` | The BIDS file tree and the bytes — manifests, individual files, archive zips. |
 | `zarr.nemar.org` | A derived, streaming copy where a recording has been converted, for reading a slice without downloading the whole file. |
+| `mcp.nemar.org` | A Model Context Protocol server: the same archive as six callable tools, for clients that speak MCP. |
 | `docs.nemar.org` | This site. |
 
 ## Use the surface that matches the question
@@ -44,6 +45,7 @@ metadata, and the streaming copy each live on a different host:
 | What does a person see? | `https://nemar.org/dataset/<id>` |
 | What is the page in simple text? | `https://nemar.org/dataset/<id>.md` |
 | Where are the conventions? | `https://docs.nemar.org/` and `/llms.txt` |
+| My client speaks MCP — can I skip URL assembly? | `https://mcp.nemar.org/mcp` ([tool calling](#tool-calling-mcpnemarorg)) |
 
 The website emits schema.org Dataset JSON-LD on dataset pages. Prefer explicit JSON metadata and
 manifests for data work, and use the Markdown mirror or JSON-LD for page-level context.
@@ -187,6 +189,10 @@ This is the same framing [DANDI](https://dandiarchive.org) and the
 deliberately not a size cutoff in gigabytes: a huge recording you only need two channels from is
 still a streaming read, and a small recording you're loading in full is still a plain download.
 
+If your client speaks MCP, [`read_window`](#read_window-a-recipe-by-default-a-taste-on-request)
+will compute one of these reads for you — the array URL, the sample range at the served rate, and
+the dequantization rule — so you do not have to derive it from the contract by hand.
+
 For the worked read recipes — fetch `index.json`, open the store, dequantize, in Python and
 JavaScript — and roughly what each layer costs in bytes and requests, see
 [Cost Ladder and Recipes for Agents](/platform/zarr/cost-ladder/). For the stable URL, anonymous
@@ -202,6 +208,271 @@ converted results should filter on `has_zarr`; use `has_zarr_verified` when the 
 fidelity verdict is required, understanding that its result set can be smaller or temporarily empty
 until the standing sweep has run.
 :::
+
+## Tool calling: `mcp.nemar.org`
+
+`https://mcp.nemar.org/mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) (MCP)
+server for the archive. If your client speaks MCP, this is the shortest path to NEMAR: six tools
+that answer the questions above without you assembling URLs, and every answer carries the
+provenance you need to cite what you read.
+
+It is anonymous, like the rest of the data plane. There is no key, no signup, and no session.
+
+**What it is not:** a data pipe. The server never hands you a whole recording. By default
+`read_window` returns a **recipe** — the exact array URL, chunk geometry, sample range, and the
+dequantization rule — and you fetch the bytes yourself, straight from S3 or through
+`zarr.nemar.org`. It will decode a small window inline if you ask (`taste: true`), and it refuses
+rather than truncates when you ask for too much. So the server is a broker that tells you where to
+read and what the numbers mean; the bytes stay on the fast path.
+
+### Transport
+
+Streamable HTTP, protocol revision `2026-07-28`. The older 2025 revision is served from the same
+endpoint, so a client pinned to it still works.
+
+| | |
+| --- | --- |
+| Endpoint | `POST https://mcp.nemar.org/mcp` |
+| Descriptor | `GET https://mcp.nemar.org/` — service name, endpoint, supported revisions |
+| Not supported | `GET` and `DELETE` on `/mcp` answer `405`; there is no session to resume |
+| `tools/list` | carries a cache hint, `ttlMs: 86400000`, `scope: "public"` — cache the tool list for a day |
+
+Most clients need nothing but the URL. From the official Python SDK:
+
+```python
+from mcp import Client
+
+async with Client("https://mcp.nemar.org/mcp") as client:
+    tools = await client.list_tools()
+    result = await client.call_tool("search_datasets", {"query": "motor imagery", "limit": 2})
+    print(result.structured_content["count"])
+```
+
+### The six tools, cheapest first
+
+| Tool | Answers | What it reads |
+| --- | --- | --- |
+| `search_datasets` | which datasets match | the catalog only |
+| `describe_dataset` | what this dataset is, plus a citation | one catalog row |
+| `list_recordings` | which recordings and channel groups exist | the dataset's Zarr `index.json`, cached |
+| `get_events` | the event table, with exact sample indices | `events.parquet` |
+| `render_overview` | a PNG overview of a recording | the min/max pyramid, never full resolution |
+| `read_window` | how to read a time window (or a small decoded taste) | array metadata, and chunks only for a taste |
+
+`describe_dataset` returns a `cost_hint` naming the next cheapest tool, so a client can walk the
+ladder without guessing.
+
+### A real session
+
+Every response below is copied from `mcp.nemar.org`, trimmed for length. Search first:
+
+```json
+// search_datasets {"query": "motor imagery", "limit": 2}
+{
+  "results": [
+    {
+      "dataset_id": "nm000233",
+      "name": "BCI Competition 2020 Track 4 — Upper-limb grasping motor imagery",
+      "doi": "10.82901/nemar.nm000233",
+      "license": "CC-BY-4.0",
+      "modalities": ["eeg"],
+      "tasks": ["imagery"],
+      "subject_count": 14,
+      "has_hed": true,
+      "has_zarr": true
+    }
+  ],
+  "count": 153,
+  "limit": 2,
+  "truncated": false
+}
+```
+
+Then a recording's events. `sample_index` is computed by the converter against the served rate, so
+it is exact rather than derived from `onset_s` by the client:
+
+```json
+// get_events {"dataset_id": "nm000329", "recording": "sub-1/ses-0/eeg/...run-0_eeg.zarr", "limit": 2}
+{
+  "source": "events_parquet",
+  "estimated": false,
+  "total_count": 72,
+  "truncated": true,
+  "events": [
+    {
+      "store_path": "sub-1/ses-0/eeg/sub-1_ses-0_task-imagery_acq-calibration_run-0_eeg.zarr",
+      "group_name": "eeg_250hz",
+      "onset_s": 4.057,
+      "duration_s": 4.5,
+      "sample_index": 1014,
+      "trial_type": "right_hand",
+      "value": "2",
+      "subject": "1", "session": "0", "task": "imagery", "run": "0"
+    }
+  ]
+}
+```
+
+`source` and `estimated` are the honesty pair. `events_parquet` with `estimated: false` means the
+sample indices came from the converter. The fallback, `events_tsv_fallback`, sets
+`estimated: true`: it reads the BIDS `events.tsv` and computes the index itself, which is off by a
+sub-sample amount wherever the source and served rates are not integer multiples.
+
+### `read_window`: a recipe by default, a taste on request
+
+The default mode reads no signal chunks at all. It tells you where the window is and how to
+interpret it:
+
+```json
+// read_window {"dataset_id": "nm000329", "recording": "...run-0_eeg.zarr", "start_s": 10, "duration_s": 2}
+{
+  "mode": "recipe",
+  "recipe": {
+    "array_path": "https://zarr.nemar.org/nm000329/zarr/.../eeg_250hz/0",
+    "s3_uri": "s3://nemar/nm000329/zarr/",
+    "s3_region": "us-east-2",
+    "s3_anonymous": true,
+    "group": "eeg_250hz",
+    "chunk_samples": 1000,
+    "shard_samples": 75000,
+    "n_channels": 63,
+    "sample_slice": { "start": 2500, "end": 3000 },
+    "scale_offset": "level-0 array attrs scale[] and offset[]; physical = digital * scale + offset",
+    "how_to": { "python_zarr": "...", "zarrita": "..." }
+  }
+}
+```
+
+`how_to` carries runnable Python and JavaScript for that exact array. Note `sample_slice`: the
+server converted your seconds to samples at the **served** rate, which is the one arithmetic step
+most easily got wrong by hand.
+
+Add `taste: true` with an explicit channel list to have the server decode a window for you. Values
+come back in the recording's physical units:
+
+```json
+// read_window {..., "start_s": 10, "duration_s": 0.2, "channels": [0, 1], "taste": true}
+{
+  "mode": "taste",
+  "sample_rate_hz": 250,
+  "channels": [0, 1],
+  "values": [[8.00116e-06, 3.0919e-05, 3.29635e-05, "..."], ["..."]],
+  "chunks_read": 1,
+  "bytes_read": 122207,
+  "filled_ranges": [],
+  "note": "values are rounded to six significant digits; see recipe for the exact byte-level read"
+}
+```
+
+Two fields to read carefully:
+
+- **`filled_ranges`** lists every sample span that had no stored chunk and was substituted with the
+  channel's baseline. It is always present, even when empty, so you never have to wonder whether a
+  build reports gaps. A fill value is indistinguishable from real near-flat signal, which is why
+  this is reported rather than left silent.
+- **`bytes_read`** is what the server fetched upstream, not what it returned. 122 KB to hand back
+  100 numbers is the point: a taste is for looking, and a recipe is for reading.
+
+**A taste over its caps is refused, never quietly truncated.** The caps are 60 s, 64 channels,
+3840 channel-seconds, and 65 536 channel-samples, and the refusal names the one you crossed:
+
+```
+taste duration_s (61) exceeds the 60 s cap; omit taste for a recipe instead
+```
+
+There is a second limit expressed in the store's own channel count rather than yours, because a
+stored chunk holds every channel: asking for one channel of a 256-channel recording still decodes
+all 256. When that trips, the message says so and suggests a duration that fits.
+
+### The provenance envelope
+
+Every recording-level response carries an `envelope`. This is the point of the server:
+
+```json
+{
+  "dataset_id": "nm000329",
+  "doi": "10.82901/nemar.nm000329",
+  "license": "CC-BY-NC-ND-4.0",
+  "citation": "Stephanie Brandl, Benjamin Blankertz, Tobias Dahne (2026) Brandl et al. 2020 — Motor Imagery Under Distraction: An Open Access BCI Dataset (v1.0.7). NEMAR. https://doi.org/10.82901/nemar.nm000329",
+  "source_commit": "7172d2d492dad63650f80cdb83352a0e9d4420f7",
+  "index_etag": "\"e4bd66659a2c937c9ca00ae68a5297ef\"",
+  "engine_version": "3",
+  "source_tree": "raw",
+  "derived": false,
+  "lossy": true,
+  "dtype": "int16",
+  "effective_rate_hz": 250,
+  "source_rate_hz": 1000,
+  "units_report": { "converted": 63, "units_column_present": true, "sidecar_supplied": true },
+  "zarr_verify_status": null
+}
+```
+
+- **`lossy: true`, always.** Every served array is int16-quantized and rate-capped relative to the
+  source recording. `effective_rate_hz` versus `source_rate_hz` above is that cap in the open: this
+  recording was recorded at 1000 Hz and is served at 250. There is no lossless streaming path
+  today. If your analysis needs the original samples, download the BIDS file.
+- **`source_commit`** is the dataset repository commit the conversion was built from, so a result is
+  reproducible against an exact state of the data rather than "whatever was there that day".
+- **`source_tree: "raw"`** — only raw BIDS recordings are converted. Nothing under `derivatives/`,
+  `sourcedata/`, or `code/` is served here.
+- **`derived`** is true only for a processed store, and then an `sss` record travels with it saying
+  what was applied. This is how Signal-Space Separation MEG appears.
+- **`zarr_verify_status`** is `verified`, `failed`, `unverifiable`, or **`null`**, and null is
+  normal: a fresh conversion has not been reached by the standing fidelity sweep yet. Verification
+  is reported, never a precondition for serving, so treat null as "not yet checked" rather than
+  "suspect".
+- **`dtype`** is the stored array's type, and it is only filled in when the answering call actually
+  read that array's metadata — so it is present on a taste and null on a recipe, where reading the
+  metadata is left to you.
+
+### Limits
+
+Anonymous per-IP rate limiting, shared with the rest of the read plane. `tools/list` is cacheable
+for a day; the dataset-level answers are cached at the edge. Two documents this server declines to
+read inline, handing you the public URL instead: an `events.parquet` over 16 MiB or 100 000 rows,
+and an `index.json` over 24 MiB. Both are readable directly, and a handful of the largest datasets
+in the archive are in that range.
+
+### Client configuration
+
+Claude Desktop or Claude Code, in `claude_desktop_config.json` or via `claude mcp add`:
+
+```json
+{
+  "mcpServers": {
+    "nemar": {
+      "type": "http",
+      "url": "https://mcp.nemar.org/mcp"
+    }
+  }
+}
+```
+
+Cursor, in `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "nemar": { "url": "https://mcp.nemar.org/mcp" }
+  }
+}
+```
+
+Python, with the official SDK (`pip install "mcp>=2.2"` — earlier majors cannot negotiate the
+2026-07-28 revision):
+
+```python
+from mcp import Client
+
+async with Client("https://mcp.nemar.org/mcp") as client:
+    result = await client.call_tool(
+        "list_recordings", {"dataset_id": "nm000329", "limit": 10}
+    )
+```
+
+The URL must include the `/mcp` path. `GET /` is a descriptor, and a `POST` there answers
+`Not Found`.
 
 ## Per-dataset entry points
 
@@ -272,6 +543,8 @@ review remains authoritative.
 ## Stable machine-readable entry points
 
 - [`/llms.txt`](https://nemar.org/llms.txt) — a compact map of public machine-facing resources.
+- [`mcp.nemar.org/mcp`](#tool-calling-mcpnemarorg) — the MCP endpoint, with a `tools/list` that
+  is cacheable for a day and a `GET /` descriptor naming the supported protocol revisions.
 - Dataset Markdown mirrors — a text-first representation of a dataset detail page.
 - Dataset JSON-LD — schema.org context embedded in the human-facing page.
 - `metadata.json` — neuroschema dataset document with catalog enrichment and version information.
