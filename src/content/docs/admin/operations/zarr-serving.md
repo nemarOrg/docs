@@ -2,10 +2,12 @@
 title: "Zarr serving copy — operations runbook"
 ---
 
-NEMAR keeps a derived, **latest-only** Zarr v3 serving copy of every recording so
-signals can be scrubbed in the browser (zarrita) and streamed for ML, from a
-single conversion. BIDS stays the source of truth; the Zarr store is reproducible.
+NEMAR tracks every recording and keeps a derived, **latest-only** Zarr v3 serving copy where
+conversion succeeds. This lets signals be scrubbed in the browser (zarrita) and streamed for ML
+from a single conversion. BIDS stays the source of truth; the Zarr store is reproducible.
 Epic: nemarOrg/nemar-cli#684.
+
+For the consumer-facing contract — store layout, the `index.json` schema, access rules, and format stability — see [Zarr Serving Copy](/platform/zarr/) in the public documentation; this page does not duplicate it.
 
 This runbook covers the **serving** side owned by `nemar-cli` (backend trigger,
 callback, D1 state, and the Cloudflare cache host + CORS). The conversion itself

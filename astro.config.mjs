@@ -10,6 +10,7 @@ export default defineConfig({
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
+			lastUpdated: true,
 			logo: {
 				light: './src/assets/nemar-logo-light.svg',
 				dark: './src/assets/nemar-logo-dark.svg',
@@ -21,6 +22,7 @@ export default defineConfig({
 			components: {
 				Footer: './src/components/Footer.astro',
 				Header: './src/components/Header.astro',
+				LastUpdated: './src/components/LastUpdated.astro',
 			},
 			plugins: [
 				starlightLinksValidator({
@@ -51,6 +53,8 @@ export default defineConfig({
 						{ label: 'Uploading a Dataset', slug: 'web/uploading' },
 						{ label: 'Managing Your Datasets', slug: 'web/managing-datasets' },
 						{ label: 'Publication Review', slug: 'web/publication-review' },
+						{ label: 'Account Settings', slug: 'web/account-settings' },
+						{ label: 'Upload Access', slug: 'web/upload-access' },
 					],
 				},
 				{
@@ -68,6 +72,7 @@ export default defineConfig({
 						{
 							label: 'Guides',
 							items: [
+								{ label: 'Collaboration & the Lifecycle', slug: 'cli/guides/collaboration' },
 								{ label: 'Uploading Datasets', slug: 'cli/guides/uploading' },
 								{ label: 'BIDS Validation', slug: 'cli/guides/validation' },
 								{ label: 'Downloading Data', slug: 'cli/guides/downloading' },
@@ -85,10 +90,12 @@ export default defineConfig({
 							],
 						},
 						{
-							label: 'Configuration',
+							label: 'Reference',
 							items: [
 								{ label: 'Configuration', slug: 'cli/reference/configuration' },
 								{ label: 'Environment Variables', slug: 'cli/reference/environment' },
+								{ label: 'Account Access', slug: 'cli/reference/account-access' },
+								{ label: 'Debugging and Bug Reports', slug: 'cli/reference/debugging' },
 							],
 						},
 					],
@@ -99,7 +106,18 @@ export default defineConfig({
 						{ label: 'Overview', link: '/platform/' },
 						{ label: 'Backend API', slug: 'platform/api' },
 						{ label: 'Data API', slug: 'platform/data-api' },
-						{ label: 'Zarr and edge access', slug: 'platform/zarr' },
+						{
+							label: 'Zarr and edge access',
+							items: [
+								{ label: 'Overview', slug: 'platform/zarr' },
+								{ label: 'Mental model', slug: 'platform/zarr/mental-model' },
+								{ label: 'Store Contract', slug: 'platform/zarr/store-contract' },
+								{ label: 'Index Contract', slug: 'platform/zarr/index-contract' },
+								{ label: 'Access and Hosting', slug: 'platform/zarr/access' },
+								{ label: 'Cost Ladder and Recipes', slug: 'platform/zarr/cost-ladder' },
+								{ label: 'Format Stability Policy', slug: 'platform/zarr/format-stability' },
+							],
+						},
 						{ label: 'DOI and versioning', slug: 'platform/doi-and-versioning' },
 						{ label: 'For agents and tools', slug: 'platform/for-agents' },
 					],

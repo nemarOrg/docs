@@ -203,10 +203,12 @@ The version DOI identifies the released version and its file manifest.
 #### Step 14: `s3_lock` - S3 Object Lock
 Applies S3 Object Lock (governance mode) to all dataset objects, preventing accidental deletion. Lock duration: 10 years.
 
-#### Step 15: `sync_nemar` - Compatibility step
-The legacy dataexplorer synchronization is disabled. The step is retained as a logged no-op so
-older publication records remain valid. Archive-zip generation is **not** an orchestrator step; the
-central version workflow dispatches it separately after the version DOI is minted.
+#### Step 15: `sync_nemar` - Compatibility step (disabled)
+This step is now a no-op: it used to sync dataset metadata to a legacy PHP dataexplorer data
+pipeline that predated the current `nemar.org`, and that coupling has since been removed. The step
+is retained only so existing publication-request records remain valid; it logs a skip and always
+succeeds. Archive-zip generation is **not** an orchestrator step; the central `run-version-doi.yml`
+workflow dispatches `generate-archive` separately after the version DOI is minted.
 
 #### Step 16: `notify_user` - Send Notification Email
 Sends a publication confirmation email to the dataset owner with the DOI and citation information. This is the final step; the publication request status changes to "published".
@@ -358,7 +360,7 @@ A: A dataset can be restricted through the takedown process. Its DOI is not dele
 a tombstone that records the withdrawal.
 
 **Q: Can I update a published dataset?**
-A: Yes. Dataset owners can update their datasets via direct pushes or pull requests.
+A: Yes, but only through pull requests, direct pushes to `main` are blocked once a dataset is public. Owners and collaborators use `nemar dataset update`/`release`; anyone else can fork and open a PR. See [Collaboration & the Lifecycle](/cli/guides/collaboration/).
 
 **Q: What if I need to publish urgently?**
 A: Contact NEMAR admins directly. Publication requests are processed in order received.

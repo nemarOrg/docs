@@ -11,11 +11,29 @@
  * Usage: bun run scripts/generate-commands.ts
  */
 import { execSync } from "child_process";
-import { rmSync, writeFileSync } from "fs";
-import { join } from "path";
+import { existsSync, rmSync, writeFileSync } from "fs";
+import { join, resolve } from "path";
 
-const CLI = "/Users/yahya/Documents/git/nemar/nemar-cli/src/index.ts";
-const DOCS = join(import.meta.dir, "..", "src", "content", "docs");
+const DOCS_ROOT = join(import.meta.dir, "..");
+const DOCS = join(DOCS_ROOT, "src", "content", "docs");
+
+/**
+ * The nemar-cli checkout this run reads `--help-all` from. Defaults to the
+ * sibling checkout (`../nemar-cli`, relative to this repo) so the script
+ * runs on any machine without editing it; set NEMAR_CLI_ENTRY (absolute, or
+ * relative to this repo) to point at a worktree instead -- an epic or phase
+ * branch whose CLI hasn't merged yet.
+ */
+const CLI = resolve(DOCS_ROOT, process.env.NEMAR_CLI_ENTRY || "../nemar-cli/src/index.ts");
+
+if (!existsSync(CLI)) {
+  console.error(
+    `Could not find the nemar CLI entry point at ${CLI}.\n` +
+      "Set NEMAR_CLI_ENTRY to the CLI's src/index.ts (absolute, or relative to this repo),\n" +
+      "or check out nemar-cli as a sibling directory (../nemar-cli).",
+  );
+  process.exit(1);
+}
 
 // Top-level groups to document. Root-level alias shortcuts (login, signup,
 // whoami, switch, register, logout) intentionally omitted; they duplicate auth.
@@ -37,7 +55,9 @@ function help(path: string): string {
   let text: string;
   try {
     // `</dev/null` so an accidental prompt gets EOF instead of hanging.
-    const out = execSync(`bun run ${CLI} ${path} --help --no-color </dev/null 2>&1`, {
+    // `--help-all` (not `--help`) so the deprecation paragraphs and the
+    // Environment Variables blocks reach the generated pages too.
+    const out = execSync(`bun run ${CLI} ${path} --help-all --no-color </dev/null 2>&1`, {
       encoding: "utf-8",
       timeout: 30000,
     });
@@ -97,7 +117,7 @@ for (const group of GROUPS) {
   const nodes = walk(group.path);
   let doc = `---\ntitle: "${group.title}"\n---\n\n`;
   doc += `${group.intro}\n\n`;
-  doc += `:::note\nThis page is generated from \`nemar ${group.path} --help\`. Run \`generate-commands.ts\` to refresh it.\n:::\n\n`;
+  doc += `:::note\nThis page is generated from \`nemar ${group.path} --help-all\`. Run \`generate-commands.ts\` to refresh it.\n:::\n\n`;
   for (const node of nodes) {
     const heading = "#".repeat(Math.min(node.depth + 2, 6));
     doc += `${heading} ${node.path}\n\n`;

@@ -24,7 +24,7 @@ canonical data plane from derived Zarr access.
 | **Backend API** | `api.nemar.org` | Auth, dataset lifecycle, admin, publication, DOIs (Cloudflare Workers + D1) | [Platform API](/platform/api/) |
 | **Data plane** | `data.nemar.org` | Public dataset files, version manifests, `records.json`, archive zips | [Data API](/platform/data-api/) |
 | **Dataset browser** | `nemar.org` | The dataset browser (Astro) | external |
-| **Signal viewer** | `zarr.nemar.org` | In-browser EEG/EMG viewer streaming per-recording Zarr | [Zarr and edge access](/platform/zarr/) |
+| **Zarr serving plane** | `zarr.nemar.org` | Derived, chunked access used by the in-browser signal viewer where conversion is available | [Zarr and edge access](/platform/zarr/) |
 | **Scholarly record** | DOI landing pages | A durable concept identity and precise version citations | [DOI and versioning](/platform/doi-and-versioning/) |
 
 ## How a dataset flows through NEMAR
@@ -35,9 +35,9 @@ canonical data plane from derived Zarr access.
 than silently changing the object that an earlier analysis used.
 
 1. A researcher prepares a BIDS dataset and validates it with the **CLI**.
-2. The CLI or website registers the dataset through the **backend API**, which coordinates the
-   dataset record, GitHub metadata, and storage workflow.
-3. Data files are stored through the NEMAR data workflow; metadata is versioned in GitHub.
+2. The CLI or website registers the dataset through the **backend API**, which creates a private
+   GitHub repository for metadata and git-annex pointers and provisions S3 storage for data blobs.
+3. Data files upload to S3; metadata is versioned in GitHub.
 4. Review creates a concept DOI; the researcher cuts versioned releases, each with its own version
    DOI.
 5. On publication the dataset becomes public on the **data plane** (`data.nemar.org`) and is

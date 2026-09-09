@@ -1,6 +1,7 @@
 ---
-title: Zarr and edge access
+title: "Zarr and edge access: mental model"
 description: How NEMAR keeps BIDS authoritative while making selected recordings streamable for interactive analysis.
+slug: platform/zarr/mental-model
 ---
 
 ## Why a second representation exists
@@ -18,7 +19,7 @@ access optimization, not a replacement for BIDS and not a new source of truth.
 The browser-facing gateway is:
 
 ```text
-https://zarr.nemar.org/<dataset-id>/zarr/<recording-stem>.zarr/
+https://zarr.nemar.org/<dataset-id>/zarr/<bids-relative-path>.zarr/
 https://zarr.nemar.org/<dataset-id>/zarr/index.json
 ```
 
@@ -70,5 +71,5 @@ the correct route.
 
 This layer is the foundation for broader in-browser analysis. The next step is to let browser tools
 do more than view a trace: read selected chunks, compute a transparent operation, show the method
-and inputs, and save a versioned derivative. Larger jobs belong on the planned [Tapis and One
-Science Place compute path](/ecosystem/compute/), with provenance and citation carried forward.
+and inputs, and save a versioned derivative. Larger jobs belong on the planned [Tapis through
+OneSciencePlace compute path](/ecosystem/compute/), with provenance and citation carried forward.

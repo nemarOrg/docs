@@ -5,7 +5,7 @@ title: "dataset"
 Dataset management operations.
 
 :::note
-This page is generated from `nemar dataset --help`. Run `generate-commands.ts` to refresh it.
+This page is generated from `nemar dataset --help-all`. Run `generate-commands.ts` to refresh it.
 :::
 
 ## dataset
@@ -19,6 +19,8 @@ Options:
   -h, --help                            display help for command
 
 Commands:
+  access                                Review and decide collaborator access
+                                        requests (owner/admin)
   ci [dataset-id]                       Check BIDS validation CI status for the
                                         current dataset
   clone [options] <dataset-id>          Clone a dataset from NEMAR
@@ -44,13 +46,138 @@ Commands:
   save [options]                        Stage and commit changes (alias for
                                         commit)
   search [options] <query>              Search datasets using semantic matching
-  status [options] <dataset-id>         Check status of a dataset
+  status|view [options] <dataset-id>    Check status of a dataset (alias: view)
   update [options] [path]               Push local changes to a dataset via PR
   upload [options] <path>               Upload a BIDS dataset to NEMAR
   validate [options] [path]             Validate a BIDS dataset using the
                                         official BIDS validator (requires Deno)
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Manage BIDS datasets on NEMAR. Upload, download, validate, and version
+  neurophysiology datasets in Brain Imaging Data Structure (BIDS) format.
+
+Prerequisites:
+  - git-annex (for upload/download)
+  - Deno runtime (for BIDS validation)
+  - NEMAR account (for upload)
+
+Workflows:
+  New dataset:          nemar dataset upload <path>
+  Edit (private):       nemar dataset commit -> nemar dataset push
+  Edit (public):        nemar dataset update
+  New version:          nemar dataset release
+  Download (one-shot):  nemar dataset download <id>            (clone + fetch data)
+  Download (lazy):      nemar dataset clone <id>               (clone only, then 'cd' in)
+                        nemar dataset get [paths]              (fetch data later)
+  Request publication:  nemar dataset publish request <id>
+
+Note:
+  'download' runs OUTSIDE a dataset directory and clones + fetches in one step.
+  'get' runs INSIDE an already-cloned dataset directory and only fetches data.
+  For NEMAR datasets (nm/on prefix), both default-skip content under stimuli/
+  and derivatives/ (large folders); pass --stimuli or --derivatives to include
+  them. OpenNeuro datasets (ds prefix) ignore these flags and download the
+  full tree.
+
+Examples:
+  $ nemar dataset validate ./my-dataset          # Validate locally
+  $ nemar dataset upload ./my-dataset            # Upload to NEMAR
+  $ nemar dataset download nm000104              # Download (skips stimuli/derivatives)
+  $ nemar dataset download nm000104 --stimuli    # Also fetch stimuli/
+  $ nemar dataset get --derivatives              # Fetch derivatives/ in a clone
+  $ nemar dataset list --mine                    # List your datasets
+  $ nemar dataset status nm000104                # Check dataset status
+  $ nemar dataset request-access nm000104        # Request collaborator access
+  $ nemar dataset invite johndoe nm000104        # Invite user as collaborator
+
+Learn More:
+  https://nemar-cli.pages.dev/commands/dataset/
+```
+
+### dataset access
+
+```text
+Usage: nemar dataset access [options] [command]
+
+Review and decide collaborator access requests (owner/admin)
+
+Options:
+  -h, --help                       display help for command
+
+Commands:
+  approve <username> <dataset-id>  Approve a pending access request
+  deny <username> <dataset-id>     Deny a pending access request
+  help [command]                   display help for command
+  list [options] <dataset-id>      List access requests for a dataset
+```
+
+#### dataset access approve
+
+```text
+Usage: nemar dataset access approve [options] <username> <dataset-id>
+
+Approve a pending access request
+
+Arguments:
+  username    Username to approve
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+Description:
+  Grant a user collaborator (write) access after they requested it.
+  Only the dataset owner or an admin can approve.
+
+Examples:
+  $ nemar dataset access approve johndoe nm000104
+```
+
+#### dataset access deny
+
+```text
+Usage: nemar dataset access deny [options] <username> <dataset-id>
+
+Deny a pending access request
+
+Arguments:
+  username    Username to deny
+  dataset-id  Dataset ID (e.g., nm000104)
+
+Options:
+  -h, --help  display help for command
+
+Description:
+  Reject a pending access request. The user is not granted access and may
+  request again later. Only the dataset owner or an admin can deny.
+
+Examples:
+  $ nemar dataset access deny johndoe nm000104
+```
+
+#### dataset access list
+
+```text
+Usage: nemar dataset access list [options] <dataset-id>
+
+List access requests for a dataset
+
+Arguments:
+  dataset-id         Dataset ID (e.g., nm000104)
+
+Options:
+  --status <status>  Filter by status: pending, approved, or denied (default:
+                     "pending")
+  --json             Output as JSON for scripting
+  -h, --help         display help for command
+
+Description:
+  List users who have requested collaborator access to a private dataset.
+  Only the dataset owner or an admin can view requests. Defaults to pending.
+
+Examples:
+  $ nemar dataset access list nm000104
+  $ nemar dataset access list nm000104 --status approved
 ```
 
 ### dataset ci
@@ -66,7 +193,14 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Show the status of the BIDS validation CI workflow for a dataset.
+  When run inside a cloned dataset, the dataset ID is auto-detected
+  from the git remote URL.
+
+Examples:
+  $ nemar dataset ci              # Auto-detect from CWD
+  $ nemar dataset ci nm000104     # Explicit dataset ID
 ```
 
 ### dataset clone
@@ -83,7 +217,20 @@ Options:
   -o, --output <path>  Output directory (default: ./<dataset-id>)
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Clone a NEMAR dataset repository with git-annex initialized.
+  Data files are not downloaded; use 'nemar dataset get' afterward.
+
+  Private datasets require authentication (nemar auth login) and are
+  only accessible to the owner or designated collaborators.
+
+Requirements:
+  - git-annex installed
+  - NEMAR account (for private datasets)
+
+Examples:
+  $ nemar dataset clone nm000104
+  $ nemar dataset clone nm000104 -o ./my-dataset
 ```
 
 ### dataset collaborators
@@ -100,7 +247,13 @@ Options:
   --json      Output as JSON for scripting
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  List all collaborators who have access to a dataset.
+  Only dataset owners and admins can view collaborators.
+
+Examples:
+  $ nemar dataset collaborators nm000104
+  $ nemar dataset collaborators nm000104 --json
 ```
 
 ### dataset commit
@@ -114,7 +267,17 @@ Options:
   -m, --message <msg>  Commit message (default: "Save changes")
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Stage all changes (git add -A) and commit them. Large files are
+  automatically handled by git-annex based on the dataset's largefiles config.
+
+Tip:
+  After committing, use 'nemar dataset push' for private datasets
+  or 'nemar dataset update' for public datasets.
+
+Examples:
+  $ nemar dataset commit
+  $ nemar dataset commit -m "Add new EEG recordings"
 ```
 
 ### dataset download
@@ -149,9 +312,44 @@ Options:
                        large)
   --skip-port-check    Skip the porting-in-progress check (use if falsely
                        blocked on an OpenNeuro-sourced dataset)
+  --require-complete   Exit non-zero if any file is unavailable from the
+                       archive (for strict pipelines)
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Download a BIDS dataset from NEMAR or OpenNeuro.
+
+  NEMAR datasets (nm/on prefix) use git-annex for efficient data transfer
+  with parallel streams and version tracking.
+
+  OpenNeuro datasets (ds prefix) are downloaded as plain files from
+  OpenNeuro's public S3 bucket. No account or git-annex required.
+
+  For NEMAR datasets, content under stimuli/ and derivatives/ is skipped by
+  default because these folders can be very large. The git-annex pointers
+  are still cloned, so you can fetch them later with 'nemar dataset get
+  --stimuli' or 'nemar dataset get --derivatives' from inside the dataset
+  directory. (OpenNeuro datasets ignore these flags; the full tree is
+  always downloaded.)
+
+Requirements:
+  - git-annex installed (NEMAR datasets only)
+  - NEMAR account (for private datasets)
+  - AWS CLI recommended for OpenNeuro downloads (falls back to HTTPS)
+
+Examples:
+  $ nemar dataset download nm000104              # Download NEMAR dataset (skips stimuli/derivatives)
+  $ nemar dataset download nm000104 -o ./data    # Custom output directory
+  $ nemar dataset download nm000104 --no-data    # Metadata only (fast)
+  $ nemar dataset download nm000104 -j 8         # More parallel streams
+  $ nemar dataset download nm000104 --resume     # Resume partial download
+  $ nemar dataset download nm000104 --update     # Pull only the version diff
+  $ nemar dataset download nm000104 --update --prune  # Plus drop orphan objects
+  $ nemar dataset download nm000104 --subjects sub-01,02      # Only these subjects
+  $ nemar dataset download nm000104 --tasks rest --datatypes eeg  # Subset
+  $ nemar dataset download nm000104 --stimuli                 # Also download stimuli/
+  $ nemar dataset download nm000104 --stimuli --derivatives   # Download everything
+  $ nemar dataset download ds000248              # Download from OpenNeuro
 ```
 
 ### dataset drop
@@ -167,7 +365,15 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Remove local copies of annexed data files. Git-annex verifies that
+  remote copies exist before dropping. Use 'nemar dataset get' to
+  re-download later.
+
+Examples:
+  $ nemar dataset drop                   # Drop all local data
+  $ nemar dataset drop sub-01/eeg/       # Drop specific directory
+  $ nemar dataset drop *.edf             # Drop EDF files
 ```
 
 ### dataset get
@@ -188,9 +394,29 @@ Options:
                        large)
   --skip-port-check    Skip the porting-in-progress check (use if falsely
                        blocked on an OpenNeuro-sourced dataset)
+  --require-complete   Exit non-zero if any file is unavailable from the
+                       archive (for strict pipelines)
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Download data files from the remote for a cloned dataset.
+  Must be run inside a git-annex dataset directory.
+
+  For private datasets, credentials are fetched automatically
+  if you are logged in (nemar auth login).
+
+  By default, content under stimuli/ and derivatives/ is skipped because
+  these folders can be very large. Pass --stimuli or --derivatives to
+  fetch them. When you supply explicit file paths, the path itself is
+  treated as the filter and the default-skip is not applied.
+
+Examples:
+  $ nemar dataset get                       # Get all files (skips stimuli/derivatives)
+  $ nemar dataset get --stimuli             # Get all files including stimuli/
+  $ nemar dataset get --stimuli --derivatives  # Get everything
+  $ nemar dataset get sub-01/eeg/           # Get specific directory
+  $ nemar dataset get stimuli/              # Explicit path: fetches stimuli/
+  $ nemar dataset get *.edf -j 8            # Get EDF files with 8 streams
 ```
 
 ### dataset invite
@@ -207,7 +433,18 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Invite a NEMAR user as a collaborator to your dataset.
+  Only dataset owners and admins can invite collaborators.
+
+  Works for both public and private repositories.
+
+Requirements:
+  - NEMAR account (nemar auth login)
+  - Dataset ownership or admin status
+
+Examples:
+  $ nemar dataset invite johndoe nm000104
 ```
 
 ### dataset list
@@ -218,26 +455,110 @@ Usage: nemar dataset list [options]
 List datasets on NEMAR (full catalog)
 
 Options:
-  --mine              List only your datasets (both private and public)
-  --owner <username>  List datasets owned by a specific user
-  --search <query>    Search by name, description, authors, or tasks
-  --modality <type>   Filter by modality (eeg, emg, meg, etc.)
-  --author <name>     Filter by author name
-  --task <name>       Filter by task name
-  --license <tiers>   Filter by license tier(s), comma-separated: public,
-                      attribution, sharealike, noncommercial, noderiv, unknown
-  --doi               Show only datasets with DOIs
-  --recent [days]     Show recently published datasets
-  --sort <order>      Sort: newest, oldest, name, participants, size (default:
-                      "newest")
-  --json              Output as JSON for scripting
-  -n, --limit <n>     Results per page (default: 20, max: 200) (default: "20")
-  --page <n>          Page number (starts at 1)
-  --offset <n>        Skip this many results (alternative to --page)
-  --all               Show all results (up to 200)
-  -h, --help          display help for command
+  --mine                       List only your datasets (both private and
+                               public)
+  --owner <username>           List datasets owned by a specific user
+  --search <query>             Search by name, description, authors, or tasks
+  --modality <type>            Filter by modality (eeg, emg, meg, etc.)
+  --author <name>              Filter by author name
+  --task <name>                Filter by task name
+  --license <tiers>            Filter by license tier(s), comma-separated:
+                               public, attribution, sharealike, noncommercial,
+                               noderiv, unknown
+  --doi                        Show only datasets with DOIs
+  --hed                        Show only datasets with HED annotations
+  --has-zarr                   Show only datasets with a ready Zarr copy
+                               (#1062)
+  --has-zarr-verified          Show only datasets whose Zarr copy passed
+                               fidelity verification (#1068)
+  --complete                   Show only datasets verified data-complete (#970)
+  --recent [days]              Show recently published datasets
+  --sort <order>               Sort order (choices: "newest", "oldest", "name",
+                               "participants", "size", "citations", default:
+                               "newest")
+  --include-unknown            Include datasets with an unknown value for the
+                               active facet filter(s)
+  --json                       Output as JSON for scripting
+  -n, --limit <n>              Results per page (default: 20, max: 200)
+                               (default: "20")
+  --page <n>                   Page number (starts at 1)
+  --offset <n>                 Skip this many results (alternative to --page)
+  --all                        Show all results (up to 200)
+  --subjects <range>           Subject count (subjects) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --channels <range>           Channel count (channels) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --sessions <range>           Session count (sessions) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --size <range>               Dataset size -- range with optional units (e.g.
+                               10gb..2tb, 500mb.., ..1gb; bare = bytes)
+  --files <range>              File count (files) -- range (e.g. 10..50, 10..,
+                               ..50, or 10)
+  --citations <range>          Citation count (citations) -- range (e.g.
+                               10..50, 10.., ..50, or 10)
+  --duration <range>           Total recording duration -- range with optional
+                               units (e.g. 30m..2h, 100h.., ..90s; bare =
+                               seconds)
+  --recording-length <range>   Per-recording duration -- range with optional
+                               units (e.g. 30m..2h, 100h.., ..90s; bare =
+                               seconds)
+  --recordings <range>         Recording count (recordings) -- range (e.g.
+                               10..50, 10.., ..50, or 10)
+  --unavailable <range>        Unavailable recording count (recordings) --
+                               range (e.g. 10..50, 10.., ..50, or 10)
+  --age <range>                Participant age (years) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --rate <range>               Sampling rate (Hz) -- range (e.g. 10..50, 10..,
+                               ..50, or 10)
+  --powerline <values>         Power line frequency -- comma-separated, one or
+                               more of: 50, 60
+  --reference <text>           EEG reference -- substring match
+  --placement <text>           Electrode placement scheme -- substring match
+  --electrode-system <values>  Electrode system -- comma-separated, one or more
+                               of: 10-05, 10-10, 10-20, biosemi, egi-geodesic,
+                               other
+  --source <values>            Source archive -- comma-separated, one or more
+                               of: openneuro, nemar, gin, other
+  --zarr <values>              Zarr conversion status -- comma-separated, one
+                               or more of: ready, pending, failed
+  --bids-version <version>     BIDS version -- exact or prefix match
+  --hed-version <version>      HED version -- exact or prefix match
+  -h, --help                   display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Lists the full NEMAR catalog, including legacy datasets from nemar.org
+  and datasets managed via nemar-cli. Shows 20 results per page by default.
+  Run 'nemar dataset list --help' for the full list of facet filters
+  (--subjects, --channels, --age, --source, ...).
+
+  With --mine: shows only YOUR datasets (requires authentication).
+  With --owner <username>: shows datasets owned by a specific user.
+
+Pagination:
+  -n, --limit <n>    Results per page (default: 20, max: 200)
+  --page <n>         Page number (e.g., --page 2 for results 21-40)
+  --offset <n>       Skip N results (e.g., --offset 40 for results 41+)
+  --all              Show all results (up to 200)
+
+Display Indicators:
+  cyan ID     Managed dataset (on GitHub)
+  dim ID      Catalog-only (nemar.org, not on GitHub)
+  *           On GitHub but not synced to nemar.org
+  !           Sync to nemar.org failed
+
+Examples:
+  $ nemar dataset list                         # First 20 datasets
+  $ nemar dataset list --page 2                # Next 20 datasets
+  $ nemar dataset list -n 50                   # 50 per page
+  $ nemar dataset list --all                   # All results (up to 200)
+  $ nemar dataset list --mine                  # Your datasets
+  $ nemar dataset list --owner yahya           # Datasets by 'yahya'
+  $ nemar dataset list --modality eeg          # EEG datasets only
+  $ nemar dataset list --license public,attribution  # Permissive licenses
+  $ nemar dataset list --search "motor"        # Search by keyword
+  $ nemar dataset list --doi --sort size       # Published, by size
+  $ nemar dataset list --subjects 20..50 --age 18..  # Facet filters
+  $ nemar dataset search "resting state EEG"   # Semantic search
 ```
 
 ### dataset manifest
@@ -255,7 +576,17 @@ Options:
   --json              Output raw JSON
   -h, --help          display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  View version manifests that map file paths to S3 annex keys.
+  Manifests are generated when a version DOI is published.
+
+  When run inside a dataset directory, the dataset ID is auto-detected.
+
+Examples:
+  $ nemar dataset manifest                    # List available versions
+  $ nemar dataset manifest v1.0.0             # View specific version
+  $ nemar dataset manifest v1.0.0 --json      # Raw JSON output
+  $ nemar dataset manifest -d nm000104        # Explicit dataset ID
 ```
 
 ### dataset publish
@@ -288,7 +619,24 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Submit a publication request to make your private dataset publicly accessible.
+  NEMAR admins will be notified and can approve or deny your request.
+
+  Once approved, your dataset will:
+  - Become publicly visible on GitHub
+  - Receive a permanent DOI via Zenodo
+  - Have tag protection enabled (prevents version manipulation)
+  - Have S3 Object Lock enabled (prevents data deletion)
+
+  You can only have one active publication request per dataset.
+
+Status Flow:
+  requested → approving → published (or denied)
+
+Examples:
+  $ nemar dataset publish request nm000104
+  $ nemar dataset publish status nm000104     # Check request status
 ```
 
 #### dataset publish resend
@@ -304,7 +652,20 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Resend the publication request notification email to all NEMAR admins.
+  Use this if admins haven't responded to your original request.
+
+  This does NOT create a duplicate request - it only sends a reminder
+  email for your existing publication request.
+
+When to Use:
+  - Admins haven't responded after several days
+  - You want to remind admins about your pending request
+  - Your request status is still "requested"
+
+Examples:
+  $ nemar dataset publish resend nm000104
 ```
 
 #### dataset publish status
@@ -320,7 +681,34 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Check the status of your publication request and see progress through
+  the approval workflow.
+
+Possible Statuses:
+  requested  - Waiting for admin review
+  approving  - Admin is running the publication process
+  published  - Dataset is now public with DOI
+  denied     - Request was denied (includes reason)
+
+Steps in Approval Process:
+   1. CI check          - Verify BIDS validation passes
+   2. Make public       - Change repository visibility
+   3. S3 public read    - Grant public read access to S3 data
+   4. Tag protection    - Prevent version manipulation
+   5. Create DOI        - Create concept DOI (EZID/Zenodo)
+   6. Update metadata   - Update from BIDS description
+   7. Update README     - Add DOI badge and citation
+   8. Create tag        - Create version tag
+   9. Create release    - Create GitHub release
+  10. Upload to Zenodo  - Upload archive (if Zenodo provider)
+  11. Publish DOI       - Make DOI public (permanent)
+  12. S3 lock           - Enable Object Lock for data preservation
+  13. Generate archive  - Create downloadable zip
+  14. Notify user       - Send publication confirmation email
+
+Examples:
+  $ nemar dataset publish status nm000104
 ```
 
 ### dataset push
@@ -338,7 +726,25 @@ Options:
   -b, --body <body>    Pull request body (with --pr)
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Push git commits to GitHub (main + git-annex branches) and optionally
+  copy annexed data to the S3 remote.
+
+  With --pr, creates a pull request after pushing the current branch.
+
+  S3 push uses temporary credentials from the NEMAR API. Falls back to
+  environment AWS credentials if not logged in.
+
+Note:
+  Direct push to main works for private datasets only. For public
+  datasets with branch protection, use 'nemar dataset update' instead,
+  or use 'push --pr' to push to a branch and create a PR.
+
+Examples:
+  $ nemar dataset push
+  $ nemar dataset push --no-s3      # Git only, skip S3
+  $ nemar dataset push -j 8         # More parallel S3 streams
+  $ nemar dataset push --pr -t "Add new recordings"
 ```
 
 ### dataset release
@@ -359,7 +765,16 @@ Options:
   -y, --yes            Skip confirmation and proceed
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Create a pull request that bumps the dataset version in
+  dataset_description.json. The PR triggers CI checks (BIDS validation,
+  version check). On merge, GitHub Actions tags the release and
+  publishes a version DOI (if a concept DOI exists).
+
+Examples:
+  $ nemar dataset release nm000104 --type patch
+  $ nemar dataset release nm000104 --version 2.0.0
+  $ nemar dataset release nm000104                   # interactive prompt
 ```
 
 ### dataset request-access
@@ -375,7 +790,21 @@ Arguments:
 Options:
   -h, --help  display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Request collaborator access to a private NEMAR dataset. The owner is
+  notified and can approve or deny; once approved you can push data via
+  git-annex.
+
+  Public datasets grant no access here, because the repository is already
+  open. Fork it and submit a pull request, or ask the owner for an invite
+  if you need merge rights.
+
+Requirements:
+  - NEMAR account (nemar auth login)
+  - Approved user status
+
+Examples:
+  $ nemar dataset request-access nm000104
 ```
 
 ### dataset save
@@ -389,7 +818,19 @@ Options:
   -m, --message <msg>  Commit message (default: "Save changes")
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Stage all changes (git add -A) and commit them. Large files are
+  automatically handled by git-annex based on the dataset's largefiles config.
+
+  This command is an alias for 'nemar dataset commit'.
+
+Tip:
+  After committing, use 'nemar dataset push' for private datasets
+  or 'nemar dataset update' for public datasets.
+
+Examples:
+  $ nemar dataset save
+  $ nemar dataset save -m "Add new EEG recordings"
 ```
 
 ### dataset search
@@ -400,29 +841,85 @@ Usage: nemar dataset search [options] <query>
 Search datasets using semantic matching
 
 Options:
-  --modality <type>  Filter by modality (eeg, emg, meg, etc.)
-  --json             Output as JSON for scripting
-  --limit <n>        Limit results (default: 20) (default: "20")
-  -h, --help         display help for command
+  --modality <type>            Filter by modality (eeg, emg, meg, etc.)
+  --author <name>              Filter by author name
+  --task <name>                Filter by task name
+  --license <tiers>            Filter by license tier(s), comma-separated:
+                               public, attribution, sharealike, noncommercial,
+                               noderiv, unknown
+  --doi                        Show only datasets with DOIs
+  --hed                        Show only datasets with HED annotations
+  --has-zarr                   Show only datasets with a ready Zarr copy
+                               (#1062)
+  --has-zarr-verified          Show only datasets whose Zarr copy passed
+                               fidelity verification (#1068)
+  --complete                   Show only datasets verified data-complete (#970)
+  --recent [days]              Show recently published datasets
+  --include-unknown            Include datasets with an unknown value for the
+                               active facet filter(s)
+  --verbose                    Show a README snippet under each result (off by
+                               default)
+  --json                       Output as JSON for scripting
+  --limit <n>                  Limit results (default: 20) (default: "20")
+  --subjects <range>           Subject count (subjects) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --channels <range>           Channel count (channels) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --sessions <range>           Session count (sessions) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --size <range>               Dataset size -- range with optional units (e.g.
+                               10gb..2tb, 500mb.., ..1gb; bare = bytes)
+  --files <range>              File count (files) -- range (e.g. 10..50, 10..,
+                               ..50, or 10)
+  --citations <range>          Citation count (citations) -- range (e.g.
+                               10..50, 10.., ..50, or 10)
+  --duration <range>           Total recording duration -- range with optional
+                               units (e.g. 30m..2h, 100h.., ..90s; bare =
+                               seconds)
+  --recording-length <range>   Per-recording duration -- range with optional
+                               units (e.g. 30m..2h, 100h.., ..90s; bare =
+                               seconds)
+  --recordings <range>         Recording count (recordings) -- range (e.g.
+                               10..50, 10.., ..50, or 10)
+  --unavailable <range>        Unavailable recording count (recordings) --
+                               range (e.g. 10..50, 10.., ..50, or 10)
+  --age <range>                Participant age (years) -- range (e.g. 10..50,
+                               10.., ..50, or 10)
+  --rate <range>               Sampling rate (Hz) -- range (e.g. 10..50, 10..,
+                               ..50, or 10)
+  --powerline <values>         Power line frequency -- comma-separated, one or
+                               more of: 50, 60
+  --reference <text>           EEG reference -- substring match
+  --placement <text>           Electrode placement scheme -- substring match
+  --electrode-system <values>  Electrode system -- comma-separated, one or more
+                               of: 10-05, 10-10, 10-20, biosemi, egi-geodesic,
+                               other
+  --source <values>            Source archive -- comma-separated, one or more
+                               of: openneuro, nemar, gin, other
+  --zarr <values>              Zarr conversion status -- comma-separated, one
+                               or more of: ready, pending, failed
+  --bids-version <version>     BIDS version -- exact or prefix match
+  --hed-version <version>      HED version -- exact or prefix match
+  -h, --help                   display help for command
 
-  Run with --help-all for examples and detailed descriptions.
-```
+Description:
+  Performs semantic search across the NEMAR dataset catalog. Unlike
+  --search on the list command (which uses exact text matching), this
+  uses AI embeddings to find conceptually similar datasets. The free-text
+  query is always the <query> argument -- this command has no --search flag.
 
-### dataset status
+  Accepts the same license/author/task/doi/complete/recent filters and facet
+  flags (--subjects, --age, --source, ...) as 'nemar dataset list --help'.
 
-```text
-Usage: nemar dataset status [options] <dataset-id>
+  For example, "brain signals during sleep" will match datasets about
+  "EEG recordings in sleep studies" even if those exact words don't appear.
 
-Check status of a dataset
-
-Arguments:
-  dataset-id  Dataset ID (e.g., nm000104)
-
-Options:
-  --json      Output as JSON for scripting
-  -h, --help  display help for command
-
-  Run with --help-all for examples and detailed descriptions.
+Examples:
+  $ nemar dataset search "motor imagery EEG"
+  $ nemar dataset search "resting state" --modality eeg
+  $ nemar dataset search "sleep spindles" --json
+  $ nemar dataset search "motor imagery" --license public --subjects 10..
+  $ nemar dataset search "P300 oddball" --verbose      # Show README snippets
 ```
 
 ### dataset update
@@ -444,7 +941,22 @@ Options:
   -y, --yes            Skip confirmation and proceed
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Push local changes (metadata or data files) to a dataset via a pull
+  request. Automatically bumps the version, commits, pushes, and creates
+  a PR. For data files (annexed), copies them to S3 via git-annex.
+
+  Run this from inside a dataset clone, or pass the path as an argument.
+
+Note:
+  This is the recommended way to update public datasets. It creates a
+  PR that must be reviewed before merging. For private datasets, you
+  can also use 'nemar dataset push' for direct updates.
+
+Examples:
+  $ cd nm000104 && nemar dataset update
+  $ nemar dataset update ./nm000104 --bump minor -m "Add new subjects"
+  $ nemar dataset update --branch fix/metadata -m "Fix participant ages"
 ```
 
 ### dataset upload
@@ -468,9 +980,43 @@ Options:
   -y, --yes                 Skip confirmation and proceed
   --restart                 Clear upload progress and re-upload all files
   --no                      Skip confirmation and decline
+  --deposit-type <type>     Attestation: 'owner' or 'redistribution'
+                            (non-interactive)
+  --key-status <status>     Attestation: re-identification key 'destroyed' or
+                            'retained'
+  --confirm-deidentified    Attestation: confirm the dataset contains no
+                            identifiable personal information
+  --affirm-no-duplicate     Attestation (redistribution only): affirm the
+                            dataset is not already archived in BIDS format
+  --upstream-source <ref>   Attestation (redistribution only): upstream release
+                            URL or accession
   -h, --help                display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+Description:
+  Upload a BIDS dataset to NEMAR. The dataset will be validated, assigned
+  a unique ID (nm000XXX), and stored on GitHub (metadata) and S3 (data files).
+
+Requirements:
+  - NEMAR account (nemar auth login)
+  - git-annex installed
+  - GitHub CLI authenticated (gh auth login)
+
+Process:
+  1. Validates BIDS format (unless --skip-validation)
+  2. Creates GitHub repository for metadata
+  3. Uploads large files to S3 in parallel
+  4. Enables PR-based versioning workflow
+
+Note:
+  This command is for initial dataset creation only. To update an
+  existing dataset, use 'nemar dataset commit' + 'nemar dataset push'
+  (private) or 'nemar dataset update' (public).
+
+Examples:
+  $ nemar dataset upload ./my-eeg-dataset
+  $ nemar dataset upload ./ds -n "My EEG Study" -d "64-channel EEG data"
+  $ nemar dataset upload ./ds --dry-run        # Preview without uploading
+  $ nemar dataset upload ./ds -j 16            # More parallel streams
 ```
 
 ### dataset validate
@@ -494,6 +1040,14 @@ Options:
   --update             Force update the BIDS validator to the latest version
   -h, --help           display help for command
 
-  Run with --help-all for examples and detailed descriptions.
+  Extra flags after known options are passed through to the BIDS validator.
+  See all validator flags: deno run jsr:@bids/validator --help
+
+  Examples:
+    $ nemar dataset validate                            # Validate current directory
+    $ nemar dataset validate ./ds --prune               # Skip derivatives
+    $ nemar dataset validate ./ds --json > out.json     # JSON for scripting
+    $ nemar dataset validate ./ds --ignoreNiftiHeaders  # Pass-through flag
+    $ nemar dataset validate ./ds --max-rows 0           # Headers only
 ```
 

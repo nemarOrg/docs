@@ -44,7 +44,7 @@ bun run gen:commands   # regenerate the CLI command reference (needs ../nemar-cl
 ```
 
 ## Generators (keep docs in sync with the CLI)
-- **`scripts/generate-commands.ts`** recursively parses `nemar … --help` to emit the command-reference pages (`cli/commands/*.mdx`, `admin/commands.mdx`). It expects `nemar-cli` checked out as a sibling at `../nemar-cli`. Re-run after CLI changes; do not hand-edit the generated command pages.
+- **`scripts/generate-commands.ts`** recursively parses `nemar … --help-all` to emit the command-reference pages (`cli/commands/*.mdx`, `admin/commands.mdx`). It expects `nemar-cli` checked out as a sibling at `../nemar-cli` by default; set `NEMAR_CLI_ENTRY` to point at a different checkout (a worktree whose branch hasn't merged yet). Re-run after CLI changes; do not hand-edit the generated command pages.
 - **`scripts/migrate-from-mkdocs.ts`** and **`scripts/restructure-ecosystem.ts`** are one-time scripts retained for provenance; they are not part of the normal build.
 
 ## Content Conventions
@@ -52,6 +52,10 @@ bun run gen:commands   # regenerate the CLI command reference (needs ../nemar-cl
 - Use Starlight asides (`:::note`, `:::tip`, `:::caution`, `:::danger`), not MkDocs `!!!` admonitions.
 - Prefer root-absolute internal links (`/cli/guides/uploading/`); relative links are allowed if they resolve. `bun run build` fails on broken internal links (starlight-links-validator).
 - "The website" / "the browser" means `nemar.org` (the apex cutover is done; the legacy PHP dataexplorer is gone). `ww2.nemar.org` and `www.nemar.org` still resolve but are non-canonical aliases; never reference them in content. The API is `api.nemar.org`, data plane `data.nemar.org`, viewer `zarr.nemar.org`. Never reference the retired `api.osc.earth` or the retired `neuromechanist` Cloudflare account (SCCN only).
+- Every page shows a created date and a last-updated date, derived from git history at build time.
+Override either with `created:` or `lastUpdated:` frontmatter, but only when history misleads, such as a moved or regenerated file.
+`lastUpdated: false` hides the last-updated line.
+A shallow clone hides both git-derived dates and logs a build warning instead of showing a wrong date.
 
 ## Development Workflow
 1. Check `.context/plan.md` for current tasks (the cutover checklist lives there).

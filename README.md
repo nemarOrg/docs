@@ -10,16 +10,21 @@ no Python toolchain and the docs can be deployed and gated independently.
 ```
 src/content/docs/
 ├── index.mdx                 Landing page (splash)
-├── getting-started/          PUBLIC  — install, quickstart, authentication
-├── commands/                 PUBLIC  — auth/dataset/sandbox reference (generated)
-├── guides/                   PUBLIC  — uploading, validation, downloading, versioning, publishing
-├── reference/                PUBLIC  — configuration, environment, api, data-api
-├── development/              PUBLIC  — contributor setup, zenodo testing
+├── ecosystem/                PUBLIC  — how the NEMAR systems fit together, CLI vs. web
+├── cli/                      PUBLIC  — the nemar CLI
+│   ├── getting-started/      —   install, quickstart, authentication
+│   ├── guides/                —   uploading, validation, downloading, versioning, publishing
+│   ├── commands/              —   auth/dataset/sandbox reference (generated)
+│   └── reference/             —   configuration, environment, account access, debugging
+├── platform/                 PUBLIC  — backend API, data plane, Zarr serving
+├── web/                      PUBLIC  — the web app: getting started, account settings, uploading
+├── policies/                 PUBLIC  — privacy, GDPR, contributor terms, takedown
+├── develop/                  PUBLIC  — contributor setup, zenodo testing
 └── admin/                    GATED   — served under /admin/*, fronted by Cloudflare Access
-    ├── commands.md           Admin command reference (generated)
+    ├── commands.mdx           Admin command reference (generated)
     ├── github-app-setup.md
-    ├── operations/           access-policies, manifest-summary-backfill, zarr-serving
-    └── disaster-recovery/    restoration runbooks, fail-safes, user roles
+    ├── operations/            access-policies, account-tiers, account-kinds, zarr-serving
+    └── disaster-recovery/     restoration runbooks, fail-safes, user roles
 ```
 
 Everything under `admin/` is public static HTML at build time; access control is
@@ -41,18 +46,20 @@ instrumentation, SSR contracts) in `nemar-cli` `AGENTS.md`, not here.
 Two scripts keep content in sync with the CLI; both are pure Bun/TypeScript (no Python):
 
 - **`scripts/generate-commands.ts`** — regenerates the command reference
-  (`commands/{auth,dataset,sandbox}.mdx`, `admin/commands.mdx`) by recursively
-  parsing the live `nemar … --help` tree. Run it after CLI changes. It expects
-  `nemar-cli` checked out as a sibling at `../nemar-cli`.
+  (`cli/commands/{auth,dataset,sandbox}.mdx`, `admin/commands.mdx`) by
+  recursively parsing the live `nemar … --help-all` tree. Run it after CLI
+  changes. It expects `nemar-cli` checked out as a sibling at `../nemar-cli`
+  by default; set `NEMAR_CLI_ENTRY` to point at a different checkout instead.
 - **`scripts/migrate-from-mkdocs.ts`** — one-time MkDocs → Starlight port
   (frontmatter, admonitions → asides, link fixups). Kept for reference; not part
   of the normal build.
 
 ## Deployment
 
-Deployed to Cloudflare Pages (SCCN account) on the `docs.nemar.org` custom domain.
-Build command `bun run build`, output `dist/`. Admin gating via a Cloudflare Access
-application on `docs.nemar.org/admin/*`.
+Deployed as a Cloudflare Worker (Workers Static Assets) on the SCCN account, on the
+`docs.nemar.org` custom domain. Build command `bun run build`, output `dist/`
+(`wrangler.jsonc` serves it). Admin gating via a Cloudflare Access application on
+`docs.nemar.org/admin/*`.
 
 ## Community and policies
 
