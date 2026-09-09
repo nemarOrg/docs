@@ -55,6 +55,10 @@ through a reviewable pull request, receives a new dataset version, and can recei
 DOI. The concept-level identity connects the history; the version-level identity protects the
 meaning of an earlier analysis.
 
+For a concrete comparison with an imported OpenNeuro dataset, see [Why use NEMAR?](/why-nemar/).
+The comparison uses the HBN EEG `on005506` / `ds005506` records and distinguishes the two
+repositories' version numbers.
+
 The DOI itself is permanent, while its registrar metadata can be corrected or enriched when a
 curation error is found. That distinction lets NEMAR improve descriptions and relationships in
 public without pretending that a previous release never existed.

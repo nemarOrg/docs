@@ -12,9 +12,10 @@ import { getCollection } from 'astro:content';
 // hand-written index would be worse than no index at all.
 export const prerender = true;
 
-const SECTION_ORDER = ['ecosystem', 'web', 'cli', 'platform', 'develop', 'policies'];
+const SECTION_ORDER = ['why-nemar', 'ecosystem', 'web', 'cli', 'platform', 'develop', 'policies'];
 
 const SECTION_TITLES: Record<string, string> = {
+	'why-nemar': 'Why NEMAR',
 	ecosystem: 'The Ecosystem',
 	web: 'Web App',
 	cli: 'CLI',

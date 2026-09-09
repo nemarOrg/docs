@@ -105,7 +105,7 @@ download to keep the URLs fresh.
 
 ### `GET /<datasetId>/metadata.json`
 
-Dataset-level [neuroschema](https://github.com/nemarOrg/neuroschema) v0.3.0
+Dataset-level [neuroschema](https://github.com/nemarOrg/neuroschema) v0.4.0
 `dataset` document combining the enrichment catalog (authors, MeSH keywords,
 license, DOI, etc.), the full version list, and a derived BIDS subject /
 session / modality / task / run tree from the **latest** version's manifest.
@@ -120,7 +120,7 @@ Wire format mirrors the core schema at
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "doc_type": "dataset",
   "dataset_id": "nm000103",
   "name": "...",
