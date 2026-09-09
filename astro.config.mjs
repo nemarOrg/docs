@@ -40,6 +40,7 @@ export default defineConfig({
 				{
 					label: 'The Ecosystem',
 					items: [
+						{ label: 'Why NEMAR?', slug: 'why-nemar' },
 						{ label: 'Mission and vision', slug: 'ecosystem/mission-and-vision' },
 						{ label: 'Overview', link: '/ecosystem/' },
 						{ label: 'CLI vs the web', slug: 'ecosystem/cli-vs-web' },
