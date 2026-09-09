@@ -9,8 +9,8 @@ difference is workflow style, not capability.
 
 ## What the web is best for
 
-- **Signing up.** Web sign-in and sign-up are planned for **July 2026**; until then, create your
-  account and authenticate with the CLI (`nemar auth signup` / `nemar auth login`).
+- **Signing up and signing in.** Create an account and use passwordless email-code sign-in in the
+  browser. The CLI remains available when a terminal-based workflow is more convenient.
 - **Browsing and exploring.** [Discover](https://nemar.org/discover), dataset detail pages,
   READMEs, and the citation dashboard live there.
 - **One-off uploads.** Drop a folder, walk through validation, request publication. No tooling
@@ -31,7 +31,7 @@ difference is workflow style, not capability.
 
 ## You don't have to pick one
 
-Most researchers use the web for sign-in, discovery, and publication review, and reach for the
+Many researchers use the web for sign-in, discovery, and publication review, then reach for the
 CLI when they need to script something. Same account, same datasets, same permissions; switching
 back and forth is fine.
 

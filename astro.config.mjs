@@ -2,13 +2,11 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
-import mermaid from 'astro-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://docs.nemar.org',
 	integrations: [
-		mermaid({ theme: 'default', autoTheme: true }),
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
@@ -40,8 +38,10 @@ export default defineConfig({
 				{
 					label: 'The Ecosystem',
 					items: [
+						{ label: 'Mission and vision', slug: 'ecosystem/mission-and-vision' },
 						{ label: 'Overview', link: '/ecosystem/' },
 						{ label: 'CLI vs the web', slug: 'ecosystem/cli-vs-web' },
+						{ label: 'Compute roadmap', slug: 'ecosystem/compute' },
 					],
 				},
 				{
@@ -99,6 +99,9 @@ export default defineConfig({
 						{ label: 'Overview', link: '/platform/' },
 						{ label: 'Backend API', slug: 'platform/api' },
 						{ label: 'Data API', slug: 'platform/data-api' },
+						{ label: 'Zarr and edge access', slug: 'platform/zarr' },
+						{ label: 'DOI and versioning', slug: 'platform/doi-and-versioning' },
+						{ label: 'For agents and tools', slug: 'platform/for-agents' },
 					],
 				},
 				{

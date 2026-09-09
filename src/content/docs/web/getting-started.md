@@ -4,26 +4,20 @@ title: "Getting started on the web"
 
 NEMAR (Neuroelectromagnetic Data Archive and Resource) is where neuroscience teams archive, share, and process EEG, MEG, and iEEG datasets. This page walks you through the everyday flow: signing in, getting an account, and uploading your first dataset.
 
-## Signing up (CLI for now)
+## Signing up
 
-Creating a NEMAR account asks for your email, an ORCID, a GitHub handle, and a couple of consent confirmations. The CLI runs the full flow in about two minutes:
+Creating a NEMAR account asks for your email, an ORCID, a GitHub handle, and a couple of consent confirmations. You can start in the browser or use the CLI:
 
 ```
 bun install -g @nemar/cli
 nemar auth signup
 ```
 
-The CLI opens a browser tab for ORCID authorization, collects the rest, and submits your account for a short admin review (typically same-day). See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown.
-
-A web sign-up flow is on the way. Until then, returning users sign in here with their existing email; the web and CLI share the same backend account.
+The CLI opens a browser tab for ORCID authorization, collects the rest, and submits your account for a short admin review. See [the sign-up page](https://nemar.org/signup) for the field-by-field breakdown. The browser and CLI share the same backend account.
 
 ## Signing in
 
-:::caution[Coming soon — planned July 2026]
-Passwordless web sign-in is planned for **July 2026**. Until it launches, authenticate with the [CLI](/cli/getting-started/installation/) (`nemar auth login`); the web and CLI share the same backend account.
-:::
-
-Once web sign-in launches, you'll sign in at the [login page](https://nemar.org/login): enter your email, NEMAR sends a 6-digit code, and you land on your dashboard. No password.
+At the [login page](https://nemar.org/login), enter your email and NEMAR sends a one-time code. After verification you land on your dashboard. No password is required. The CLI can use an API key for scripts and terminal workflows.
 
 Uploads and publication requests unlock when your account is in the `active` state. The dashboard tells you which state you're in.
 
