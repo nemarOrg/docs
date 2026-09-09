@@ -137,7 +137,7 @@ every feature of either archive's website.
 | Hosting and curation roles | No contributor roles in this DOI record | NEMAR as `HostingInstitution` and `nemarAdmin` as `DataCurator` | The record distinguishes the people who created the data from the service that hosts and curates this release. |
 | Description | No description in this DOI record | Abstract plus separate citation guidance | A machine can learn what the dataset contains without first scraping a web page. |
 | Subjects and keywords | No subjects in this DOI record | Domain terms including HBN, EEG, HED, CBCL, BIDS, and neuroscience | Structured terms improve discovery and give tools useful context. |
-| Rights | No rights entry in this DOI record | CC BY-SA 4.0 with an SPDX identifier and license URL | A citation record can expose the reuse condition; users must still read the license. |
+| Rights | OpenNeuro currently does not register rights metadata in its DataCite DOI records, at least in the records checked here | CC BY-SA 4.0 with an SPDX identifier and license URL | A citation record can expose the reuse condition; users must still read the license. |
 | Version relationship | The DOI suffix contains `v1.0.1`, but the DataCite `version` field is empty and no version relation is recorded | `version: 1.0.0`, with `IsVersionOf` pointing to the NEMAR concept DOI | The version is explicit in metadata, not only encoded in a string. |
 | Related scholarly and operational records | No related identifiers in this DOI record | `IsIdenticalTo` the OpenNeuro source DOI, plus the dataset paper, original HBN publications, NEMAR GitHub description, and NEMAR landing page | Related identifiers connect the imported release to its source, papers, code, and documentation. |
 | Funding | No funding references in this DOI record | NIH, grant `R01MH125934`, and Child Mind Institute entries | Funding context is available to people and machines that build research-impact graphs. |
@@ -150,10 +150,10 @@ Both DOIs are valid scholarly identifiers. The difference is what each repositor
 into its registrar record.
 
 For example, OpenNeuro's own documentation describes its BIDS requirement and public-domain
-licensing policy even though those details are not present in this particular OpenNeuro DataCite
-record. The NEMAR record states CC BY-SA 4.0 for the NEMAR release. Those are separate repository
-statements: read the license attached to the release you actually use rather than assuming that
-an imported dataset has the same terms everywhere.
+licensing policy even though those details are not registered in the current OpenNeuro DataCite
+records checked here. The NEMAR record states CC BY-SA 4.0 for the NEMAR release. Those are
+separate repository statements: read the license attached to the release you actually use rather
+than assuming that an imported dataset has the same terms everywhere.
 
 :::caution
 Metadata is a living part of a research resource. A DOI record can be updated, and a landing
