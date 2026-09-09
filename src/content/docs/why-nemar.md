@@ -12,7 +12,7 @@ If a dataset began somewhere else, NEMAR should make that provenance easier to f
 it. The HBN EEG example below shows the difference between the source repository's DOI and the
 NEMAR release DOI for the same imported dataset.
 
-## Eight reasons to use NEMAR
+## Nine reasons to use NEMAR
 
 ### 1. One foundation, several ways to work
 
@@ -41,7 +41,30 @@ release.
 Read the [Data API contract](/platform/data-api/) for the file, manifest, metadata, and archive
 endpoints.
 
-### 4. The DOI describes both identity and history
+### 4. Neuroschema makes metadata portable downstream
+
+NEMAR publishes dataset-level metadata as a [Neuroschema](https://github.com/nemarOrg/neuroschema)
+v0.4.0 document. The live [`on005506` metadata document](https://data.nemar.org/on005506/metadata.json)
+reports `doc_type: dataset`, `source: nemar`, and `schema_version: 0.4.0`. It gives software a
+structured description of the dataset, its files, BIDS entities, authors, identifiers, terms,
+and NEMAR-specific extensions. A downstream tool can use that contract instead of scraping a
+page or inventing a private interpretation of every dataset.
+
+This contract is already useful across the surrounding ecosystem. [EEGDash](https://eegdash.org/)
+uses NEMAR-backed records and defines typed dataset and recording schemas; its datasets can feed
+[Braindecode](https://braindecode.org/stable/index.html) workflows, while its
+[MOABB interoperability example](https://eegdash.org/generated/auto_examples/tutorials/50_evaluation/plot_55_moabb_interop.html)
+shows the catalog-to-benchmark handoff. [MOABB](https://github.com/NeuroTechX/moabb) also supports
+NEMAR as a download provider for datasets that declare a NEMAR identifier.
+
+The libraries do not all store the raw Neuroschema document unchanged: EEGDash is an indexing and
+loading layer, Braindecode is a learning layer, and MOABB is a benchmarking layer. Compatibility
+means that the dataset identity and important metadata can travel between those layers without
+losing the connection to the BIDS source.
+
+See the [NEMAR metadata contract](/platform/data-api/) and the [Neuroschema repository](https://github.com/nemarOrg/neuroschema).
+
+### 5. The DOI describes both identity and history
 
 NEMAR uses a concept DOI for the continuing dataset and a version DOI for each released state.
 The DOI record can carry the NEMAR identifier, creator identifiers, roles, description, domain
@@ -49,7 +72,7 @@ terms, rights, funding, related publications, source relationships, and links to
 record. The [HBN comparison below](#a-concrete-comparison-hbn-eeg-release-2) shows exactly what is
 present in one live NEMAR/OpenNeuro pair.
 
-### 5. Zarr and edge access make partial reads practical
+### 6. Zarr and edge access make partial reads practical
 
 Where conversion is available, NEMAR provides a derived Zarr serving copy so a viewer or analysis
 client can request a time window, a few channels, or selected recordings instead of downloading
@@ -58,14 +81,14 @@ explicit rather than hidden behind an apparently empty viewer.
 
 See [the Zarr mental model](/platform/zarr/mental-model/) and [access recipes](/platform/zarr/cost-ladder/).
 
-### 6. The CLI supports repeatable work at research scale
+### 7. The CLI supports repeatable work at research scale
 
 The [nemar CLI](/cli/) is useful when a browser is not the right tool: scripted publication,
 large or parallel transfers, validation in a pipeline, bulk operations, and work on a shared
 server or compute node. The web app remains useful for discovery and review; the two surfaces
 share accounts, permissions, and datasets.
 
-### 7. Improvement is visible instead of silently rewriting history
+### 8. Improvement is visible instead of silently rewriting history
 
 NEMAR treats a release as a fixed, citable state. A correction, new cohort, metadata enrichment,
 or conversion improvement can go through review, become a new version, and receive a new version
@@ -74,7 +97,7 @@ analysis.
 
 The [DOI and versioning guide](/platform/doi-and-versioning/) explains the release workflow.
 
-### 8. The interfaces are open to people, agents, and future compute
+### 9. The interfaces are open to people, agents, and future compute
 
 NEMAR's public pages, Markdown, JSON, schema.org records, manifests, API routes, and
 documentation are intended to be understandable to software as well as people. That supports
