@@ -2,7 +2,8 @@
 title: "Publishing Datasets"
 ---
 
-This guide explains how to publish private datasets to make them publicly accessible with a permanent DOI.
+This guide explains how to publish private datasets to make them publicly accessible with a citable
+DOI and a preserved release state.
 
 ## Overview
 
@@ -75,8 +76,10 @@ Your dataset is now:
 - Publicly visible on GitHub
 - Protected by tag protection (versions cannot be modified)
 - Backed by permanent S3 storage with Object Lock
-- Archived on Zenodo (draft backup)
 - Citable with a permanent DOI
+
+NEMAR's canonical dataset DOI is issued through EZID. A version workflow may create a non-public
+Zenodo draft as a best-effort archive backup, but that draft is not the dataset's canonical DOI.
 
 ## Admin Perspective
 
@@ -113,24 +116,25 @@ nemar admin publish approve nm000104
 The CLI will show you:
 - Dataset information
 - Requesting user
-- What will happen (14 orchestrator steps)
+- What will happen (16 orchestrator steps)
 
 You can:
 - Press `y` to proceed
 - Press `n` to cancel
 - Use `--yes` flag to skip confirmation
 
-**Provider selection:**
+**DOI provider:**
 ```bash
-# EZID (default)
+# Production DOI (EZID)
 nemar admin publish approve nm000104
 
-# Zenodo
-nemar admin publish approve nm000104 --provider zenodo
-
-# EZID sandbox (for testing)
+# EZID test shoulder (for testing)
 nemar admin publish approve nm000104 --sandbox
 ```
+
+The current dataset publication path uses EZID. Older CLI surfaces may still display a Zenodo
+provider option for compatibility, but the current backend rejects Zenodo as the dataset DOI
+provider.
 
 **Non-interactive mode:**
 ```bash
@@ -139,58 +143,72 @@ nemar admin publish approve nm000104 --yes
 
 ### The Publication Orchestrator
 
-When you approve a request, an automated 14-step orchestrator runs. Steps are idempotent and can be resumed if interrupted. The DOI provider (EZID or Zenodo) is specified via `--provider` flag or defaults to EZID.
+When you approve a request, an automated 16-step orchestrator runs. Steps are idempotent and can be
+resumed if interrupted. The current dataset DOI path uses EZID; `--sandbox` selects the EZID test
+shoulder for testing.
 
 #### Step 1: `ci_check` - CI Verification
 Checks if BIDS validation and version-check workflows exist on the repo. Deploys them if missing. Verifies the latest CI run passes (if any runs exist).
 
-#### Step 2: `repo_public` - Make Repository Public
-Changes GitHub repository visibility from private to public. Updates the database visibility record.
+#### Step 2: `enrichment_check` - Check Optional Metadata
+Checks whether the dataset has optional NEMAR enrichment metadata available for the DOI record.
+This is a warning-only step; missing enrichment does not block publication.
 
 #### Step 3: `s3_public_read` - S3 Public Read Access
-The bucket is public-by-default behind a single deny-list policy (a public-read `Allow` with a `NotResource` carve-out listing every private dataset prefix; see #673/#674). Making this dataset public **removes** its prefix from the carve-out so anonymous `GetObject` is allowed; it does not add a new grant. Idempotent. This enables anonymous downloads via git-annex web remote URLs.
+The bucket is public-by-default behind a single deny-list policy (a public-read `Allow` with a
+`NotResource` carve-out listing every private dataset prefix; see #673/#674). Making this dataset
+public **removes** its prefix from the carve-out so anonymous `GetObject` is allowed; it does not
+add a new grant. Idempotent. This enables anonymous downloads via git-annex web remote URLs.
 
-#### Step 4: `tag_protect` - Tag Protection
+#### Step 4: `repo_public` - Make Repository Public
+Changes GitHub repository visibility from private to public. Updates the database visibility record.
+
+#### Step 5: `tag_protect` - Tag Protection
 Enables tag protection rules on the repository, preventing deletion or modification of version tags. Ensures DOI integrity since DOIs reference specific tags.
 
-#### Step 5: `doi_create` - Create Concept DOI
-Creates the concept (parent) DOI. Routes to the configured provider:
-- **EZID:** Calls EZID API with DataCite kernel-4 XML metadata. DOI pattern: `10.82901/NEMAR.<dataset_id>` (production) or `10.5072/FK2<dataset_id>` (sandbox).
-- **Zenodo:** Creates a Zenodo deposition and pre-reserves a concept DOI.
+#### Step 6: `doi_create` - Create Concept DOI
+Creates the concept (parent) DOI through EZID with DataCite kernel-4 XML metadata. DOI pattern:
+`10.82901/NEMAR.<dataset_id>` in production or `10.5072/FK2<dataset_id>` in the EZID test
+shoulder.
 
 Skipped if a concept DOI already exists.
 
-#### Step 6: `update_metadata` - Update dataset_description.json
+#### Step 7: `update_metadata` - Update dataset_description.json
 Reads BIDS metadata from the repo, enriches it with DOI information, and commits an updated `dataset_description.json` back to the repo.
 
-#### Step 7: `update_readme` - Update README
+#### Step 8: `update_readme` - Update README
 Generates or updates the dataset README with DOI badge, citation info, and dataset description.
 
-#### Step 8: `create_tag` - Create Version Tag
+#### Step 9: `create_tag` - Create Version Tag
 Creates a `v1.0.0` git tag on the repo's main branch if no tags exist yet.
 
-#### Step 9: `create_release` - Create GitHub Release
+#### Step 10: `create_release` - Create GitHub Release
 Creates a GitHub Release from the version tag.
 
-#### Step 10: `upload_to_zenodo` - Upload Archive to Zenodo
-Downloads the release archive from GitHub and uploads it to Zenodo.
-- **Zenodo provider:** Uploads to the primary Zenodo deposition.
-- **EZID provider:** Creates a Zenodo **draft** deposition as a backup archive (never published). This provides a secondary archival copy of the data.
+#### Step 11: `upload_to_zenodo` - Compatibility step
+The current publication orchestrator retains this step so older progress records remain readable,
+but the dataset publication path skips the Zenodo upload. A later version workflow may create a
+non-public Zenodo draft as a best-effort archive backup.
 
-#### Step 11: `publish_doi` - Publish DOI
-Makes the DOI publicly resolvable:
-- **EZID:** Changes identifier status from "reserved" to "public" via `ezidMakePublic()`.
-- **Zenodo:** Publishes the Zenodo deposition, which activates the DOI.
+#### Step 12: `publish_doi` - Publish DOI
+Changes the EZID identifier status from `reserved` to `public`, making the DOI publicly resolvable.
 
-After this step, the DOI is permanent and cannot be undone.
+The DOI identifier is permanent. If a dataset is later withdrawn, NEMAR can restrict the dataset
+and leave the DOI resolving to a tombstone rather than silently changing the released state.
 
-#### Step 12: `s3_lock` - S3 Object Lock
+#### Step 13: `version_doi` - Create Version DOI and Manifest
+Creates the first version DOI under the concept DOI and dispatches the version manifest workflow.
+The version DOI identifies the released version and its file manifest.
+
+#### Step 14: `s3_lock` - S3 Object Lock
 Applies S3 Object Lock (governance mode) to all dataset objects, preventing accidental deletion. Lock duration: 10 years.
 
-#### Step 13: `sync_nemar` - Sync Metadata to nemar.org
-Syncs the dataset's metadata to the legacy nemar.org dataexplorer datapipeline. This step is non-fatal (a failure here does not block publication). Note that archive-zip generation is **not** an orchestrator step; the central `run-version-doi.yml` workflow dispatches `generate-archive` separately after the version DOI is minted (see #670).
+#### Step 15: `sync_nemar` - Compatibility step
+The legacy dataexplorer synchronization is disabled. The step is retained as a logged no-op so
+older publication records remain valid. Archive-zip generation is **not** an orchestrator step; the
+central version workflow dispatches it separately after the version DOI is minted.
 
-#### Step 14: `notify_user` - Send Notification Email
+#### Step 16: `notify_user` - Send Notification Email
 Sends a publication confirmation email to the dataset owner with the DOI and citation information. This is the final step; the publication request status changes to "published".
 
 ### Resuming Failed Publications
@@ -208,14 +226,14 @@ nemar admin publish approve nm000104 --resume
 
 **Example scenario:**
 ```bash
-# First attempt fails at step 4 (tag_protect)
+# First attempt fails at step 5 (tag_protect)
 nemar admin publish approve nm000104
 # Error: Tag protection failed
 
 # Fix the issue (e.g., remove conflicting GitHub rules)
 # Then resume
 nemar admin publish approve nm000104 --resume
-# Skips completed steps 1-3, retries step 4, then continues with 5-14
+# Skips completed steps 1-4, retries step 5, then continues with 6-16
 ```
 
 ### Denying Publication
@@ -296,15 +314,14 @@ nemar admin publish deny nm000104 --reason "BIDS validation failing - please fix
 > **Heads up:** the `GITHUB_ADMIN_PAT` user-token approach is being replaced by a GitHub App installation token; see [GitHub App setup](/admin/github-app-setup/). Migration tracked in [epic #432](https://github.com/nemarOrg/nemar-cli/issues/432).
 
 **Problem:** Approval fails at `doi_create`
-- **Cause:** DOI provider API error
+- **Cause:** EZID API error
 - **Solution:**
-  - EZID: Check `EZID_USERNAME`/`EZID_PASSWORD` are valid
-  - Zenodo: Check `ZENODO_API_KEY` is valid
+  - Check `EZID_USERNAME`/`EZID_PASSWORD` are valid
   - Retry with `--resume`
 
 **Problem:** Approval fails at `publish_doi`
-- **Cause:** DOI publication failed (EZID status change or Zenodo publish)
-- **Solution:** Check provider API status. DOI may already be in the correct state. Retry with `--resume`.
+- **Cause:** EZID status change failed
+- **Solution:** Check EZID status. The DOI may already be in the correct state. Retry with `--resume`.
 
 **Problem:** Approval fails at `s3_lock`
 - **Cause:** AWS API error or permissions issue
@@ -333,10 +350,12 @@ nemar admin publish deny nm000104 --reason "BIDS validation failing - please fix
 ## FAQ
 
 **Q: How long does publication take?**
-A: Once approved, the orchestrator takes 1-2 minutes to complete all 14 steps. Admin review time varies.
+A: Once approved, the orchestrator runs its 16 tracked steps; runtime depends on repository size,
+S3 object count, and external services. Admin review time varies.
 
-**Q: Can I unpublish a dataset?**
-A: No. Once published, a dataset is permanently public. The DOI is permanent and cannot be deleted.
+**Q: Can a published dataset be withdrawn?**
+A: A dataset can be restricted through the takedown process. Its DOI is not deleted; it resolves to
+a tombstone that records the withdrawal.
 
 **Q: Can I update a published dataset?**
 A: Yes. Dataset owners can update their datasets via direct pushes or pull requests.
@@ -350,24 +369,20 @@ A: Only one active request per dataset. Previous requests must be completed (app
 **Q: What happens if orchestrator is interrupted?**
 A: Use `--resume` to continue from the last successful step. The system tracks progress automatically.
 
-## DOI Providers
+## DOI registration
 
-NEMAR supports two DOI providers:
-
-### EZID (Default)
+### EZID
 - Production DOIs: `10.82901/NEMAR.<dataset_id>` (e.g., `10.82901/NEMAR.nm000104`)
 - Version DOIs: `10.82901/NEMAR.nm000104.V1.0.1`
 - Sandbox DOIs: `10.5072/FK2<dataset_id>` (auto-deleted after 2 weeks)
 - Metadata format: DataCite kernel-4 XML
-- DOI lifecycle: reserved -> public (irreversible)
+- DOI lifecycle: `reserved` → `public`; a withdrawn record may be marked unavailable while
+  remaining resolvable as a tombstone.
 
-### Zenodo
-- DOIs are assigned by Zenodo (e.g., `10.5281/zenodo.12345`)
-- Each version gets its own Zenodo deposition
-- Sandbox available at `sandbox.zenodo.org`
-
-### Zenodo Backup for EZID Datasets
-When using EZID as the primary DOI provider, the system automatically creates a Zenodo draft deposition as a backup archive. This draft is never published but provides a secondary copy of the dataset archive. The Zenodo deposition ID is stored in the database and updated with each new version.
+### Zenodo archive backup
+Zenodo is not NEMAR's canonical dataset DOI provider. The version workflow may create or update a
+non-public Zenodo draft as a best-effort archive backup; availability of that backup does not change
+which DOI researchers should cite.
 
 ## Organization-Level Secrets
 

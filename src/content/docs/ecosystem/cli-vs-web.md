@@ -4,8 +4,8 @@ description: NEMAR has two surfaces, the CLI and the web app. They share one bac
 ---
 
 NEMAR has two surfaces: the **web app** ([nemar.org](https://nemar.org)) and the
-**[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets. The
-difference is workflow style, not capability.
+**[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets, but each
+is optimized for a different workflow.
 
 ## What the web is best for
 
@@ -37,9 +37,9 @@ back and forth is fine.
 
 ## Accounts and permissions
 
-The CLI and the web share state through the same backend. Signing in on the CLI issues a
-long-lived API token tied to your account; signing in on the web issues a cookie-backed session.
-Both honor the same admin role, dataset ownership, and collaborator permissions.
+The CLI and the web share state through the same backend. Signing in through the CLI stores a named
+API key for that machine; signing in on the web uses a cookie-backed session. Both honor the same
+admin role, dataset ownership, and collaborator permissions.
 
 ```bash
 # Quick start with the CLI (see the full guide under CLI > Getting Started)

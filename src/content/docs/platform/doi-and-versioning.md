@@ -15,9 +15,9 @@ author, and a URL. A populated NEMAR record can carry much more context when the
 supports it:
 
 - authors, ORCID identifiers, and affiliations;
-- an abstract, methods or technical description, and MeSH-validated keywords;
+- an abstract, acknowledgement text, and MeSH-validated keywords;
 - funding information and related publications or identifiers;
-- creation, publication, and update dates;
+- issued and, when supplied, collection dates;
 - language, geographic information, file formats, sizes, and license;
 - the dataset version and the relationship between the concept and its versions.
 
