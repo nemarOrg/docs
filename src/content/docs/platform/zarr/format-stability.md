@@ -28,16 +28,14 @@ so an index this schema accepts is, by construction, an index containing nothing
   there is no fixed sunset date, because the index is the mandatory entry point (anonymous `ListBucket` is denied; see [Access and hosting](/platform/zarr/access/))
   and a client has nothing else to fall back to if it disappeared.
 
-### Rollout: format version 3 does not exist anywhere yet
+### Rollout: formats can coexist
 
-:::note[Rollout]
-Format version 3 ships with **nemar-cli release 0.9.12** (epic #1181), and reaches a given dataset only when that dataset then **reconverts** under the converter's current discovery generation
-(`engine_version`; Architecture Decision Record (ADR) [0033](https://github.com/nemarOrg/nemar-cli/blob/main/.context/decisions/0033-the-zarr-queue-stamps-the-engine-that-converted-each-dataset.md)) —
-an unchanged dataset does not pick up a producer-side format change on its own.
-Checked directly on 2026-09-02 against production (`nm000103`, `nm000281`) and against the `zarr-test.nemar.org` staging host:
-every index checked on both is still `format_version: 1`.
-Format version 3 is not the version any dataset is serving today, in production or in staging;
-once the release ships, some datasets will still take time to reconvert, so do not assume every dataset's index looks like the v3 shape this section documents — check the field, every time.
+:::note[Current deployment]
+Index v3 and store format v2 are deployed in production. Checked on 2026-09-09, `nm000103`
+served an index with `format_version: 3` and a store written by biosigIO 1.2.7. Because the
+latest-only conversion runs per dataset, older v1 indexes can coexist with v3 until those datasets
+are reconverted. The API schemas are live; the staging catalog currently reports zero datasets.
+Always read `format_version` before interpreting a document.
 :::
 
 ## The store: additive so far, on two different floors
@@ -46,21 +44,21 @@ biosigIO's own store `format_version` has stayed at `2` through several rounds o
 by the same rule the index uses: a reader that ignores attributes it does not recognize keeps working.
 Three of those rounds are not on the same footing, though:
 
-- The `sss` root attribute (Signal-Space Separation disclosure, ADR 0028) is **already live in production today** — it predates this epic and does not wait on nemar-cli release 0.9.12.
-- The declared pyramid and chunk-geometry attributes (`n_view_levels`, `view_levels`, `chunk_seconds`, `shard_seconds`, `chunk_samples`, `shard_samples`, `source_rate_hz`, `view_chunk_columns`) need biosigIO ≥1.2.6, which has not shipped to production or staging yet.
-- The `nemar` root attribute is written by the NEMAR converter itself, not by biosigIO, and ships with nemar-cli release 0.9.12 regardless of biosigIO version.
+- The `sss` root attribute (Signal-Space Separation disclosure, ADR 0028) is **already live in production today** — it predates the v3 rollout.
+- The declared pyramid and chunk-geometry attributes (`n_view_levels`, `view_levels`, `chunk_seconds`, `shard_seconds`, `chunk_samples`, `shard_samples`, `source_rate_hz`, `view_chunk_columns`) need biosigIO ≥1.2.6 and are present in current converted stores.
+- The `nemar` root attribute is written by the NEMAR converter itself, not by biosigIO, and is present in current v3 conversions regardless of the biosigIO version that supplies the other fields.
 
-See the [store contract's rollout note](/platform/zarr/store-contract/) for the biosigIO version split behind `channels_tsv_units`/`bids_unit` specifically,
+See the [store contract's current-deployment note](/platform/zarr/store-contract/) for the biosigIO version split behind `channels_tsv_units`/`bids_unit` specifically,
 and for what a live production store looks like today
-(checked 2026-09-02: `biosigio_version: "1.2.1"`, none of the above except `sss`).
+(checked 2026-09-09: `biosigio_version: "1.2.7"`, with the current optional fields present on the sampled store).
 
 biosigIO's stated policy is that a reader should reject a store whose `format_version` is *newer* than the one it supports, rather than guess at an unfamiliar layout —
 the same "read the version, don't assume the shape" discipline the index asks for.
 
-Because the store's own version has not moved, **there is no store-side deprecation window to describe yet** —
-every store on the platform is format version 2, before and after this rollout.
-The [store contract page's rollout note](/platform/zarr/store-contract/) is about which *optional* attributes a given store happens to carry (tied to which biosigIO release wrote it, and to whether nemar-cli release 0.9.12 has shipped),
-not about a version bump.
+Because the store's own version has not moved, there is no store-side deprecation window to describe:
+current stores remain biosigIO format version 2. The [store contract page's current-deployment note](/platform/zarr/store-contract/)
+is about which *optional* attributes a given store happens to carry, tied to the biosigIO and
+producer versions that wrote it, not about a store format bump.
 
 ## Where to watch for change
 

@@ -12,7 +12,8 @@ There are two ways to get a NEMAR account, and both share the same backend accou
 
 On the web, there is no separate sign-up form:
 authorizing with ORCID (Open Researcher and Contributor ID) at the [login page](https://nemar.org/login) for the first time creates your account as part of that same flow.
-You enter your email, city, and country during that authorization;
+After ORCID authorization, NEMAR asks first-time visitors for their email, city, and country;
+affiliation is optional, and GitHub is not required for a web account.
 NEMAR then emails you a verification code to confirm the address.
 Your account is created right away, without a username or password,
 and reaches the base tier once you confirm that code;
@@ -26,9 +27,9 @@ nemar auth signup
 ```
 
 `nemar auth signup` opens a browser to NEMAR's sign-in page, the same one the login page above uses;
-ORCID creates your account there, collecting your email, city, and country as part of that authorization, the same as on the web.
-Back in the terminal, it then asks only for whatever is still missing, typically a username and your GitHub handle,
-and ends by requesting upload access for you.
+ORCID creates or continues your account there. After the browser step, the CLI asks only for whatever
+profile fields are still missing, such as email, city, country, a username,
+or GitHub handle when needed, and ends by requesting upload access unless you pass `--no-upload-access`.
 Verify your email from the link NEMAR sends, and your account reaches the base tier:
 no admin review at sign-up.
 A headless machine (no browser available) is a normal case, not a fallback:

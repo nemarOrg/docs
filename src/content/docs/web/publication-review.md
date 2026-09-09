@@ -9,10 +9,13 @@ Publication review is how a private NEMAR dataset becomes a citable, public, arc
 When a dataset is published, three things change:
 
 - **Visibility.** The dataset moves from private to public; anyone can find it on [Discover](https://nemar.org/discover).
-- **DOI.** A concept DOI is minted (via DataCite/Zenodo) so the dataset becomes citable. Each future version gets its own version DOI under the concept.
+- **DOI.** NEMAR mints a concept DOI in its `10.82901/NEMAR` namespace through EZID and publishes
+  the associated DataCite metadata. Each future version gets its own version DOI under the concept.
 - **S3 lock.** Files are written under S3 Object Lock so they can't be tampered with after publication.
 
-Publishing is irreversible by design, a published DOI cannot be retracted, only superseded. The confirmation dialog on the admin side requires typing `PUBLISH` for that reason.
+The DOI identifier is permanent by design. If a dataset must later be withdrawn, NEMAR can restrict
+the dataset and leave the DOI resolving to a tombstone rather than silently changing the released
+state. The confirmation dialog on the admin side requires typing `PUBLISH` for that reason.
 
 ## What the admin checks
 
@@ -23,7 +26,8 @@ Publishing is irreversible by design, a published DOI cannot be retracted, only 
 
 ## How long does review take?
 
-Most reviews land within 1-2 business days. Submissions that pass on the first try move through quickly; the slower ones are usually waiting on a metadata fix or a re-upload after an HED tagging issue.
+Review timing varies with the queue and with the fixes a submission needs. Submissions that pass on
+the first try move through more quickly; others wait for a metadata fix or a re-upload.
 
 ## If you're denied
 
@@ -35,4 +39,5 @@ The card shows **Validation failed** with a short error summary. The fix is almo
 
 ## Getting cited
 
-Once your dataset has a DOI, citations show up automatically in the [citation dashboard](https://dashboard.nemar.org/citations) as publications referencing it appear. NEMAR pulls citations from OpenAlex and DataCite Event Data.
+Once your dataset has a DOI, use the DOI landing page and the version DOI in your own citations. Do
+not treat the DOI as a promise that every downstream citation index will update immediately.

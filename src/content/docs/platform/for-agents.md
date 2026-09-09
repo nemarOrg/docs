@@ -1,12 +1,17 @@
 ---
-title: "For Agents"
-description: "One page to point an autonomous agent, script, or tool integration at: what NEMAR is, which host answers which question, verified request examples, and when to stream instead of download."
+title: "For Agents and Tools"
+description: "Machine-facing routes and conventions for scripts, research agents, and LLM-assisted workflows."
 ---
 
 This page is written for a machine client: an autonomous agent, a script, or any other automated
 integration deciding how to find, describe, or fetch NEMAR data programmatically. It links to the
 pages that carry the real contracts rather than restating them — where this page and a page it
 links to ever disagree, the linked page is right.
+
+NEMAR is committed to agentic research: not only the code repositories, but also the webpages,
+dataset records, and data access paths should be understandable to software. An agent should be
+able to discover a dataset, inspect its context, identify the exact release, and explain what it
+used without scraping a visual page as its only source.
 
 ## What NEMAR is
 
@@ -24,8 +29,24 @@ metadata, and the streaming copy each live on a different host:
 | `nemar.org` | The dataset browser — human-readable dataset pages, search, citation info. |
 | `api.nemar.org` | Catalog search and per-dataset metadata (the backend API). |
 | `data.nemar.org` | The BIDS file tree and the bytes — manifests, individual files, archive zips. |
-| `zarr.nemar.org` | A derived, streaming copy of every recording, for reading a slice without downloading the whole file. |
+| `zarr.nemar.org` | A derived, streaming copy where a recording has been converted, for reading a slice without downloading the whole file. |
 | `docs.nemar.org` | This site. |
+
+## Use the surface that matches the question
+
+| Question | Preferred surface |
+| --- | --- |
+| Which datasets match a search? | `https://api.nemar.org/datasets` and its search parameters |
+| What is this dataset about? | `https://data.nemar.org/<id>/metadata.json` |
+| Which files are in one release? | `https://data.nemar.org/<id>/<version>/manifest.json` |
+| Can I read one BIDS path? | `https://data.nemar.org/<id>/<version>/<bids-path>` |
+| Can I stream converted chunks? | `https://zarr.nemar.org/<id>/zarr/...` where indexed |
+| What does a person see? | `https://nemar.org/dataset/<id>` |
+| What is the page in simple text? | `https://nemar.org/dataset/<id>.md` |
+| Where are the conventions? | `https://docs.nemar.org/` and `/llms.txt` |
+
+The website emits schema.org Dataset JSON-LD on dataset pages. Prefer explicit JSON metadata and
+manifests for data work, and use the Markdown mirror or JSON-LD for page-level context.
 
 ## The three questions
 
@@ -42,7 +63,8 @@ part of the platform:
 ## Query and metadata: `api.nemar.org`
 
 The backend API is documented in full at [Backend API](/platform/api/). The three requests below
-cover query and metadata, and were run against production while writing this page.
+cover query and metadata. The example outputs were captured from production on 2026-09-09;
+ranking and catalog contents change as datasets are added or updated.
 
 Search by free text:
 
@@ -53,6 +75,16 @@ $ curl -s "https://api.nemar.org/datasets/search?q=EEG&limit=3" | jq '.results[]
   "name": "THINGS-EEG2: A large and rich EEG dataset for modeling human visual object recognition",
   "doi": "10.82901/nemar.nm000232"
 }
+{
+  "id": "on004752",
+  "name": "Dataset of intracranial EEG, scalp EEG and beamforming sources from epilepsy patients performing a verbal working memory task",
+  "doi": "10.82901/nemar.on004752"
+}
+{
+  "id": "on007602",
+  "name": "EEG-Speech Brain Decoding Dataset",
+  "doi": "10.82901/nemar.on007602"
+}
 ```
 
 A filtered list (`modality`, `author`, `task`, and `license` are among the accepted filters):
@@ -60,8 +92,18 @@ A filtered list (`modality`, `author`, `task`, and `license` are among the accep
 ```bash
 $ curl -s "https://api.nemar.org/datasets?modality=eeg&limit=3" | jq '.datasets[] | {dataset_id, name, license}'
 {
-  "dataset_id": "on007753",
-  "name": "BCCWJ-EEG",
+  "dataset_id": "on008768",
+  "name": "Resting-State EEG in Parkinson's Disease and Healthy Controls",
+  "license": "CC0"
+}
+{
+  "dataset_id": "on008711",
+  "name": "RSVP with flankers - sentences with semantic and syntactic violations",
+  "license": "CC0"
+}
+{
+  "dataset_id": "on008701",
+  "name": "MET - Music-Induced Emotion EEG Dataset",
   "license": "CC0"
 }
 ```
@@ -69,16 +111,17 @@ $ curl -s "https://api.nemar.org/datasets?modality=eeg&limit=3" | jq '.datasets[
 Per-dataset detail:
 
 ```bash
-$ curl -s "https://api.nemar.org/datasets/nm000281" | jq '.dataset | {dataset_id, name, latest_version_doi}'
+$ curl -s "https://api.nemar.org/datasets/nm000103" | jq '.dataset | {dataset_id, name, latest_version_doi}'
 {
-  "dataset_id": "nm000281",
-  "name": "emg2pose: Surface EMG and Hand Pose",
-  "latest_version_doi": "10.82901/nemar.nm000281.v1.0.4"
+  "dataset_id": "nm000103",
+  "name": "Healthy Brain Network EEG - Not for Commercial Use",
+  "latest_version_doi": "10.82901/nemar.nm000103.v2.0.0"
 }
 ```
 
-Each example above is piped through `jq` for readability, and each returned more than one result;
-drop the `limit`/pipe to see the full, unfiltered response.
+The list examples are piped through `jq` for readability and return multiple datasets;
+the detail example returns one dataset wrapper. Drop the `limit`/pipe to see the full,
+unfiltered list response.
 
 ## Downloading: `data.nemar.org`
 
@@ -129,9 +172,10 @@ updates.
 
 ## Stream or download? The Zarr serving copy
 
-NEMAR serves every recording twice: once as the archived BIDS file (download it whole, from
-`data.nemar.org` or the CLI) and once as a derived Zarr copy on `zarr.nemar.org` (stream just the
-part you need). Which one to reach for is a question about the *shape* of the read, not its size:
+Where conversion is available, NEMAR exposes a recording through two access layers: the archived
+BIDS file (download it whole, from `data.nemar.org` or the CLI) and a derived Zarr copy on
+`zarr.nemar.org` (stream just the part you need). Which one to reach for is a question about the
+*shape* of the read, not its size:
 
 - **Stream** when you need a slice — a handful of channels, a time window, or a subset of
   recordings out of a larger set.
@@ -153,12 +197,10 @@ redirected), see [Access and Hosting](/platform/zarr/access/).
 Filter on `has_zarr_verified` rather than `has_zarr` when a pipeline needs a fidelity guarantee,
 not just a store's existence: `has_zarr` means a store was produced, `has_zarr_verified` means the
 standing fidelity sweep re-derived ground truth from the dataset's own BIDS metadata and confirmed
-the store agrees. Both filters are live on `api.nemar.org` today. Measured against production
-while writing this page: `GET /datasets?has_zarr=1` returns 618 of 755 public datasets.
-`has_zarr_verified=1` is also live and genuinely filters, but currently matches none of them,
-because the standing fidelity sweep has not yet stamped a `verified` verdict on any production
-dataset — a pipeline that needs results today should filter on `has_zarr` and move to
-`has_zarr_verified` once the sweep has run.
+the store agrees. Both filters are live on `api.nemar.org` today. A pipeline that needs
+converted results should filter on `has_zarr`; use `has_zarr_verified` when the stricter
+fidelity verdict is required, understanding that its result set can be smaller or temporarily empty
+until the standing sweep has run.
 :::
 
 ## Per-dataset entry points
@@ -166,20 +208,14 @@ dataset — a pipeline that needs results today should filter on `has_zarr` and 
 A client that already has a dataset id has entry points beyond the API endpoints above:
 
 - **The dataset page**, `nemar.org/dataset/<id>` — server-rendered, and carries
-  [schema.org](https://schema.org/Dataset) `Dataset` JSON-LD today. A "Use this data" section
-  aimed at exactly this audience is planned for a later phase of the same epic as this page, and
-  is **not live yet**.
-- **A markdown mirror** of the same page, at `nemar.org/dataset/<id>.md` — also planned for a
-  later phase of the same epic, and **not live yet**.
+  [schema.org](https://schema.org/Dataset) `Dataset` JSON-LD and a "Use this data" section
+  with machine-facing links.
+- **A markdown mirror** of the same page, at `nemar.org/dataset/<id>.md` — a text-first
+  representation of the dataset page's use and access information.
 - **The DOI**, which resolves through DataCite content negotiation.
 
-:::caution
-The "Use this data" section and the markdown mirror are not live yet — treat them as planned, not
-available, and do not link-check against production for either.
-:::
-
 The DOI is live today and works the same way any DataCite DOI does: ask for schema.org JSON-LD by
-`Accept` header and follow the redirect, for any dataset —
+`Accept` header and follow the redirect, for any dataset with a DOI —
 
 ```
 https://doi.org/10.82901/nemar.<id>
@@ -214,3 +250,33 @@ its data for anything beyond nonprofit research.** That floor is a warranty depo
 described in the [Data Contributor Terms](/policies/contributor-terms/#licensing) and the
 [Dataset Submission Standards](/policies/submission-standards/). See [Policies](/policies/) for
 the rest — privacy, takedown, and the GDPR position.
+
+## Agent behavior we want
+
+Good research tooling should:
+
+- preserve dataset ID, version, DOI, license, and source URLs in its output;
+- read the README and structured metadata before proposing an interpretation;
+- distinguish declared facts from computed summaries and model-generated suggestions;
+- respect the dataset license and access conditions;
+- cite the exact version used;
+- expose enough provenance that a person can reproduce or challenge the result;
+- report a dataset-specific correction to its dataset repository, and a systematic pipeline issue to
+  [`nemar-cli`](https://github.com/nemarOrg/nemar-cli/issues).
+
+LLMs may help summarize or propose metadata, but they do not get final publication authority. The
+[AI-assisted curation policy](/policies/ai-use/) describes the current boundaries: these pipelines
+work from documentation and structural metadata, controlled vocabularies are validated, and human
+review remains authoritative.
+
+## Stable machine-readable entry points
+
+- [`/llms.txt`](https://nemar.org/llms.txt) — a compact map of public machine-facing resources.
+- Dataset Markdown mirrors — a text-first representation of a dataset detail page.
+- Dataset JSON-LD — schema.org context embedded in the human-facing page.
+- `metadata.json` — neuroschema dataset document with catalog enrichment and version information.
+- `manifest.json` — the file list for a selected release, including paths, sizes, and checksums
+  where available.
+
+These interfaces are designed to be explicit and inspectable. They are not permission to expose
+private datasets or to send participant-level recordings to a language model.

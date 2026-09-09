@@ -11,9 +11,10 @@ nemar auth login
 
 This works whether you already have a NEMAR account or not:
 ORCID (Open Researcher and Contributor ID) creates a brand-new account the first time,
-or signs you into the one you already have.
-It activates the account either way:
-browsing, the dashboard, sandbox training, and an API key all work from there, with no admin involved.
+or signs you into the one you already have. A new account starts pending until you verify
+the email address NEMAR sends a code to; after verification, the base tier includes the
+dashboard, sandbox training, and an API key, with no admin involved. Browsing public data
+does not require an account.
 If you're setting up a brand-new account and want the CLI to also collect your username, GitHub handle, city, and country and request upload access,
 run `nemar auth signup` instead;
 see [Quick Start](/cli/getting-started/quickstart/).
@@ -32,7 +33,7 @@ Running `nemar auth login` prints a link and a code, then waits:
 ```
 
 1. Open that link in any browser, on any device; it doesn't have to be the machine you ran the command on.
-2. Sign in to NEMAR with ORCID if you're not already, then confirm on the page once it names your account and this machine.
+2. Sign in to NEMAR with ORCID if you're not already. If this is a new account, verify the email code first; then return to the authorization page and confirm once it names your account and this machine.
 3. The terminal finishes on its own. It's polling in the background and picks up your new key the moment you confirm.
 
 The link and code are the whole mechanism.
@@ -55,7 +56,8 @@ nemar auth login --no-open
 (equivalently, set `NEMAR_NO_BROWSER=1`).
 This prints the link and code only.
 Copy the link into a browser on your laptop or phone, sign in and confirm there,
-and the original terminal still finishes on its own the moment you do; it never stops polling.
+verifying the email code first if this is a new account. The original terminal still finishes
+on its own the moment you confirm; it never stops polling.
 
 ## The paste-key fallback
 

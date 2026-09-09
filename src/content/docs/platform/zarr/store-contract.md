@@ -9,12 +9,15 @@ where `<zarr>` is that recording's `zarr` field in the dataset's [index](/platfo
 The store itself is written by [biosigIO](https://github.com/neuromechanist/biosigio) (`Recording.to_zarr` / `stream_to_zarr`);
 NEMAR's converter (`scripts/zarr/generate_zarr.py` in `nemarOrg/nemar-cli`) adds a small set of its own attributes on top, named below.
 
-:::note[Rollout]
-Nothing on this page is live yet, in production or in staging.
-The `nemar` root attribute ships with **nemar-cli release 0.9.12** (epic #1181);
-until then, no store anywhere carries it, regardless of which biosigIO release wrote the store.
+:::note[Current deployment]
+The fields below describe current v3 stores. Checked on 2026-09-09 against a live `nm000103`
+store: its root reported `format: "biosigio-zarr"`, `format_version: 2`, and
+`biosigio_version: "1.2.7"`; the NEMAR provenance object, pyramid and chunk-geometry attributes,
+and `channels_tsv_units` were present. Older latest-only stores can omit optional attributes until
+they are reconverted, so inspect the store's own `format_version` and `biosigio_version` before
+assuming this full shape. The `sss` attribute remains conditional on the correction being applied.
 
-Two separate biosigIO floors apply to the rest of this page, not one:
+Two separate biosigIO floors apply to the optional fields on this page, not one:
 the declared pyramid and chunk-geometry attributes
 (`n_view_levels`, `view_levels`, `chunk_seconds`, `shard_seconds`, `chunk_samples`, `shard_samples`, `source_rate_hz`, `view_chunk_columns`)
 need biosigIO ≥1.2.6.
@@ -24,12 +27,6 @@ and 1.2.7 is what brings the streaming export path to parity with it —
 a store converted under 1.2.6 alone can carry correct units for a small recording and importer-only units for a large one, silently.
 See the [format stability policy](/platform/zarr/format-stability/) for how a client should read `biosigio_version`.
 
-Checked directly against a live production store on 2026-09-02 (`nm000103`):
-`biosigio_version` is `"1.2.1"`, and the store carries none of the above —
-no `nemar` attribute, no declared-pyramid keys, no `channels_tsv_units`.
-Every store checked in production and in staging today looks like this one;
-none of what follows on this page exists anywhere outside the epic branch yet.
-Check the store's own `format_version` and `biosigio_version` before assuming this full shape.
 :::
 
 ## Layout
@@ -84,7 +81,7 @@ so a consumer that opens the store directly — the machine learning streaming p
 {
   "dataset_id": "nm000103",
   "doi": "10.82901/nemar.nm000103",
-  "license": "CC0",
+  "license": "CC-BY-NC-SA 4.0",
   "citation": "...",
   "source_commit": "d14ae5eb3881e368ee328bc1312d3fa51f7e70a9",
   "source_tree": "raw",
@@ -254,7 +251,7 @@ see [Index contract: `layout`](/platform/zarr/index-contract/#layout) and [ADR 0
 
 When the recording sits in a BIDS layout, the sibling `_channels.tsv` is authoritative for each channel's type and unit,
 and adopting a declared unit **converts the samples** into it rather than merely relabeling them
-(biosigIO ≥1.2.7 — see the rollout note near the top of this page).
+(biosigIO ≥1.2.7 — see the current-deployment note near the top of this page).
 Two attributes record what happened:
 
 - **`channels[].bids_unit`**, on a channel whose declared unit was recorded rather than adopted

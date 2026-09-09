@@ -4,8 +4,8 @@ description: NEMAR has two surfaces, the CLI and the web app. They share one bac
 ---
 
 NEMAR has two surfaces: the **web app** ([nemar.org](https://nemar.org)) and the
-**[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets. The
-difference is workflow style, not capability.
+**[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets, but each
+is optimized for a different workflow.
 
 ## What the web is best for
 
@@ -34,7 +34,7 @@ difference is workflow style, not capability.
 
 ## You don't have to pick one
 
-Most researchers use the web for sign-in, discovery, and publication review, and reach for the
+Many researchers use the web for sign-in, discovery, and publication review, then reach for the
 CLI when they need to script something. Same account, same datasets, same permissions; switching
 back and forth is fine.
 

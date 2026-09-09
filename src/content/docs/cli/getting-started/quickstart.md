@@ -13,7 +13,9 @@ nemar auth login
 
 This opens your browser to NEMAR's sign-in page and prints a link and a code either way.
 On a headless machine (a cluster, a container, an SSH session with no display), that link is the whole mechanism, not a fallback:
-copy it into a browser anywhere, sign in with ORCID (Open Researcher and Contributor ID), confirm, and the terminal finishes on its own.
+copy it into a browser anywhere, sign in with ORCID (Open Researcher and Contributor ID), verify
+the emailed code if this creates a new account, then confirm the CLI sign-in. The terminal finishes
+on its own.
 See [Authentication](/cli/getting-started/authentication/) for the full walk-through.
 
 If this is a brand-new account, run `nemar auth signup` instead:

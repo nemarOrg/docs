@@ -9,12 +9,12 @@ then gives the read recipe Architecture Decision Record (ADR) [0025](https://git
 
 ## The ladder
 
-:::note[Rollout]
-The `catalog.json` row, the `index.json` row's v3 figures, and the whole `events.parquet` row describe the contract as it ships with nemar-cli release 0.9.12 (epic #1181).
-`catalog.json` 404s today, on production and on staging (checked live on 2026-09-02);
-every dataset's `index.json` is `format_version 1` today, everywhere;
-`events.parquet` (nemarOrg/nemar-cli#1205, merged into the epic branch 2026-09-02) is on the same footing as the rest — merged, not live.
-See the [overview's rollout table](/platform/zarr/#what-is-live-today-versus-after-the-release) for the full list.
+:::note[Current deployment]
+The catalog, v3 index, manifest, and events rows are deployed. Checked on 2026-09-09, the
+production catalog contained 625 datasets, `nm000103` served a v3 index, and its
+`events.parquet` file was available. The staging catalog endpoint is live but currently reports
+zero datasets. Measurements below mix current live objects with historical or synthetic
+measurements; each section labels its basis.
 :::
 
 | Layer | Rough size | What it costs to read |
@@ -31,7 +31,8 @@ One entry (`ZarrCatalogDataset` in `backend/src/services/zarr-catalog.ts`) is on
 There is exactly one document for the whole platform —
 its size grows with the number of converted public datasets, not with how many you read,
 so it is the cheapest possible "what is there" query regardless of scale.
-Not live yet; see the rollout note above.
+The catalog is live; see the [index contract](/platform/zarr/index-contract/) for its fields and
+the current rollout context.
 
 ### `index.json`
 
@@ -43,7 +44,9 @@ a 5-recording dataset is 2.3 kB;
 and `nm000281`, the largest dataset checked at 25,253 recordings, is 12.85 MB.
 `nm000103` is a mid-sized dataset by this measure, not one of the largest — `nm000281` alone has more than seven times as many recordings.
 
-All of the above is today's still-live format v1 shape, which is what every dataset actually serves right now (see the [rollout note](/platform/zarr/index-contract/#rollout-what-is-live-today-versus-after-the-release)).
+Those measurements are a historical format v1 baseline, not a statement that every dataset still
+serves v1. At the 2026-09-09 check, the `nm000103` v3 index response was 2,742,915 bytes; the
+size of an index varies with its dataset and conversion state.
 Format v1 carries an inline `source_key` per store.
 **Measurement method**: fetched `nm000281`'s live index (12,846,915 bytes, 25,253 stores) and parsed it.
 Removed the `source_key` field from every store entry,
@@ -53,7 +56,7 @@ the re-serialized original matched the live file's byte count exactly,
 confirming the live document is already compact JSON with no formatting noise to control for.
 Result: stripping `source_key` saves **2,593,563 bytes, about 20.2 percent of the document** —
 higher than the 18 percent a prior, smaller measurement of this same dataset found, consistent with the dataset having grown since.
-Format v3 splits `source_key` into the separate [manifest file](/platform/zarr/index-contract/#the-manifest-file) for exactly this reason, once it ships.
+Format v3 splits `source_key` into the separate [manifest file](/platform/zarr/index-contract/#the-manifest-file) for exactly this reason.
 Set against that saving, v3 also adds new per-store detail (the `layout` recipe geometry, `units_report`, structured provenance) that v1 does not carry —
 a fully-populated v3 store entry runs a few hundred bytes larger than its v1 equivalent by schema shape alone —
 so the net effect on total index size varies by dataset depending on how many of the new, optional fields apply to it.
@@ -63,8 +66,10 @@ Everything needed to decide which recording to open, and at what rate, is alread
 
 ### `events.parquet`
 
-Not live anywhere yet — see the rollout note at the top of this section, and [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) for the full shape.
-There is no live file to measure yet.
+`events.parquet` is live for datasets whose current conversion produced it — for example,
+`nm000103` served the object on 2026-09-09. The synthetic per-row estimate below was not derived
+from that production file, so it should be treated as a planning range rather than a measurement of
+the live object.
 Building small synthetic files against the real schema-building code (`events_schema`/`events_table_from_columns` in `scripts/zarr/generate_zarr.py`) puts the per-row cost, zstd-compressed, at **roughly 10 to 40 bytes per row** — not a single number, because it moves with the shape of the data, not just the row count:
 the numeric columns (`onset_s` float64, `duration_s` float32, `sample_index` int64) cost about the same either way,
 but the dictionary-encoded string columns (`store_path`, `subject`, `trial_type`, `value`, and whether `session`/`hed` are populated at all) compress hard when a small set of distinct strings repeats across many rows, and far less when the dictionary is nearly as large as the row count —
@@ -99,7 +104,8 @@ ORDER BY onset_s, group_name;
 
 The `filesystem=`/`filters=` combination above was verified against the synthetic file (through a local filesystem, same code path pyarrow uses for S3),
 and `pafs.S3FileSystem(anonymous=True, region="us-east-2")` was separately verified live against this exact bucket, reading a real object (`nm000103/zarr/index.json`) anonymously —
-the two together cover the pattern, though not yet the real events.parquet object, which does not exist.
+the two together cover the access pattern; the live object exists, but the examples above were not
+benchmarked against its contents.
 duckdb's remote-HTTPS `read_parquet()` was verified against a public test file (its own httpfs support auto-loads; no separate `INSTALL`/`LOAD` needed) — again the mechanism, not this specific URL.
 
 ### `view/*`
@@ -115,8 +121,9 @@ a whole-recording render on a 40-minute, 129-channel store was **594 requests fo
 With every `view/*` level chunked at a constant `view_chunk_columns` (1024 by default) instead, that same level-4 render becomes **3 requests**, and the level-6 minimap becomes **1 request**.
 A viewport needs roughly 1000–2500 columns at whatever level it picks,
 so a constant-column chunk is sized to the request, not to the recording's length —
-this is the shape every store will carry once it is converted under nemar-cli release 0.9.12's engine version;
-see the [store contract's rollout note](/platform/zarr/store-contract/) for what today's stores look like instead.
+current stores converted with the fixed geometry carry this shape; older stores may retain earlier
+chunking until they are reconverted. See the [store contract's current-deployment note](/platform/zarr/store-contract/)
+for the version-dependent attributes.
 
 ### Level 0
 

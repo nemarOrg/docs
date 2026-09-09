@@ -2,13 +2,11 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
-import mermaid from 'astro-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://docs.nemar.org',
 	integrations: [
-		mermaid({ theme: 'default', autoTheme: true }),
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
@@ -42,8 +40,10 @@ export default defineConfig({
 				{
 					label: 'The Ecosystem',
 					items: [
+						{ label: 'Mission and vision', slug: 'ecosystem/mission-and-vision' },
 						{ label: 'Overview', link: '/ecosystem/' },
 						{ label: 'CLI vs the web', slug: 'ecosystem/cli-vs-web' },
+						{ label: 'Compute roadmap', slug: 'ecosystem/compute' },
 					],
 				},
 				{
@@ -107,9 +107,10 @@ export default defineConfig({
 						{ label: 'Backend API', slug: 'platform/api' },
 						{ label: 'Data API', slug: 'platform/data-api' },
 						{
-							label: 'Zarr Serving Copy',
+							label: 'Zarr and edge access',
 							items: [
 								{ label: 'Overview', slug: 'platform/zarr' },
+								{ label: 'Mental model', slug: 'platform/zarr/mental-model' },
 								{ label: 'Store Contract', slug: 'platform/zarr/store-contract' },
 								{ label: 'Index Contract', slug: 'platform/zarr/index-contract' },
 								{ label: 'Access and Hosting', slug: 'platform/zarr/access' },
@@ -117,7 +118,8 @@ export default defineConfig({
 								{ label: 'Format Stability Policy', slug: 'platform/zarr/format-stability' },
 							],
 						},
-						{ label: 'For Agents', slug: 'platform/for-agents' },
+						{ label: 'DOI and versioning', slug: 'platform/doi-and-versioning' },
+						{ label: 'For agents and tools', slug: 'platform/for-agents' },
 					],
 				},
 				{

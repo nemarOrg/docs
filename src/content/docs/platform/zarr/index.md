@@ -1,11 +1,12 @@
 ---
 title: "Zarr Serving Copy"
-description: "The derived Zarr v3 serving copy of every NEMAR recording: what it is, what it is not, and where its contract is documented."
+description: "The derived Zarr v3 serving copy and recording index: what it is, what it is not, and where its contract is documented."
 ---
 
-NEMAR maintains a derived Zarr version 3 (v3) copy of every recording in a published Brain Imaging Data Structure (BIDS) dataset,
-so a browser can scrub a signal without downloading the whole file
-and a machine learning (ML) pipeline can stream samples instead of pulling the original recording first.
+NEMAR tracks every recording in an index and, where conversion succeeds, maintains a derived Zarr
+version 3 (v3) copy in a published Brain Imaging Data Structure (BIDS) dataset. This lets a browser
+scrub a signal without downloading the whole file and lets a machine learning (ML) pipeline stream
+samples instead of pulling the original recording first.
 
 This section is the contract for anyone building against that copy:
 a viewer, an inference service, a training loader, or an agent.
@@ -51,31 +52,31 @@ that is a separate, access-gated runbook for NEMAR administrators (`/admin/opera
   and check those fields in code that needs to detect a future change;
   see [Format stability policy](/platform/zarr/format-stability/).
 
-## What is live today versus after the release
+## Current rollout status
 
-This page and the four it links to describe the contract as it ships, not as it stands today.
-**Nothing in the "after" column below exists in production or in staging as of 2026-09-02** — checked live, and against the deployed source for the two rows that cannot be checked by URL alone.
-It all ships together with **nemar-cli release 0.9.12** (epic #1181), `events.parquet` included — merged into the epic branch as nemarOrg/nemar-cli#1205 (merge commit `606745d9`, 2026-09-02).
+The producer and serving contract described here is deployed in production. Checked on
+2026-09-09: `nm000103` served an index with `format_version: 3`, a `manifest.json`, and
+`events.parquet`; `https://zarr.nemar.org/catalog.json` returned a catalog with 625 datasets;
+and `api.nemar.org` returned working `has_zarr` and `has_zarr_verified` filters.
 
-| Capability | Today (production and staging) | After nemar-cli release 0.9.12 |
-| --- | --- | --- |
-| Index `format_version` | `1`, on every dataset checked | `3`, once a dataset reconverts under the new engine version |
-| `nemar` root store attribute | absent from every store | present on every store converted after the release |
-| Declared pyramid / chunk-geometry attributes | absent (needs biosigIO ≥1.2.6, not yet installed) | present |
-| `channels_tsv_units` / `bids_unit` parity across both export paths | absent (needs biosigIO ≥1.2.7) | present |
-| `sss` root attribute (MaxShield correction, ADR 0028) | **already live** — predates this epic | unchanged |
-| `GET /schemas/*` | `404` | serves the index and manifest JSON Schemas |
-| `GET /catalog.json` | `404` | serves `zarr-catalog.json`, the discovery front door |
-| `manifest.json` | `404` | serves the producer manifest split out of `index.json` |
-| `events.parquet` | `404`; `events_parquet`/`events_row_count` absent from every index | serves one Parquet row per (event, channel group), with a computed `sample_index`; index gains the two fields |
-| A non-browser request for a store object | proxied, the same as every other request | redirected (`302`) straight to S3 |
-| `index.json` / `zarr.json` cache lifetimes | flat `max-age=60, stale-while-revalidate=300` for both | `300s`/`3600s` and `60s`/`300s` respectively when untokened; `86400s` when tokened |
-| `has_zarr` / `has_zarr_verified` API filters | accepted as query parameters, silently ignored | `has_zarr` filters correctly; `has_zarr_verified` narrows it further |
-| Anonymous S3 reads; `s3:ListBucket` denial | **already live**, independent of this epic | unchanged |
+The staging schema endpoints are live, but `zarr-test.nemar.org/catalog.json` currently reports
+zero datasets. Do not infer staging dataset availability from the contract alone. Older datasets
+can retain an earlier producer shape until they are reconverted, so clients should read each
+index's `format_version`, `engine_version`, `biosigio_version`, and timestamps rather than
+assuming the platform has one conversion state.
 
-See the "Rollout" note on whichever page documents each row for how it was checked.
+| Capability | Current production status (checked 2026-09-09) |
+| --- | --- |
+| Index format | v3 on sampled `nm000103`; older datasets may coexist |
+| `nemar` root attribute and geometry | present on a sampled current store written by biosigIO 1.2.7 |
+| Schemas | live at `api.nemar.org/schemas/zarr-index-v3.json` and `zarr-manifest-v1.json` |
+| Catalog | live at `zarr.nemar.org/catalog.json` (625 entries at the check) |
+| Manifest and events | live for `nm000103`; optional fields or files can be absent for other datasets |
+| Non-browser store/document GET | 302 to public S3; browser-origin GETs are proxied; HEAD remains proxied |
+| API filters | live; sample totals were 625 for `has_zarr` and 51 for `has_zarr_verified` |
+| Anonymous object reads and `s3:ListBucket` denial | object reads are public; bucket listing remains denied |
 
-:::note[Rollout]
-`events.parquet` — full shape at [Index contract: `events.parquet`](/platform/zarr/index-contract/#eventsparquet) — closes [nemarOrg/nemar-cli#1060](https://github.com/nemarOrg/nemar-cli/issues/1060) via nemarOrg/nemar-cli#1205, merged into the epic branch on 2026-09-02.
-It ships together with the rest of this table when nemar-cli release 0.9.12 does, same as every other row here.
-:::
+`events.parquet` was introduced in the nemar-cli 0.9.12 line through
+[nemarOrg/nemar-cli#1205](https://github.com/nemarOrg/nemar-cli/pull/1205) and is now live for
+datasets whose current conversion produced it. The release and issue references describe the
+history of the rollout; they are not a promise that every dataset has already been reconverted.

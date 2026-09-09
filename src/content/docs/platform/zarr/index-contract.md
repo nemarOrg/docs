@@ -25,24 +25,19 @@ so the schema a client validates against cannot drift from the one the converter
 The schema is **closed**: every object sets `additionalProperties: false`,
 so a document carrying a field this page does not name would fail its own producer's validation before publishing.
 
-## Rollout: what is live today versus after the release
+## Rollout and version coexistence
 
-:::note[Rollout]
-Nothing on this page is live yet, in production or in staging.
-It all ships with **nemar-cli release 0.9.12** (epic #1181).
-Until then:
+:::note[Current deployment]
+Format version 3 is deployed in production. Checked on 2026-09-09, `nm000103` served a v3
+index, a `manifest.json`, and an `events.parquet` file. The production catalog reported 625
+datasets, and the API's `has_zarr` and `has_zarr_verified` filters returned totals of 625 and 51.
+The schema endpoints are live on `api.nemar.org` and `api-test.nemar.org`.
 
-- Every dataset's index is `format_version 1` — no `pending`, no `layout`, no `discovered_count`, and a per-store `source_key` inline instead of the separate [manifest file](#the-manifest-file) below.
-  Checked directly on 2026-09-02 against production (`nm000103`, `nm000281`) and against the `zarr-test.nemar.org` staging host (the exemplar fleet): every index checked on both is `format_version 1`.
-- `GET /schemas/zarr-index-v3.json` 404s, on both `api.nemar.org` and the staging equivalent `api-test.nemar.org` — checked live on 2026-09-02.
-- [`GET /catalog.json`](#zarr-catalogjson-the-discovery-front-door) 404s the same way, on both `zarr.nemar.org` and `zarr-test.nemar.org` — checked live on 2026-09-02.
-- The [manifest file](#the-manifest-file) does not exist either — `manifest.json` also 404s today, checked the same way.
-- Neither [`has_zarr` nor `has_zarr_verified`](#has_zarr-and-has_zarr_verified-on-the-api) exists on the deployed API yet — both are accepted as query parameters today but have no effect, so the request succeeds and simply ignores them rather than erroring.
-- [`events.parquet`](#eventsparquet) does not exist anywhere either — merged into the epic branch (nemarOrg/nemar-cli#1205, merge commit `606745d9`, head `2390c424`, 2026-09-02) on the same footing as the rest of this page, and ships with it.
-
-Once the release ships, format version 3 still reaches a dataset only when that dataset *reconverts* under converter engine version 3 (Architecture Decision Record (ADR) 0033) —
-an unchanged dataset does not pick it up on its own, so the two formats will coexist for a while even after release.
-**Read `format_version` first**, and branch on it, rather than assuming every dataset's index looks like this page.
+The staging catalog currently reports zero datasets, so a live staging schema does not imply that
+the staging environment has converted examples available. Format v3 reaches a dataset only when
+that dataset reconverts under converter engine version 3 (Architecture Decision Record (ADR)
+0033). Older indexes can therefore coexist with v3 for a while. **Read `format_version` first**,
+and branch on it, rather than assuming every dataset's index looks like this page.
 :::
 
 ## Top-level fields
@@ -50,7 +45,7 @@ an unchanged dataset does not pick it up on its own, so the two formats will coe
 | Field | Meaning |
 | --- | --- |
 | `format` | Always the literal `"nemar-zarr-index"`. |
-| `format_version` | Always `3` on this page's shape (see rollout note above). |
+| `format_version` | `3` on this page's shape; older datasets may serve an earlier version until they are reconverted. |
 | `dataset_id` | The NEMAR dataset id (`nm`/`xx`/`on` band). |
 | `contract_base` | **The only URL a client may hardcode**: the stable base for this dataset's serving copy, `https://zarr.nemar.org/<id>/zarr/`. |
 | `data_base` | Where the bytes are served from *today*, for an HTTP Zarr reader. May change independently of `contract_base` — re-read it from this document rather than hardcoding it. |
@@ -239,9 +234,10 @@ so a permanently failing recording stops consuming the queue.
 
 ## The manifest file
 
-:::note[Rollout]
-`manifest.json` does not exist yet — checked live on 2026-09-02, it 404s on production and on staging.
-It ships with nemar-cli release 0.9.12 (epic #1181); see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::note[Current deployment]
+`manifest.json` is live for current converted datasets. For example, it was served for `nm000103`
+when checked on 2026-09-09. It remains optional at the dataset level: an older index or a conversion
+that did not publish the sidecar may not advertise one.
 :::
 
 A second, producer-internal document sits alongside the index:
@@ -259,7 +255,7 @@ for a field no consumer on `nemar.org` reads, while `index.json` is fetched on e
 See the [cost ladder page](/platform/zarr/cost-ladder/#indexjson) for the exact measurement method.
 **Nothing on `nemar.org` reads this file**, and it carries no serving contract of its own;
 it may change shape more freely than the index.
-Once the [events.parquet](#eventsparquet) feature ships, this same document also gets a `files[]` array —
+When a conversion publishes [events.parquet](#eventsparquet), this same document also gets a `files[]` array —
 one entry per dataset-level object the run published beside the index (today, only ever `events.parquet`), each with its `size_bytes` and `row_count` —
 so a later run or an operator can confirm the object on S3 is the one this conversion wrote, without downloading it.
 See [Access and hosting](/platform/zarr/access/#caching-and-freshness) for how `manifest.json` is cached and redirect-gated —
@@ -267,9 +263,12 @@ it shares `index.json`'s cache lifetime (both are rewritten by the same conversi
 
 ## `events.parquet`
 
-:::note[Rollout]
-Not live anywhere yet — see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
-Design is final (nemarOrg/nemar-cli#1205, closing [#1060](https://github.com/nemarOrg/nemar-cli/issues/1060)); it ships together with everything else on this page.
+:::note[Current deployment]
+`events.parquet` is live for datasets whose current conversion produced it. For example, `nm000103`
+advertised and served the file when checked on 2026-09-09. It is optional: datasets without usable
+event rows, and older indexes published before this feature was available, may omit both
+`events_parquet` and `events_row_count`. The design originated in nemarOrg/nemar-cli#1205 and
+closes [#1060](https://github.com/nemarOrg/nemar-cli/issues/1060).
 :::
 
 A dataset with at least one recording's BIDS `events.tsv` gets one columnar file, dataset-wide, beside `index.json` and `manifest.json`:
@@ -367,9 +366,11 @@ producer bookkeeping so a later run, or an operator, can confirm the object on S
 
 ## `zarr-catalog.json`: the discovery front door
 
-:::note[Rollout]
-`GET /catalog.json` 404s today — checked live on 2026-09-02, on production and on staging.
-It ships with nemar-cli release 0.9.12 (epic #1181); see the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::note[Current deployment]
+`GET /catalog.json` is live at `https://zarr.nemar.org/catalog.json`. It reported 625 entries when
+checked on 2026-09-09. The staging catalog endpoint is also live, but its current count is zero.
+The catalog contains only public, active datasets with at least one ready store, so its count is
+not the same as the total number of datasets in the NEMAR catalog.
 :::
 
 A client with no dataset id to start from — human or agent, and without `s3:ListBucket` — has no way to enumerate datasets from the per-dataset index alone.
@@ -386,34 +387,34 @@ and the absolute `index_url` a client needs to go straight to that dataset's ind
 {
   "format": "nemar-zarr-catalog",
   "format_version": 1,
-  "generated_utc": "2026-09-01T06:00:00Z",
+  "generated_utc": "2026-09-09T03:00:04.639Z",
   "contract_base": "https://zarr.nemar.org/",
-  "count": 342,
+  "count": 625,
   "datasets": [
     {
       "dataset_id": "nm000103",
-      "name": "Healthy Brain Network EEG",
+      "name": "Healthy Brain Network EEG - Not for Commercial Use",
       "doi": "10.82901/nemar.nm000103",
-      "license": "CC0",
+      "license": "CC-BY-NC-SA 4.0",
       "modalities": ["eeg"],
-      "tasks": ["rest", "video"],
-      "subject_count": 126,
-      "has_hed": 1,
-      "hed_version": "8.3.0",
-      "store_count": 252,
-      "recording_count": 252,
+      "subject_count": 447,
+      "store_count": 3522,
+      "recording_count": 3522,
       "recordings_unavailable": 0,
-      "total_recording_duration": 452340.5,
-      "zarr_converted_at": "2026-08-30T04:12:09Z",
+      "total_recording_duration": 1026054.144,
+      "zarr_converted_at": "2026-09-05 02:04:15",
       "zarr_source_commit": "d14ae5eb3881e368ee328bc1312d3fa51f7e70a9",
       "zarr_errors": 0,
       "zarr_verify_status": "verified",
-      "zarr_verified_at": "2026-08-31T02:00:11Z",
+      "zarr_verified_at": "2026-09-04 03:00:41",
       "index_url": "https://zarr.nemar.org/nm000103/zarr/index.json"
     }
   ]
 }
 ```
+
+The values above are an abridged response captured on 2026-09-09; counts, timestamps, and optional
+metadata change as the catalog is regenerated.
 
 `zarr_verify_status` (`"verified"` / `"failed"` / `"unverifiable"`, or `null` if the standing fidelity sweep has not reached this dataset yet) is a **stricter** signal than presence in this catalog:
 it means the sweep re-derived ground truth from the dataset's own `channels.tsv` and modality sidecar and confirmed the published store agrees, not merely that a store exists.
@@ -421,10 +422,11 @@ Published once daily plus on demand, not per-conversion, so treat `generated_utc
 
 ## `has_zarr` and `has_zarr_verified` on the API
 
-:::note[Rollout]
-Neither filter exists on `api.nemar.org` today — not just `has_zarr_verified`.
-Checked against the deployed API source on 2026-09-02: `has_zarr` query-parameter handling is absent too, so both are silently ignored, not rejected, until nemar-cli release 0.9.12 (epic #1181) ships.
-See the [rollout note](#rollout-what-is-live-today-versus-after-the-release) above.
+:::note[Current deployment]
+Both filters are deployed and active. On 2026-09-09, a request with `has_zarr=1` reported a
+`total_count` of 625 and a request with `has_zarr_verified=1` reported 51. These values change as
+datasets are converted and verification runs complete; use the response rather than hardcoding
+them.
 :::
 
 `GET /datasets` on the backend API accepts two independent boolean filters,

@@ -3,22 +3,26 @@ title: "Access and Hosting"
 description: "The stable URL, anonymous S3 access, the browser-versus-machine split at the edge, caching, and rate limits for the Zarr serving copy."
 ---
 
-:::note[Rollout]
-This page describes the contract as it ships with **nemar-cli release 0.9.12** (epic #1181), not as it stands today.
-Checked live on 2026-09-02, on both production and the `zarr-test.nemar.org` staging host:
-the redirect split, the tokened/untokened cache lifetimes below, `GET /catalog.json`, `GET /schemas/*`, and `events.parquet` do not exist yet.
-Today, every request — browser or not — is proxied the same way, and `index.json` and a store's `zarr.json` share one flat cache lifetime (`max-age=60, stale-while-revalidate=300`), checked against the deployed source.
-Anonymous S3 access, the `s3:ListBucket` denial, and the 10,000-requests-per-60-seconds rate bucket are **already live today**, independent of this release — see each section below for which parts of it apply now.
+:::note[Current deployment]
+This page describes the deployed production contract, checked on 2026-09-09. Production served
+the v3 index, `manifest.json`, and `events.parquet` for `nm000103`; the catalog contained 625
+datasets; and the schemas were available from `api.nemar.org`. The staging catalog endpoint is
+live but currently reports zero datasets.
+
+Browser-origin `GET` requests are proxied with CORS headers. Non-browser `GET` requests for store
+objects and for `manifest.json` or `events.parquet` redirect to public S3; `index.json`, catalog,
+and `HEAD` requests remain proxied. Anonymous object access, the `s3:ListBucket` denial, and the
+10,000-requests-per-60-seconds rate bucket are also live.
 :::
 
 ## The one stable URL
 
 `https://zarr.nemar.org` is the only host and base path a client should hardcode:
 it is the index document's own `contract_base`, `https://zarr.nemar.org/<dataset_id>/zarr/`.
-That said, `contract_base` itself is a `format_version 3` field —
-today's `format_version 1` index does not publish it, so a client reading a v1 index has only the hostname convention above to go on, not the field itself.
+That said, `contract_base` itself is a `format_version 3` field.
+A client reading an older v1 index has only the hostname convention above to go on, not the field itself.
 
-`data_base` and `s3_uri`, also published in [`index.json`](/platform/zarr/index-contract/) once v3 ships,
+`data_base` and `s3_uri`, also published in [`index.json`](/platform/zarr/index-contract/) for v3 datasets,
 describe where the bytes happen to live *today* — currently a public Amazon S3 object under `s3://nemar/<dataset_id>/zarr/`, region `us-east-2` —
 and may change independently of `contract_base`.
 **Read them from the index each time rather than hardcoding either one.**
@@ -37,16 +41,14 @@ for any object whose key you already know.
 There is no anonymous directory listing at any level of the bucket, including its root; this is also already true today, independent of this epic.
 This is exactly why the [index](/platform/zarr/index-contract/) and the [`zarr-catalog.json` discovery front door](/platform/zarr/index-contract/#zarr-catalogjson-the-discovery-front-door) exist:
 with no listing available, a document a client can *fetch by name* is the only way to discover what a dataset serves, or which datasets are served at all.
-If you find yourself reaching for `ListObjectsV2` against this bucket, the object you want is `index.json` or `catalog.json`, not a listing —
-though `catalog.json` itself is one of the pieces still shipping with 0.9.12; see the rollout note above.
+If you find yourself reaching for `ListObjectsV2` against this bucket, the object you want is `index.json` or `catalog.json`, not a listing.
 
 A private dataset's objects are excluded from the bucket's public-read grant,
 so a request for one returns `403` at S3 (or `404` through the gateway below) — the same as a path that does not exist.
 
 ## Browser versus everything else
 
-The split described in this section ships with nemar-cli release 0.9.12; today, every request is proxied, with no redirect branch at all.
-Once it ships, `zarr.nemar.org` — a Cloudflare Worker in front of that same S3 origin — will treat two kinds of request differently:
+`zarr.nemar.org` — a Cloudflare Worker in front of that same S3 origin — treats two kinds of request differently:
 
 - **A browser request** — one carrying an `Origin` header from `nemar.org`, a `*.nemar.org` subdomain, or `localhost`/`127.0.0.1` — is **proxied**:
   the Worker fetches the object server-side, sets Cross-Origin Resource Sharing (CORS) headers scoped to that origin, and edge-caches the response.
@@ -63,14 +65,14 @@ Once it ships, `zarr.nemar.org` — a Cloudflare Worker in front of that same S3
 - **Only public datasets are gated on the proxied branches.** The redirect branch relies on the S3 bucket policy itself as the enforcement point:
   a redirect that then 403s at S3 for a private dataset's object leaks nothing the proxied `404` would not.
 
-`GET /catalog.json` (no dataset id segment) will be a separate route that can never match the redirect rule above —
-it is always proxied and edge-cached, the same as `index.json`, once it ships (see the rollout note above; it 404s today).
+`GET /catalog.json` (no dataset id segment) is a separate route that cannot match the redirect rule above.
+It is always proxied and edge-cached, the same as `index.json`.
 
 ## Caching and freshness
 
-The table below is the shape that ships with the release.
-Today, `index.json` and a store's `zarr.json` share one flat, untokened lifetime — `max-age=60, stale-while-revalidate=300` — with no tokened variant at all;
-neither `manifest.json` nor `events.parquet` is a concept the deployed Worker knows about at all today, so a request for either (once one exists) would fall through to the generic `max-age=86400` chunk default below, not the row it gets after the release.
+The table below describes the current Worker response policy. An intermediary cache can report a
+different observed age or time-to-live, so treat the policy as the contract rather than assuming a
+particular cache instance has already refreshed.
 
 | Object | Untokened | Tokened (`?v=<updated_utc>`) |
 | --- | --- | --- |
@@ -78,7 +80,7 @@ neither `manifest.json` nor `events.parquet` is a concept the deployed Worker kn
 | a store's `zarr.json` (group/array metadata) | `max-age=60, stale-while-revalidate=300` | `max-age=86400, stale-while-revalidate=86400` |
 | every other object (chunks) | `max-age=86400, stale-while-revalidate=86400` | same |
 | `GET /catalog.json` | `max-age=3600, stale-while-revalidate=3600` | — |
-| `GET /schemas/*` | `max-age=86400` | — |
+| `GET https://api.nemar.org/schemas/*` | `max-age=86400` | — |
 | a `404` from this gateway | `max-age=60` | — |
 
 `index.json`, `manifest.json`, and `events.parquet` — the three dataset-level documents, named by the shared `ZARR_DATASET_DOCUMENTS` list — are rewritten together by every conversion, so they share one cache lifetime and one purge list, whichever one you request.
@@ -96,17 +98,13 @@ The query string does not change which object is fetched, only the cache key.
 
 ## Rate limits
 
-The shared rate-limit bucket itself is **already live today**: every request under `<zarr.nemar.org host>/<id>/zarr/...` — proxied today, redirected once 0.9.12 ships —
+The shared rate-limit bucket is live: every request under `<zarr.nemar.org host>/<id>/zarr/...` —
 is counted against one shared, IP-keyed bucket of **10,000 requests per 60 seconds**, the same generous data-plane bucket `data.nemar.org` uses.
-What is new is the *observe-only* treatment of a redirect, which cannot exist before the redirect branch itself does.
-
-Once the release ships: a redirect is **observe-only**: it still counts against that shared bucket, but it never itself returns `429` —
+Redirects are **observe-only**: they still count against that shared bucket, but never themselves return `429` —
 a `302` costs a fraction of a millisecond of Worker time and zero bytes of egress, so there is no reason to block it.
 A *proxied* request from the same client IP — a browser-origin fetch, or a request for `index.json` —
 is enforced normally and can `429` once the shared bucket the redirected traffic already counted against is exhausted.
 In other words: redirected traffic is never itself throttled, but it is not free either —
 heavy redirected traffic from one IP can still trip the limit for that IP's proxied requests.
-Today, with no redirect branch, every request against this bucket is a normal, enforced hit — there is no observe-only case yet.
-
 Everything above is anonymous by design;
 there is no authentication on this gateway, and no token-keyed bucket applies here — contrast the authenticated, token-bucketed [backend API](/platform/api/).

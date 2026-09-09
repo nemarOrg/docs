@@ -110,8 +110,8 @@ When a PR is merged to `main`, the `pr-merge.yml` workflow fires and performs:
 
 1. **Tag and Release** - Reads the version from `dataset_description.json`, creates a `vX.Y.Z` git tag and GitHub Release
 2. **Webhook** - Calls the backend's `/webhooks/publish-version-doi` endpoint with the dataset ID, version, and release URL
-3. **Version DOI** - If a concept DOI exists, the backend mints a version DOI via EZID (or Zenodo). For EZID, the DOI pattern is `<concept_doi>.V<version>`.
-4. **Zenodo Backup** - For EZID-provider datasets, creates/updates a Zenodo draft deposition with the release archive (never published, serves as backup)
+3. **Version DOI** - If a concept DOI exists, the backend mints a version DOI through EZID. The DOI pattern is `<concept_doi>.V<version>`.
+4. **Zenodo Backup** - The version workflow may create or update a non-public Zenodo draft as a best-effort archive backup; this is not NEMAR's canonical DOI.
 5. **Version Manifest** - Generates a manifest (file listing with checksums) and uploads to `s3://nemar/<dataset_id>/version/v<version>.json`
 
 The webhook token (`NEMAR_WEBHOOK_TOKEN`) is configured as an organization-level secret on nemarDatasets; no per-repo setup is needed.

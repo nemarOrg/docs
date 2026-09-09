@@ -10,15 +10,14 @@ Every NEMAR dataset lives in two phases, and the collaboration model is differen
 
 The short version: **private data uses collaborators, public data uses pull requests.**
 
-```mermaid
-flowchart LR
-    A[Upload<br/>private repo] --> B[Curate privately<br/>collaborators push to main]
-    B --> C[Request publication<br/>admin approves]
-    C --> D[Public + DOI<br/>ruleset locks main]
-    D --> E[Contribute via PR<br/>anyone proposes, maintainers merge]
-    E -->|PR merged| F[New version DOI]
-    F --> E
-```
+**Lifecycle at a glance:**
+
+1. **Upload** — NEMAR creates a private repository and storage area.
+2. **Curate privately** — the owner and collaborators push changes directly while the dataset is a draft.
+3. **Request publication** — an administrator reviews the request and approves or denies it.
+4. **Publish** — the repository becomes public, the release receives a DOI, and the public branch is protected.
+5. **Improve through pull requests** — anyone can propose a change; maintainers review and merge it.
+6. **Create the next version** — a merged public change becomes a new release with a version DOI, returning to step 5.
 
 ## 1. Upload (private by default)
 
