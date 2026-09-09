@@ -34,10 +34,10 @@ implementation detail.
 NEMAR's compute direction is grounded in its partnership with the [San Diego Supercomputer Center
 (SDSC)](https://www.sdsc.edu/news/2026/PR20260526-Neuro-AI.html). The [Neuroscience Gateway
 (NSG)](https://www.nsgportal.org/) is an established resource for the neuroscience community: it
-provides browser and programmatic access to neuroscience tools, data-processing software, and
-high-performance computing resources. NEMAR contributes the structured, open, citable data layer;
-SDSC and NSG provide the compute environment and operational path that can turn a dataset into a
-reproducible analysis.
+provides access to neuroscience tools and computing resources on HPC, HTC, and cloud infrastructure.
+NEMAR contributes the structured, open, citable data layer; our aim is to connect a NEMAR
+dataset, version, and workflow seamlessly to the appropriate compute resources so they can become
+a reproducible analysis.
 
 That partnership is what makes the data-to-compute loop practical. It is also why the planned
 Tapis and One Science Place work matters: the goal is to connect NEMAR's dataset and citation
