@@ -255,4 +255,41 @@ describe("safeNext", () => {
 			expect(safeNext(hostile)).toBe("/admin/");
 		});
 	}
+
+	// The cases only the decoded view catches. A check on the literal string
+	// alone accepts every one of these.
+	for (const encoded of [
+		"%2F%2Fevil.example",
+		"%2f%2fevil.example/admin/x",
+		"/admin/..%2fplatform%2fapi",
+		"/admin/%2e%2e/platform/",
+		"/%61dmin/x",
+		"/admin/x%00",
+		"/admin/x%0d%0aSet-Cookie:%20a=b",
+		"%5c%5cevil.example",
+	]) {
+		test(`rejects once decoded: ${encoded}`, () => {
+			expect(safeNext(encoded)).toBe("/admin/");
+		});
+	}
+
+	test("rejects a malformed escape rather than guessing", () => {
+		expect(safeNext("/admin/%zz")).toBe("/admin/");
+		expect(safeNext("/admin/100%")).toBe("/admin/");
+	});
+
+	test("rejects a path that escapes the gated tree", () => {
+		expect(safeNext("/admin/../platform/api/")).toBe("/admin/");
+	});
+
+	test("caps an absurdly long value", () => {
+		expect(safeNext(`/admin/${"a".repeat(600)}`)).toBe("/admin/");
+	});
+
+	test("keeps a query string on an accepted path", () => {
+		// A `..` in a query is inert, so it must not cost a legitimate link.
+		expect(safeNext("/admin/operations/zarr-serving/?highlight=..")).toBe(
+			"/admin/operations/zarr-serving/?highlight=..",
+		);
+	});
 });

@@ -47,20 +47,48 @@ interface FunctionContext {
  */
 export function safeNext(raw: string | null): string {
 	if (!raw) return GATED_PREFIX;
+	// A path this long is either a mistake or someone probing what this endpoint
+	// will reflect back into a header.
+	if (raw.length > MAX_NEXT_LENGTH) return GATED_PREFIX;
+	// Checked in BOTH the literal and the once-decoded form. `%2F%2Fevil.example`
+	// is a protocol-relative URL wearing an encoding, and only the decoded view
+	// sees that; requiring both to pass also refuses a value whose two views
+	// disagree, rather than picking one and hoping the browser agrees.
+	let decoded: string;
+	try {
+		decoded = decodeURIComponent(raw);
+	} catch {
+		// A malformed escape is not a path anything can reason about, and
+		// `decodeURIComponent` throwing is the only signal of it.
+		return GATED_PREFIX;
+	}
+	return isPlainGatedPath(raw) && isPlainGatedPath(decoded) ? raw : GATED_PREFIX;
+}
+
+/** Cap on a `next` this Function will re-emit into a `Location` header. */
+const MAX_NEXT_LENGTH = 512;
+
+function isPlainGatedPath(value: string): boolean {
 	// A newline or control character could split a header on a downstream proxy
-	// less careful than this runtime. Spelled with `\uXXXX` escapes rather than the
-	// literal bytes: literal control characters are invisible in a diff, a review
-	// and most editors, so the next person cannot tell a correct class from a
-	// mangled one, and some tooling rewrites them silently.
-	if (/[\u0000-\u001f\u007f]/.test(raw)) return GATED_PREFIX;
-	// Backslashes are treated as slashes by some URL parsers, so `/\evil.example`
-	// can be read as a protocol-relative host.
-	if (raw.includes("\\")) return GATED_PREFIX;
-	// Protocol-relative (`//host`) and absolute (`https://host`) both leave this
-	// host. A single leading slash followed by the gated prefix is the only
-	// accepted shape.
-	if (!raw.startsWith(GATED_PREFIX)) return GATED_PREFIX;
-	return raw;
+	// less careful than this runtime. A character-code loop rather than a regex,
+	// because a control-character class in a regex is what Biome's
+	// `noControlCharactersInRegex` exists to flag, and literal control bytes in
+	// source are invisible in a diff.
+	for (let i = 0; i < value.length; i += 1) {
+		const code = value.charCodeAt(i);
+		if (code <= 0x1f || code === 0x7f) return false;
+	}
+	// Backslashes are path separators to the WHATWG URL parser for special
+	// schemes, so `/\\evil.example` resolves as a HOST rather than a path.
+	if (value.includes("\\")) return false;
+	// Protocol-relative (`//host`) and absolute (`https://host`) both fail this
+	// prefix check before any scheme is inspected, so there is no scheme-casing
+	// bug available to it either.
+	if (!value.startsWith(GATED_PREFIX)) return false;
+	// `/admin/../platform/` stays on this origin, so it is not an open redirect,
+	// but it leaves the tree this handoff exists to reach.
+	const pathOnly = value.split(/[?#]/, 1)[0] ?? "";
+	return !pathOnly.split("/").includes("..");
 }
 
 function failure(appBase: string): Response {
