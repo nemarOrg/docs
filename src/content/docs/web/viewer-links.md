@@ -5,10 +5,10 @@ title: "Linking to a recording"
 Every dataset page on [nemar.org](https://nemar.org) can open its signal viewer directly on a named recording, driven by a `view` parameter in the URL:
 
 ```
-https://nemar.org/dataset/on007753?view=sub-05_task-rest
+https://nemar.org/dataset/on007753?view=sub-05_task-BCCWJreading
 ```
 
-Follow a link like that and the viewer opens on subject 5's resting-state recording, with the subject and task selectors already set. Nothing else is required: the dataset page is public, so the link works for anonymous visitors and needs no sign-in.
+Follow a link like that and the viewer opens on subject 5's recording for that task, with the subject and task selectors already set. Nothing else is required: the dataset page is public, so the link works for anonymous visitors and needs no sign-in.
 
 ## Sharing what you are looking at
 
@@ -31,7 +31,7 @@ The `view` value uses ordinary BIDS entity syntax, joined by underscores, and yo
 Six entities are recognized: `sub`, `ses`, `task`, `acq`, `run`, and `recording`. They may appear in any order, and anything else in the value (`split`, `desc`, a file suffix) is ignored, so a filename copied straight out of the file tree works as a value too:
 
 ```
-https://nemar.org/dataset/on007753?view=sub-05_task-rest_eeg.set
+https://nemar.org/dataset/on007753?view=sub-05_task-BCCWJreading_eeg.vhdr
 ```
 
 Without a `v` parameter the link resolves against the dataset's latest published version. Add `v` to pin a link that must keep showing the same data as the dataset gains versions.
@@ -62,7 +62,7 @@ https://nemar.org/dataset/{dataset_id}?view=sub-{subject}_task-{task}
 
 Three properties worth relying on:
 
-- **OpenNeuro identifiers work.** `https://nemar.org/dataset/ds004186?view=sub-01` redirects to the NEMAR identifier for that mirror and keeps the parameter, so you can build links from the accession you already store.
+- **OpenNeuro identifiers work.** `https://nemar.org/dataset/ds007753?view=sub-05` redirects to the NEMAR identifier for that mirror and keeps the parameter, so you can build links from the accession you already store.
 - **Links do not expire on version changes.** An unpinned link follows the latest published version. A recording that no longer exists relaxes to the nearest match instead of erroring.
 - **The parameter is read in the browser.** It does not change the page's server-rendered content, its canonical URL, or how it is indexed, so publishing many per-dataset links costs nothing in search terms.
 
