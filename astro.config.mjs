@@ -53,6 +53,7 @@ export default defineConfig({
 						{ label: 'Getting Started', slug: 'web/getting-started' },
 						{ label: 'Uploading a Dataset', slug: 'web/uploading' },
 						{ label: 'Managing Your Datasets', slug: 'web/managing-datasets' },
+						{ label: 'Linking to a Recording', slug: 'web/viewer-links' },
 						{ label: 'Publication Review', slug: 'web/publication-review' },
 						{ label: 'Account Settings', slug: 'web/account-settings' },
 						{ label: 'Upload Access', slug: 'web/upload-access' },
