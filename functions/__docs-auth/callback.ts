@@ -16,13 +16,21 @@
  * route starts with a double underscore.
  */
 
-const DOCS_SESSION_COOKIE = "nemar_docs_session";
+/** See the note on the same constant in `functions/_middleware.ts`: the `__Host-`
+ *  prefix is what makes "valid on this host and nowhere else" a rule the browser
+ *  enforces, rather than a property this code merely intends. */
+const DOCS_SESSION_COOKIE = "__Host-nemar_docs_session";
 const DEFAULT_API_BASE = "https://api.nemar.org";
 const DEFAULT_APP_BASE = "https://app.nemar.org";
 
 /** The only prefix a `next` value may point at, which is also the only prefix
  *  the gate protects. */
 const GATED_PREFIX = "/admin/";
+
+/** A docs session lasts a working day; anything longer from the API is clamped
+ *  rather than trusted, and a missing or unusable value falls back to it. */
+const DEFAULT_COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
+const MAX_COOKIE_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 interface Env {
 	readonly NEMAR_API_BASE?: string;
@@ -62,7 +70,9 @@ export function safeNext(raw: string | null): string {
 		// `decodeURIComponent` throwing is the only signal of it.
 		return GATED_PREFIX;
 	}
-	return isPlainGatedPath(raw) && isPlainGatedPath(decoded) ? raw : GATED_PREFIX;
+	return isPlainGatedPath(raw) && isPlainGatedPath(decoded)
+		? raw
+		: GATED_PREFIX;
 }
 
 /** Cap on a `next` this Function will re-emit into a `Location` header. */
@@ -124,6 +134,9 @@ export async function onRequest(context: FunctionContext): Promise<Response> {
 	try {
 		exchanged = await fetch(`${apiBase}/auth/docs/exchange`, {
 			method: "POST",
+			// Never follow a redirect: a 302 that lands on something answering 200
+			// would otherwise arrive here as a successful exchange.
+			redirect: "manual",
 			headers: {
 				"content-type": "application/json",
 				"User-Agent": request.headers.get("User-Agent") ?? "nemar-docs-gate",
@@ -133,22 +146,46 @@ export async function onRequest(context: FunctionContext): Promise<Response> {
 	} catch {
 		return failure(appBase);
 	}
-	if (!exchanged.ok) return failure(appBase);
+	if (exchanged.status !== 200) return failure(appBase);
 
-	const body = (await exchanged.json()) as {
-		session?: string;
-		max_age_seconds?: number;
+	// Parsed defensively, and every field validated before it reaches a header.
+	// This is a trusted caller today, so this is defence in depth -- but the two
+	// values below are interpolated into `Set-Cookie`, and a `session` of
+	// `abc; Domain=nemar.org` would silently widen the credential to every
+	// `*.nemar.org` host, which is the one property the whole design rests on.
+	let body: unknown;
+	try {
+		body = await exchanged.json();
+	} catch {
+		return failure(appBase);
+	}
+	if (!body || typeof body !== "object") return failure(appBase);
+	const { session, max_age_seconds: maxAgeRaw } = body as {
+		session?: unknown;
+		max_age_seconds?: unknown;
 	};
-	if (!body.session) return failure(appBase);
+	// Cookie-value characters only: no `;`, no whitespace, nothing that could end
+	// the value and start an attribute.
+	if (typeof session !== "string" || !/^[A-Za-z0-9._~-]+$/.test(session)) {
+		return failure(appBase);
+	}
+	const maxAge =
+		typeof maxAgeRaw === "number" &&
+		Number.isInteger(maxAgeRaw) &&
+		maxAgeRaw > 0
+			? Math.min(maxAgeRaw, MAX_COOKIE_MAX_AGE_SECONDS)
+			: DEFAULT_COOKIE_MAX_AGE_SECONDS;
 
-	// No `Domain` attribute, so the cookie is host-only. That is the point of the
-	// whole design: this credential is valid here and nowhere else, which is what
-	// lets the platform's own session stay scoped to the app host.
-	const maxAge = body.max_age_seconds ?? 8 * 60 * 60;
-	const response = new Response(null, { status: 302, headers: { location: next } });
+	// No `Domain` attribute, and a `__Host-` name so the browser refuses one: this
+	// credential is valid here and nowhere else, which is what lets the platform's
+	// own session stay scoped to the app host.
+	const response = new Response(null, {
+		status: 302,
+		headers: { location: next },
+	});
 	response.headers.append(
 		"Set-Cookie",
-		`${DOCS_SESSION_COOKIE}=${body.session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`,
+		`${DOCS_SESSION_COOKIE}=${session}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`,
 	);
 	response.headers.set("Cache-Control", "no-store");
 	response.headers.set("X-Robots-Tag", "noindex");

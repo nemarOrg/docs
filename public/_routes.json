@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/admin/*", "/__docs-auth/*"],
-  "exclude": []
+  "include": ["/*"],
+  "exclude": ["/_astro/*", "/pagefind/*", "/figures/*", "/favicon.svg"]
 }

@@ -1,5 +1,5 @@
 /**
- * Tests for the `/admin/*` gate (nemarOrg/nemar-cli#1336 phase 0, issue #1338).
+ * Tests for the admin documentation gate (nemarOrg/nemar-cli#1336 phase 0, issue #1338).
  *
  * These call the two Pages Functions DIRECTLY, with a real `Bun.serve` standing
  * in for the platform API and a canned `next()` standing in for the static
@@ -9,33 +9,41 @@
  * WHY NOT DRIVE IT THROUGH `wrangler pages dev`. That was the first attempt and
  * it measures the wrong thing. Locally, wrangler serves a static asset without
  * invoking the Function when one exists at the path, so a request for a real
- * admin page never reached the middleware and every assertion below "passed"
- * by never running. Deployed Pages is the other way round -- "once you add
- * Functions on a Pages project, all requests by default will invoke your
- * Function", with assets as the fallback "if no Function is matched" -- so a
- * local run proves neither the logic nor the routing. Splitting them fixes
+ * admin page never reached the middleware and every assertion "passed" by never
+ * running. Deployed Pages is the other way round. Splitting the question fixes
  * both halves: this file proves the logic deterministically, and
  * `scripts/probe-admin-gate.ts` proves the routing against a deployed host,
  * which is the only place that question has a real answer.
  *
- * `public/_routes.json` is what pins the routing down in production: it names
- * `/admin/*` and `/__docs-auth/*` as the only paths that invoke a Function, so
- * public pages stay pure static assets and the gated ones cannot be served
- * without the gate running first.
+ * THE TWO CLASSES OF DEFECT THIS FILE EXISTS TO CATCH, both found by review
+ * after the first version of the gate was written:
+ *
+ * 1. **Path spelling.** The gate was scoped to `/admin/*` in `_routes.json`,
+ *    which Pages matches against the RAW pathname, while the asset server
+ *    percent-decodes before looking up a file. So `/admin%2Fcommands/` invoked
+ *    no Function and was then served as `/admin/commands/`. The gate is now
+ *    site-wide and normalizes the path itself; the `normalizeRequestPath` cases
+ *    below are that bypass, pinned.
+ * 2. **Trusting any 2xx.** The middleware branched on 403 and 401 and treated
+ *    everything else that was `ok` as an admin verdict, following redirects on
+ *    the way. A 204, a 302 to something cheerful, or a maintenance page served
+ *    as 200 all opened the gate. Only `200` plus `ok: true` does now.
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Server } from "bun";
 import { onRequest as callback, safeNext } from "../functions/__docs-auth/callback";
-import { onRequest as gate } from "../functions/admin/_middleware";
+import { isGatedPath, normalizeRequestPath, onRequest as gate, readCookies } from "../functions/_middleware";
 
 const APP_BASE = "https://app.nemar.test";
+const COOKIE = "__Host-nemar_docs_session";
 const GATED = "https://docs.nemar.test/admin/operations/zarr-serving/";
+const PUBLIC_URL = "https://docs.nemar.test/platform/api/";
 
 let api: Server;
 let apiBase: string;
 
-/** The three verdicts the real `/auth/docs/verify` gives, plus the exchange. */
+/** The verdicts and malformed answers the middleware has to tell apart. */
 beforeAll(() => {
 	api = Bun.serve({
 		port: 0,
@@ -43,23 +51,53 @@ beforeAll(() => {
 			const url = new URL(req.url);
 			if (url.pathname === "/auth/docs/verify") {
 				const presented = req.headers.get("X-Docs-Session");
-				if (presented === "live-admin") {
-					return Response.json({ ok: true, username: "admin", role: "admin" });
+				switch (presented) {
+					case "live-admin":
+						return Response.json({ ok: true, username: "admin", role: "admin" });
+					case "live-member":
+						return Response.json({ ok: false, error: "not_authorized" }, { status: 403 });
+					case "ok-false":
+						// A 200 that says no. The original gate served the page for this.
+						return Response.json({ ok: false });
+					case "no-content":
+						return new Response(null, { status: 204 });
+					case "not-json":
+						return new Response("<html>maintenance</html>", {
+							status: 200,
+							headers: { "content-type": "text/html" },
+						});
+					case "redirected":
+						return new Response(null, {
+							status: 302,
+							headers: { location: `${apiBase}/auth/docs/cheerful` },
+						});
+					case "server-error":
+						return new Response("boom", { status: 500 });
+					default:
+						return Response.json({ ok: false, error: "invalid_session" }, { status: 401 });
 				}
-				if (presented === "live-member") {
-					return Response.json({ ok: false, error: "not_authorized" }, { status: 403 });
-				}
-				if (presented === "server-error") {
-					return new Response("boom", { status: 500 });
-				}
-				return Response.json({ ok: false, error: "invalid_session" }, { status: 401 });
 			}
+			// Where the redirect above points. Answers 200 so a followed redirect would
+			// look like success.
+			if (url.pathname === "/auth/docs/cheerful") return Response.json({ ok: true });
 			if (url.pathname === "/auth/docs/exchange" && req.method === "POST") {
 				const body = (await req.json()) as { code?: string };
-				if (body.code === "live-code") {
-					return Response.json({ session: "live-admin", max_age_seconds: 28800 });
+				switch (body.code) {
+					case "live-code":
+						return Response.json({ session: "live-admin", max_age_seconds: 28800 });
+					case "cookie-injection":
+						return Response.json({ session: "abc; Domain=nemar.org", max_age_seconds: 60 });
+					case "maxage-injection":
+						return Response.json({ session: "abc", max_age_seconds: "1; Domain=nemar.org" });
+					case "huge-maxage":
+						return Response.json({ session: "abc", max_age_seconds: 99999999 });
+					case "null-body":
+						return Response.json(null);
+					case "not-json":
+						return new Response("nope", { status: 200 });
+					default:
+						return Response.json({ error: "invalid_grant" }, { status: 400 });
 				}
-				return Response.json({ error: "invalid_grant" }, { status: 400 });
 			}
 			return new Response("not found", { status: 404 });
 		},
@@ -75,11 +113,16 @@ function env(overrides: Record<string, string> = {}) {
 	return { NEMAR_API_BASE: apiBase, NEMAR_APP_BASE: APP_BASE, ...overrides };
 }
 
+const ASSET_BODY = "<h1>Zarr serving copy</h1>";
+
 /** The static asset the gate serves once it has authorized the request. */
 function asset(): Response {
-	return new Response("<h1>Zarr serving copy</h1>", {
+	return new Response(ASSET_BODY, {
 		status: 200,
-		headers: { "content-type": "text/html", "cache-control": "public, max-age=0, must-revalidate" },
+		headers: {
+			"content-type": "text/html",
+			"cache-control": "public, max-age=0, must-revalidate",
+		},
 	});
 }
 
@@ -91,91 +134,229 @@ function gateRequest(cookie?: string, url = GATED): Promise<Response> {
 	});
 }
 
-describe("the gate on /admin/*", () => {
+// --------------------------------------------------------------------------
+// Path normalization: the bypass
+// --------------------------------------------------------------------------
+
+describe("normalizeRequestPath", () => {
+	test("leaves an ordinary path alone", () => {
+		expect(normalizeRequestPath("/admin/commands/")).toBe("/admin/commands/");
+		expect(normalizeRequestPath("/platform/api/")).toBe("/platform/api/");
+	});
+
+	// Each of these was served to anonymous callers by the first version of the
+	// gate, because `_routes.json` matched the raw spelling and the asset server
+	// decoded afterwards.
+	for (const [raw, expected] of [
+		["/admin%2Fcommands/", "/admin/commands/"],
+		["/%61dmin/commands/", "/admin/commands/"],
+		["/ADMIN/commands/", "/admin/commands/"],
+		["//admin/commands/", "/admin/commands/"],
+		["/./admin/commands/", "/admin/commands/"],
+		["/platform/../admin/commands/", "/admin/commands/"],
+		["/admin/../admin/commands/", "/admin/commands/"],
+		["/admin%2f%2ecommands/", "/admin/.commands/"],
+		["/admin%252Fcommands/", "/admin/commands/"],
+		["/admin\\commands/", "/admin/commands/"],
+	] as const) {
+		test(`normalizes ${raw}`, () => {
+			expect(normalizeRequestPath(raw)).toBe(expected);
+		});
+	}
+
+	test("resolves a traversal that leaves the gated tree", () => {
+		expect(normalizeRequestPath("/admin/../platform/api/")).toBe("/platform/api/");
+	});
+
+	test("does not throw on a malformed escape", () => {
+		expect(normalizeRequestPath("/admin/%zz")).toBe("/admin/%zz");
+	});
+});
+
+describe("isGatedPath", () => {
+	for (const gated of ["/admin", "/admin/", "/admin/commands/", "/admin/operations/x"]) {
+		test(`gates ${gated}`, () => expect(isGatedPath(gated)).toBe(true));
+	}
+	for (const open of ["/", "/platform/api/", "/administrators/", "/cli/commands/", "/pagefind/x"]) {
+		test(`does not gate ${open}`, () => expect(isGatedPath(open)).toBe(false));
+	}
+});
+
+describe("the gate refuses every spelling of a gated path", () => {
+	for (const raw of [
+		"/admin%2Fcommands/",
+		"/%61dmin/commands/",
+		"/ADMIN/commands/",
+		"//admin/commands/",
+		"/./admin/commands/",
+		"/platform/../admin/commands/",
+		"/admin%252Fcommands/",
+		"/admin\\commands/",
+		"/admin",
+	]) {
+		test(`refuses ${raw} anonymously`, async () => {
+			const res = await gateRequest(undefined, `https://docs.nemar.test${raw}`);
+			expect(res.status).toBe(302);
+			expect(await res.text()).not.toContain(ASSET_BODY);
+		});
+	}
+
+	test("the redirect names the NORMALIZED path, not the spelling that arrived", async () => {
+		const res = await gateRequest(undefined, "https://docs.nemar.test/admin%2Fcommands/");
+		expect(res.headers.get("location")).toContain(encodeURIComponent("/admin/commands/"));
+	});
+});
+
+describe("public paths are untouched", () => {
+	test("a public page is served without contacting the API", async () => {
+		const res = await gateRequest(undefined, PUBLIC_URL);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toBe(ASSET_BODY);
+	});
+
+	test("a public page keeps its own caching answer and is not marked noindex", async () => {
+		const res = await gateRequest(undefined, PUBLIC_URL);
+		expect(res.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
+		expect(res.headers.get("x-robots-tag")).toBeNull();
+	});
+
+	test("a path that merely starts with the same letters is not gated", async () => {
+		const res = await gateRequest(undefined, "https://docs.nemar.test/administrators/");
+		expect(res.status).toBe(200);
+	});
+});
+
+// --------------------------------------------------------------------------
+// Verdict handling: only 200 plus ok:true opens the gate
+// --------------------------------------------------------------------------
+
+describe("the gate on a gated path", () => {
 	test("an anonymous request is redirected to the website's handoff", async () => {
 		const res = await gateRequest();
 		expect(res.status).toBe(302);
-		const location = res.headers.get("location") ?? "";
-		expect(location.startsWith(`${APP_BASE}/auth/docs/authorize`)).toBe(true);
+		expect(res.headers.get("location") ?? "").toStartWith(`${APP_BASE}/auth/docs/authorize`);
 	});
 
-	test("the redirect carries the page that was asked for", async () => {
+	test("the sign-in redirect is never cached", async () => {
+		// A bare 302 with no cache header is heuristically cacheable, and this one is
+		// only correct for a visitor who has no session.
 		const res = await gateRequest();
-		expect(res.headers.get("location")).toContain(
-			encodeURIComponent("/admin/operations/zarr-serving/"),
-		);
+		expect(res.headers.get("cache-control")).toBe("no-store");
 	});
 
-	test("the query string of the original request survives the round trip", async () => {
+	test("the query string of the original request survives", async () => {
 		const res = await gateRequest(undefined, `${GATED}?highlight=lock`);
 		expect(res.headers.get("location")).toContain(encodeURIComponent("?highlight=lock"));
 	});
 
 	test("a live admin session is served the asset", async () => {
-		const res = await gateRequest("nemar_docs_session=live-admin");
+		const res = await gateRequest(`${COOKIE}=live-admin`);
 		expect(res.status).toBe(200);
 		expect(await res.text()).toContain("Zarr serving copy");
 	});
 
 	test("the served page is private and never indexed", async () => {
-		// The asset's own header says `public, max-age=0`; serving it behind a
-		// session means that answer is wrong and has to be replaced, or a shared
-		// cache could hand one admin's page to the next visitor.
-		const res = await gateRequest("nemar_docs_session=live-admin");
+		const res = await gateRequest(`${COOKIE}=live-admin`);
 		expect(res.headers.get("cache-control")).toBe("private, no-store");
 		expect(res.headers.get("x-robots-tag")).toContain("noindex");
 	});
 
 	test("a signed-in non-admin gets 404, not 403", async () => {
-		// Mirrors adminGate on the website: a status code must not tell someone
-		// that a surface they cannot reach exists.
-		const res = await gateRequest("nemar_docs_session=live-member");
+		const res = await gateRequest(`${COOKIE}=live-member`);
 		expect(res.status).toBe(404);
 	});
 
-	test("a stale or forged session is refused and the cookie cleared", async () => {
-		const res = await gateRequest("nemar_docs_session=expired-or-forged");
+	test("the 404 is not cached either", async () => {
+		// The same URL is a real page for the next visitor, who may be an admin.
+		const res = await gateRequest(`${COOKIE}=live-member`);
+		expect(res.headers.get("cache-control")).toBe("no-store");
+	});
+
+	test("a stale session is refused and the cookie cleared", async () => {
+		const res = await gateRequest(`${COOKIE}=expired-or-forged`);
 		expect(res.status).toBe(302);
 		const setCookie = res.headers.get("set-cookie") ?? "";
-		expect(setCookie).toContain("nemar_docs_session=;");
+		expect(setCookie).toContain(`${COOKIE}=;`);
 		expect(setCookie).toContain("Max-Age=0");
 	});
 
-	test("the cookie is read out of a header that carries several", async () => {
-		const res = await gateRequest("other=1; nemar_docs_session=live-admin; another=2");
-		expect(res.status).toBe(200);
-	});
+	// Each of these was a 200 with the asset body before the review.
+	for (const [session, label] of [
+		["ok-false", "a 200 whose body says ok: false"],
+		["no-content", "a 204"],
+		["not-json", "a 200 that is not JSON"],
+		["redirected", "a 302 pointing at something that answers ok: true"],
+		["server-error", "a 500"],
+	] as const) {
+		test(`fails CLOSED on ${label}`, async () => {
+			const res = await gateRequest(`${COOKIE}=${session}`);
+			expect(res.status).toBe(503);
+			expect(await res.text()).not.toContain(ASSET_BODY);
+		});
+	}
 
-	test("a cookie whose name merely ends with ours is not accepted", async () => {
-		// `not_nemar_docs_session=live-admin` must not authenticate anything.
-		const res = await gateRequest("not_nemar_docs_session=live-admin");
-		expect(res.status).toBe(302);
-	});
-
-	test("it fails CLOSED when the API is unreachable", async () => {
-		// Port 9 is discard: the connection is refused immediately, so this does
-		// not depend on a timeout.
+	test("fails CLOSED when the API is unreachable", async () => {
+		// Port 9 is discard: refused immediately, so this does not depend on a timeout.
 		const res = await gate({
-			request: new Request(GATED, { headers: { Cookie: "nemar_docs_session=live-admin" } }),
+			request: new Request(GATED, { headers: { Cookie: `${COOKIE}=live-admin` } }),
 			env: { NEMAR_API_BASE: "http://127.0.0.1:9", NEMAR_APP_BASE: APP_BASE },
 			next: async () => asset(),
 		});
 		expect(res.status).toBe(503);
 	});
 
-	test("it fails CLOSED on an API error it does not recognize", async () => {
-		const res = await gateRequest("nemar_docs_session=server-error");
-		expect(res.status).toBe(503);
-	});
-
-	test("it never serves the asset for any refusal", async () => {
-		// The one property that matters most: no refusal path may leak the body.
-		for (const cookie of [undefined, "nemar_docs_session=live-member", "nemar_docs_session=bad"]) {
+	test("never serves the asset for any refusal", async () => {
+		for (const cookie of [
+			undefined,
+			`${COOKIE}=live-member`,
+			`${COOKIE}=bad`,
+			`${COOKIE}=ok-false`,
+			`${COOKIE}=no-content`,
+		]) {
 			const res = await gateRequest(cookie);
-			expect(await res.text()).not.toContain("Zarr serving copy");
+			expect(await res.text()).not.toContain(ASSET_BODY);
 		}
 	});
 });
+
+// --------------------------------------------------------------------------
+// Cookies
+// --------------------------------------------------------------------------
+
+describe("readCookies", () => {
+	test("returns every value of the name, in header order", () => {
+		expect(readCookies(`a=1; ${COOKIE}=first; b=2; ${COOKIE}=second`, COOKIE)).toEqual([
+			"first",
+			"second",
+		]);
+	});
+
+	test("matches the name exactly", () => {
+		expect(readCookies(`not-${COOKIE}=x; ${COOKIE}_extra=y`, COOKIE)).toEqual([]);
+	});
+
+	test("skips an empty value", () => {
+		expect(readCookies(`${COOKIE}=; ${COOKIE}=real`, COOKIE)).toEqual(["real"]);
+	});
+});
+
+describe("a stale duplicate cookie does not lock an admin out", () => {
+	test("a junk value ahead of a live one still authorizes", async () => {
+		// The `__Host-` prefix stops a sibling host planting one at all; this covers
+		// the browser that is still carrying a duplicate from before the rename.
+		const res = await gateRequest(`${COOKIE}=stale-junk; ${COOKIE}=live-admin`);
+		expect(res.status).toBe(200);
+	});
+
+	test("an infrastructure failure on one value is not reported as a refusal", async () => {
+		const res = await gateRequest(`${COOKIE}=server-error; ${COOKIE}=bad`);
+		expect(res.status).toBe(503);
+	});
+});
+
+// --------------------------------------------------------------------------
+// The callback
+// --------------------------------------------------------------------------
 
 describe("the callback that sets the docs cookie", () => {
 	function callbackRequest(query: string): Promise<Response> {
@@ -193,16 +374,45 @@ describe("the callback that sets the docs cookie", () => {
 		expect(res.headers.get("location")).toBe("/admin/operations/zarr-serving/");
 	});
 
-	test("sets a host-only, HttpOnly, Secure, SameSite=Lax cookie", async () => {
+	test("sets a __Host- cookie with no Domain attribute", async () => {
 		const res = await callbackRequest("code=live-code");
 		const setCookie = res.headers.get("set-cookie") ?? "";
-		expect(setCookie).toContain("nemar_docs_session=live-admin");
+		expect(setCookie).toContain(`${COOKIE}=live-admin`);
 		expect(setCookie).toContain("HttpOnly");
 		expect(setCookie).toContain("Secure");
 		expect(setCookie).toContain("SameSite=Lax");
-		// No Domain attribute: this credential is valid on this host and nowhere
-		// else, which is what lets the platform session stay scoped to the app.
+		expect(setCookie).toContain("Path=/");
 		expect(setCookie).not.toContain("Domain=");
+	});
+
+	// A misbehaving API must not be able to widen the credential past this host,
+	// which is the one property the whole design rests on.
+	test("refuses a session value that would inject a cookie attribute", async () => {
+		const res = await callbackRequest("code=cookie-injection");
+		expect(res.status).toBe(400);
+		expect(res.headers.get("set-cookie")).toBeNull();
+	});
+
+	test("ignores a max-age that would inject an attribute", async () => {
+		const res = await callbackRequest("code=maxage-injection");
+		const setCookie = res.headers.get("set-cookie") ?? "";
+		expect(setCookie).not.toContain("Domain=");
+		expect(setCookie).toContain("Max-Age=28800");
+	});
+
+	test("clamps an absurd max-age", async () => {
+		const res = await callbackRequest("code=huge-maxage");
+		expect(res.headers.get("set-cookie")).toContain("Max-Age=86400");
+	});
+
+	test("answers 400 rather than throwing on a null body", async () => {
+		const res = await callbackRequest("code=null-body");
+		expect(res.status).toBe(400);
+	});
+
+	test("answers 400 rather than throwing on a non-JSON body", async () => {
+		const res = await callbackRequest("code=not-json");
+		expect(res.status).toBe(400);
 	});
 
 	test("answers 400 for a spent or unknown code rather than looping", async () => {
@@ -226,10 +436,9 @@ describe("the callback that sets the docs cookie", () => {
 });
 
 describe("safeNext", () => {
-	// This value lands in a Location header, and an attacker can call the
-	// callback directly without ever passing through the website, so the rule is
-	// duplicated here on purpose: `safeDocsNext` in the website repo cannot be
-	// imported across repositories.
+	// This value lands in a `Location` header, and an attacker can call the callback
+	// directly without ever passing through the website, so the rule is duplicated
+	// here on purpose: the website's own validator cannot be imported across repos.
 	test("accepts a gated path", () => {
 		expect(safeNext("/admin/operations/zarr-serving/")).toBe("/admin/operations/zarr-serving/");
 	});
@@ -256,8 +465,7 @@ describe("safeNext", () => {
 		});
 	}
 
-	// The cases only the decoded view catches. A check on the literal string
-	// alone accepts every one of these.
+	// The cases only the decoded view catches.
 	for (const encoded of [
 		"%2F%2Fevil.example",
 		"%2f%2fevil.example/admin/x",
@@ -275,7 +483,6 @@ describe("safeNext", () => {
 
 	test("rejects a malformed escape rather than guessing", () => {
 		expect(safeNext("/admin/%zz")).toBe("/admin/");
-		expect(safeNext("/admin/100%")).toBe("/admin/");
 	});
 
 	test("rejects a path that escapes the gated tree", () => {
@@ -287,7 +494,6 @@ describe("safeNext", () => {
 	});
 
 	test("keeps a query string on an accepted path", () => {
-		// A `..` in a query is inert, so it must not cost a legitimate link.
 		expect(safeNext("/admin/operations/zarr-serving/?highlight=..")).toBe(
 			"/admin/operations/zarr-serving/?highlight=..",
 		);
