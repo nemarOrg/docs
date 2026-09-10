@@ -33,7 +33,19 @@ wrangler.jsonc             # Cloudflare Worker (Workers Static Assets -> dist)
 ```
 
 ## Public vs Admin (access model)
-Everything under `src/content/docs/admin/` builds to `/admin/*`. The whole site is static; access control is applied at the **edge by Cloudflare Access** on `docs.nemar.org/admin/*` (email/IdP policy), NOT by repo privacy. The repo is public. Keep genuinely internal material (webhook contracts, observability internals, SSR contracts) in the `nemar-cli` repo, not on this site even behind the gate.
+Everything under `src/content/docs/admin/` builds to `/admin/*` and is gated by **NEMAR's own ORCID-backed session**, not by repo privacy and not by Cloudflare Access. The repo is public. Keep genuinely internal material (webhook contracts, observability internals, SSR contracts) in the `nemar-cli` repo, not on this site even behind the gate.
+
+**What this file used to say was false, and it matters.** It claimed Cloudflare Access enforced on `docs.nemar.org/admin/*`. It did not: the Access app on this Pages project covers **preview deployments only**, so every page under `/admin/` answered 200 to anyone on production and all 12 were listed in the public sitemap. Nothing confidential leaked (procedures and identifiers, never credential values, in a public repo), but anyone reading this file believed the section was protected and would have written accordingly. If you find yourself relying on a control described here, check it with a request before you trust it.
+
+The gate has three parts, and removing any one of them reopens the hole:
+
+1. **`functions/admin/_middleware.ts`** requires a `nemar_docs_session` cookie and asks `api.nemar.org/auth/docs/verify` whether it belongs to an admin. `users.role` in the platform database is the single source of truth, which is why this is not an Access email allowlist: a second copy of "who is an admin" is the thing that drifts. It **fails closed** -- an unreachable API refuses the page. A signed-in non-admin gets **404, not 403**, matching `adminGate` on the website, so a status code never reveals that the section exists.
+2. **`public/_routes.json`** names `/admin/*` and `/__docs-auth/*` as the only paths that invoke a Function. This is load-bearing and easy to delete by accident: without it public pages would pay a Function invocation, and the auto-generated routes file is not something to rely on for an access control.
+3. **`pagefind: false` on every admin page**, enforced by `scripts/check-admin-gating.ts` in the `build` script. `/pagefind/*` is not under `/admin/`, so the middleware never sees it, and the search index otherwise carries the full text of every admin page. Fragments are gzip with a `pagefind_dcd` marker, so a plain `grep` over `dist/pagefind/` finds nothing **even when the content is there** -- decompress, or you will get a false pass.
+
+Signing in goes through the website: the middleware redirects to `app.nemar.org/auth/docs/authorize`, which proves an admin session and returns to `/__docs-auth/callback` with a one-time code worth 60 seconds. The docs host trades it for its own cookie (`functions/__docs-auth/callback.ts`). The cookie is host-only by design; the platform's own session is scoped to `app.nemar.org` so it never travels to the data or zarr hosts, which is exactly why a handoff is needed rather than a shared cookie. Signing out of nemar.org revokes the docs session too.
+
+**Verifying it.** `bun test` covers the middleware's decisions. It cannot cover the routing, and this is the trap: `wrangler pages dev` serves a static asset **without invoking the Function**, while deployed Pages invokes the Function first and falls back to the asset only when none matches. So a local run can show a gate working that does nothing in production, or the reverse. Against a deployed host use `bun run probe:gate` (add a URL argument for a preview), which needs no credentials because the thing worth checking is what an anonymous visitor gets. Run it after any deploy that touches the gate, the routes file, or the admin section.
 
 ## Environment Setup
 ```bash
