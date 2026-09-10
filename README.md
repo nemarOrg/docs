@@ -20,16 +20,23 @@ src/content/docs/
 ├── web/                      PUBLIC  — the web app: getting started, account settings, uploading
 ├── policies/                 PUBLIC  — privacy, GDPR, contributor terms, takedown
 ├── develop/                  PUBLIC  — contributor setup, zenodo testing
-└── admin/                    GATED   — served under /admin/*, fronted by Cloudflare Access
+└── admin/                    GATED   — served under /admin/*, admin-only NEMAR session
+    ├── index.md               Section index for the gated pages
     ├── commands.mdx           Admin command reference (generated)
     ├── github-app-setup.md
     ├── operations/            access-policies, account-tiers, account-kinds, zarr-serving
     └── disaster-recovery/     restoration runbooks, fail-safes, user roles
 ```
 
-Everything under `admin/` is public static HTML at build time; access control is
-applied at the edge by **Cloudflare Access** on the `docs.nemar.org/admin/*` path,
-not in this repo. Keep genuinely internal material (webhook internals, observability
+Everything under `admin/` is static HTML at build time, and access control is applied
+in front of it by **NEMAR's own ORCID-backed session**, checked for the `admin` role
+against `users.role` in the platform database. It is **not** Cloudflare Access: see
+[Deployment](#deployment) for what Access does cover here. Because the platform session
+cookie is scoped to `app.nemar.org` and cannot be read on this hostname, signing in is a
+handoff through the website rather than a shared cookie; `AGENTS.md` describes the parts.
+
+Gated is not secret: this repository is public, so every admin page is readable on
+GitHub. Keep genuinely internal material (webhook internals, observability
 instrumentation, SSR contracts) in `nemar-cli` `AGENTS.md`, not here.
 
 ## Commands
@@ -56,10 +63,16 @@ Two scripts keep content in sync with the CLI; both are pure Bun/TypeScript (no 
 
 ## Deployment
 
-Deployed as a Cloudflare Worker (Workers Static Assets) on the SCCN account, on the
-`docs.nemar.org` custom domain. Build command `bun run build`, output `dist/`
-(`wrangler.jsonc` serves it). Admin gating via a Cloudflare Access application on
-`docs.nemar.org/admin/*`.
+Served by the `nemar-docs` Cloudflare **Pages** project on the SCCN account, git-connected
+with `main` as the production branch and bound to the `docs.nemar.org` custom domain. Build
+command `bun run build`, output `dist/`. (`wrangler.jsonc` describes a planned move to a
+Workers Static Assets deployment; it is not what serves the site today.)
+
+`/admin/*` is gated by NEMAR's own admin-only session, enforced in this repo by a Pages
+Function that checks the session against the platform API before the static asset is served.
+The Cloudflare Access application on this project covers **preview deployments only**, never
+`docs.nemar.org` itself. Saying otherwise is what left all twelve admin pages answering 200
+to anyone while they were believed to be protected, so keep the distinction explicit.
 
 ## Community and policies
 

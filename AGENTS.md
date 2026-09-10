@@ -19,7 +19,8 @@ src/content/docs/
 │   └── reference/         #   configuration, environment
 ├── platform/              # PUBLIC: backend API + data plane
 ├── develop/               # PUBLIC: contributor setup, zenodo testing
-└── admin/                 # GATED: served under /admin/*, edge-gated by Cloudflare Access
+└── admin/                 # GATED: served under /admin/*, admin-only NEMAR session (see below)
+    ├── index.md           #   section index: what each gated group is for
     ├── commands.mdx        #   admin command reference (GENERATED)
     ├── github-app-setup.md
     ├── operations/         #   access-policies, manifest-summary-backfill, zarr-serving
@@ -39,9 +40,11 @@ Everything under `src/content/docs/admin/` builds to `/admin/*` and is gated by 
 
 The gate has three parts, and removing any one of them reopens the hole:
 
-1. **`functions/admin/_middleware.ts`** requires a `nemar_docs_session` cookie and asks `api.nemar.org/auth/docs/verify` whether it belongs to an admin. `users.role` in the platform database is the single source of truth, which is why this is not an Access email allowlist: a second copy of "who is an admin" is the thing that drifts. It **fails closed** -- an unreachable API refuses the page. A signed-in non-admin gets **404, not 403**, matching `adminGate` on the website, so a status code never reveals that the section exists.
+1. **`functions/admin/_middleware.ts`** requires a `nemar_docs_session` cookie and asks `api.nemar.org/auth/docs/verify` whether it belongs to an admin. `users.role` in the platform database is the single source of truth, which is why this is not an Access email allowlist: a second copy of "who is an admin" is the thing that drifts. It **fails closed** -- an unreachable API refuses the page. A signed-in non-admin gets **404, not 403**, matching `adminGate` on the website, so the response does not confirm to a signed-in reader that their account was checked and found wanting.
+
+   **Do not upgrade that into a claim that the section is hidden.** It is not, and aiming for it would be wasted work: the sidebar links all 13 admin pages by title from every public page, `robots.txt` names the prefix in order to ask crawlers off it, and this repository is public, so the pages themselves are on GitHub. The gate controls who is *served* the pages on this host. Non-disclosure is not one of its properties, and no comment or document here should imply otherwise.
 2. **`public/_routes.json`** names `/admin/*` and `/__docs-auth/*` as the only paths that invoke a Function. This is load-bearing and easy to delete by accident: without it public pages would pay a Function invocation, and the auto-generated routes file is not something to rely on for an access control.
-3. **`pagefind: false` on every admin page**, enforced by `scripts/check-admin-gating.ts` in the `build` script. `/pagefind/*` is not under `/admin/`, so the middleware never sees it, and the search index otherwise carries the full text of every admin page. Fragments are gzip with a `pagefind_dcd` marker, so a plain `grep` over `dist/pagefind/` finds nothing **even when the content is there** -- decompress, or you will get a false pass.
+3. **Nothing about `/admin/` in the documents served outside the gate**, enforced by `scripts/check-admin-gating.ts`, which the `build` script runs twice: once on the source before `astro build` (a fast error naming the page that is missing a top-level `pagefind: false`) and once with `--built` on `dist/` afterwards. The second run is the deciding one, because the source check argues about text while the built one reads what was published: it fails on an `/admin/` URL in a Pagefind fragment, in the sitemap, or in `llms.txt`. `/pagefind/*`, `/sitemap-0.xml` and `/llms.txt` are all outside `/admin/`, so the middleware never sees them, and the search index otherwise carries the full text of every admin page. Two traps: Starlight honours `pagefind: false` only as a **top-level** frontmatter field, so a nested one is a false pass; and fragments are gzip behind a `pagefind_dcd` marker, so a plain `grep` over `dist/pagefind/` finds nothing **even when the content is there** -- decompress, or you will get a false pass. The sitemap exclusion is the `filter` on the `@astrojs/sitemap` integration declared in `astro.config.mjs`; declaring it there replaces the copy Starlight would otherwise inject.
 
 Signing in goes through the website: the middleware redirects to `app.nemar.org/auth/docs/authorize`, which proves an admin session and returns to `/__docs-auth/callback` with a one-time code worth 60 seconds. The docs host trades it for its own cookie (`functions/__docs-auth/callback.ts`). The cookie is host-only by design; the platform's own session is scoped to `app.nemar.org` so it never travels to the data or zarr hosts, which is exactly why a handoff is needed rather than a shared cookie. Signing out of nemar.org revokes the docs session too.
 
@@ -79,7 +82,7 @@ A shallow clone hides both git-derived dates and logs a build warning instead of
 ## Deployment
 Served by the `nemar-docs` Cloudflare Pages project on the SCCN account, git-connected with `main` as the production branch: merging to `main` triggers the build and the deploy, and a branch push gets a preview deployment. Confirm one with `bunx cfman wrangler --account sccn pages deployment list --project-name nemar-docs`.
 
-Custom-domain binding to `docs.nemar.org` and the Cloudflare Access app on `/admin/*` are configured in the Cloudflare dashboard.
+Custom-domain binding to `docs.nemar.org` is configured in the Cloudflare dashboard. So is the Cloudflare Access application on this project, which covers **preview deployments only** and has never covered the production hostname: `/admin/*` on `docs.nemar.org` is gated by the session handoff described above, and nothing in the dashboard gates it.
 
 `bun run deploy` (`astro build && wrangler deploy`) targets the Workers Static Assets deployment in `wrangler.jsonc`, which does not exist on the account yet (`wrangler deployments list` answers `This Worker does not exist`). Do not run it expecting to publish the live site.
 
