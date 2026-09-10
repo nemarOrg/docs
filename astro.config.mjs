@@ -105,6 +105,7 @@ export default defineConfig({
 					label: 'Platform & APIs',
 					items: [
 						{ label: 'Overview', link: '/platform/' },
+						{ label: 'Hosts and routes', slug: 'platform/hosts-and-routes' },
 						{ label: 'Backend API', slug: 'platform/api' },
 						{ label: 'Data API', slug: 'platform/data-api' },
 						{
