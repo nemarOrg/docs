@@ -136,12 +136,13 @@ and [Cost Ladder and Recipes](/platform/zarr/cost-ladder/) for worked reads.
 
 ## The MCP server: `mcp.nemar.org`
 
-`mcp.nemar.org` serves the archive over the
+`https://mcp.nemar.org/mcp` serves the archive over the
 [Model Context Protocol](https://modelcontextprotocol.io) (MCP)
 as six tools: `search_datasets`, `describe_dataset`, `list_recordings`,
 `get_events`, `render_overview`, and `read_window`.
-An MCP client (Claude, Cursor, or anything else that speaks the protocol)
-points at the endpoint and can then answer questions about NEMAR data directly.
+It is a stateless broker, with no session to resume,
+and a client should not construct any URL for it other than that endpoint.
+An MCP client points at it and can then answer questions about NEMAR data directly.
 
 **Reach for it when** the caller is a language model or an agent,
 and the job is to find, describe, or plan a read.
@@ -149,6 +150,8 @@ and the job is to find, describe, or plan a read.
 **Reach for something else when** you want the bytes.
 It is not a bulk download path, it is not a replacement for the CLI,
 and no upload happens here: none of the six tools writes anything.
+It also only ever sees published data, since private and sandbox datasets are invisible to it,
+so it cannot answer a question about a deposit that is not public yet.
 
 Configuration and a worked session are in
 [For agents and tools](/platform/for-agents/#tool-calling-mcpnemarorg).
@@ -167,32 +170,35 @@ so the client knows what a call takes before it makes it,
 and a rejected call comes back naming the limit it crossed rather than as output to be parsed.
 The server also does the arithmetic that is easiest to get wrong by hand:
 `read_window` converts your seconds into a sample range at the rate the array is actually served at,
-and `get_events` returns event sample indices computed by the converter rather than
-re-derived from onset times by the caller.
+and `get_events` returns event sample indices computed by the converter where a converted event
+table exists, marking them as estimated when it has to fall back to the BIDS `events.tsv`
+and derive them itself.
 
 **It returns recipes, not data.**
 This is the part that makes it not a wrapper around the CLI, but its opposite.
 A CLI's whole job is to move bytes onto your disk.
 The MCP server refuses to be a data pipe: by default `read_window` reads no signal chunks at all
 and instead returns a *recipe*, naming
-the exact array URL, the chunk geometry, the sample range, and the dequantization rule,
-and the caller fetches the bytes itself, straight from S3 or through `zarr.nemar.org`.
+the exact array URL, the chunk geometry, the sample range,
+and where to find the scale and offset that turn stored integers back into physical units;
+the caller then fetches the bytes itself, straight from S3 or through `zarr.nemar.org`.
 It will decode a small window inline if you explicitly ask (`taste: true`),
 and when a request is over its caps it **refuses and names the cap you crossed
 rather than quietly truncating the answer**,
 because a silently shortened window is a wrong result rather than a small one.
-Megabytes never travel through the conversation, and the bytes stay on the fast path.
+No bulk signal bytes pass through the server, so the data stays on the fast path.
 
 **It needs no credentials and no install.**
 The server is anonymous: no key, no signup, no session.
-So an assistant can answer a question about a dataset for someone
-who has no NEMAR account at all and has installed nothing,
-which is not true of the CLI.
+So an assistant can answer a question about a published dataset for someone who has
+installed nothing at all, where reaching for the CLI means a package plus system dependencies
+before it can answer anything.
 
-**Every answer carries its provenance.**
-Recording-level responses come back with an envelope naming the dataset, its DOI, its license,
+**Answers carry their provenance.**
+A recording-level response comes back with an envelope naming the dataset, its DOI, its license,
 its citation, and the exact source commit the conversion was built from,
-plus whether the served array is lossy.
+plus whether the served array is lossy;
+the two catalog-level tools carry the DOI, license, and citation as fields of their own.
 A model that reads data through this server has what it needs to cite the exact version it used,
 and to know when it is looking at a rate-capped copy instead of the original.
 
