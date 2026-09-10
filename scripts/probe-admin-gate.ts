@@ -11,6 +11,17 @@
  * when no Function matches. So the routing half can only be verified against a
  * real deployment, which is what this does.
  *
+ * WHAT THIS FILE IS FOR, AND WHAT IT MUST NOT CONTAIN. Only things that are
+ * HTTP-observable from outside, by an anonymous client. It used to also fetch
+ * `/pagefind/pagefind.<hash>.pf_meta` and assert the bytes did not contain
+ * `/admin/`; that check could never fail. A `pf_meta` holds a format version
+ * and a list of chunk hashes -- no page URLs and no page text -- so it passed
+ * with the index fully populated and every admin page in it. Page URLs live in
+ * `pagefind/fragment/*`, and enumerating those over HTTP means guessing their
+ * content-hashed filenames, which is why the index assertion belongs where the
+ * files are on disk: `scripts/check-admin-gating.ts --built`, run from
+ * `bun run build`. Do not re-add a search-index check here.
+ *
  * It needs no credentials, because the thing worth checking is what an
  * ANONYMOUS visitor gets. Run it after any deploy that touches the gate, the
  * routes file, or the admin section:
@@ -25,6 +36,7 @@ const base = (process.argv[2] ?? "https://docs.nemar.org").replace(/\/+$/, "");
  *  would only find pages that are linked, and an unlinked page is exactly the
  *  one that would be missed. */
 const GATED_PAGES = [
+	"/admin/",
 	"/admin/commands/",
 	"/admin/github-app-setup/",
 	"/admin/disaster-recovery/",
@@ -39,6 +51,28 @@ const GATED_PAGES = [
 	"/admin/operations/zarr-serving/",
 ];
 
+/**
+ * Spellings of a gated path that ARE NOT the canonical one. Every entry here was
+ * served anonymously by the first version of this gate, so this list is a
+ * regression test, not a hypothetical: the middleware then ran only for paths
+ * `public/_routes.json` matched as raw text, while the asset server
+ * percent-decodes before it looks up a file, so `/admin%2Fcommands/` invoked no
+ * Function and was then served as `/admin/commands/`. Trimming this list back to
+ * "the real paths" re-opens a hole that was already exploited once.
+ *
+ * `/admin` without a trailing slash is in the list for the neighbouring reason:
+ * it is a path with no asset of its own, so what answers it is whatever runs
+ * before the asset lookup.
+ */
+const BYPASS_SPELLINGS = [
+	"/admin%2Fcommands/", // encoded separator: decoded by the asset server, not by a raw path match
+	"/%61dmin/commands/", // encoded letter: same trick one character earlier
+	"/ADMIN/commands/", // case: Cloudflare's asset lookup is not case-sensitive
+	"//admin/commands/", // empty leading segment
+	"/admin%252Fcommands/", // double-encoded separator: survives one decode pass
+	"/admin", // no trailing slash, so no asset behind it either way
+];
+
 /** Pages that must keep working for everyone. A gate that also breaks the
  *  public site is not a success. */
 const PUBLIC_PAGES = ["/", "/platform/api/", "/cli/commands/", "/platform/hosts-and-routes/"];
@@ -51,18 +85,38 @@ function check(ok: boolean, name: string, detail: string): void {
 	console.log(`${ok ? "PASS" : "FAIL"}  ${name}\n      ${detail}`);
 }
 
+/**
+ * The path is concatenated onto the base and parsed as one absolute URL, which
+ * keeps every spelling above intact: the URL parser does not decode `%2F` or
+ * `%61`, does not lower-case a path, and does not collapse `//`. It is NOT
+ * `new URL(path, base)`, which reads a leading `//` as protocol-relative and
+ * would send `//admin/commands/` to a host named `admin`. `assertVerbatim`
+ * turns that reasoning into something that can fail rather than a comment that
+ * can rot: a probe that silently normalizes its own request is a probe that
+ * reports on a path nobody asked about.
+ */
 async function get(path: string): Promise<Response> {
 	return fetch(`${base}${path}`, { redirect: "manual", headers: { "User-Agent": UA } });
 }
 
+function assertVerbatim(path: string): void {
+	const sent = new URL(`${base}${path}`).pathname;
+	if (sent !== path) {
+		check(false, `probe sends the path verbatim: ${path}`, `client rewrote it to ${sent}`);
+	}
+}
+
 console.log(`probing ${base}\n`);
 
-for (const path of GATED_PAGES) {
+for (const path of [...GATED_PAGES, ...BYPASS_SPELLINGS]) {
+	assertVerbatim(path);
+
 	const res = await get(path);
 	// 302 to the handoff is the expected refusal. 404 is also a refusal (it is
 	// what a signed-in non-admin gets), and anything 2xx means the page was
 	// served to nobody in particular, which is the failure this whole phase is
-	// about.
+	// about. Any OTHER 3xx is a failure too, and a telling one: a 301 or 308 to
+	// the canonical path means the asset server answered before the gate did.
 	const refused = res.status === 302 || res.status === 404;
 	const location = res.headers.get("location") ?? "";
 	check(refused, `gated anonymously: ${path}`, `status=${res.status}${location ? ` -> ${location}` : ""}`);
@@ -79,38 +133,6 @@ for (const path of GATED_PAGES) {
 for (const path of PUBLIC_PAGES) {
 	const res = await get(path);
 	check(res.status === 200, `public page still serves: ${path}`, `status=${res.status}`);
-}
-
-// The search index is the bypass a path-scoped gate cannot close by itself, so
-// it is checked here too. Fragments are gzip with a `pagefind_dcd` marker before
-// the JSON, so a plain text search over them returns nothing even when the
-// content IS present -- decompress, or this check silently passes.
-{
-	const entry = await get("/pagefind/pagefind-entry.json");
-	if (entry.status !== 200) {
-		check(true, "search index is absent", `status=${entry.status}, nothing to leak`);
-	} else {
-		const meta = (await entry.json()) as { languages?: Record<string, { hash?: string }> };
-		const hashes = Object.values(meta.languages ?? {})
-			.map((l) => l.hash)
-			.filter((h): h is string => !!h);
-		check(hashes.length > 0, "search index is readable for probing", `languages=${hashes.length}`);
-
-		let adminHits = 0;
-		for (const hash of hashes) {
-			const idx = await get(`/pagefind/pagefind.${hash}.pf_meta`);
-			if (!idx.ok) continue;
-			const raw = new Uint8Array(await idx.arrayBuffer());
-			let text: string;
-			try {
-				text = new TextDecoder().decode(Bun.gunzipSync(raw));
-			} catch {
-				text = new TextDecoder().decode(raw);
-			}
-			if (text.includes("/admin/")) adminHits++;
-		}
-		check(adminHits === 0, "no admin URL in the search index metadata", `hits=${adminHits}`);
-	}
 }
 
 console.log(`\n${failures === 0 ? "all checks passed" : `${failures} check(s) FAILED`}`);
