@@ -161,6 +161,7 @@ export default defineConfig({
 					label: 'Admin',
 					badge: { text: 'gated', variant: 'caution' },
 					items: [
+						{ label: 'Overview', link: '/admin/' },
 						{ label: 'Admin Commands', slug: 'admin/commands' },
 						{ label: 'GitHub App Setup', slug: 'admin/github-app-setup' },
 						{ label: 'Operations', items: [{ autogenerate: { directory: 'admin/operations' } }] },
