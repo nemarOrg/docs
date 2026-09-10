@@ -3,7 +3,7 @@ title: "Hosts and Routes"
 description: "Every NEMAR hostname, what serves it, and how a request is routed: the two website hosts, the four Worker hostnames, the docs and dashboard sites, the page and API routes, and where old URLs go."
 ---
 
-NEMAR is four deployed things behind eight production hostnames.
+NEMAR answers on eight production hostnames, served by five deployments.
 This page is the map: which hostname is served by which deployment,
 which paths live on which host, and where a retired URL ends up.
 
@@ -36,13 +36,14 @@ This page answers the question before those: *which host, and why that one.*
 | `zarr.nemar.org` | The Zarr serving copies and their index documents | The same Worker, zarr fork | Anonymous |
 | `mcp.nemar.org` | The Model Context Protocol server | The same Worker, mcp fork | Anonymous |
 | `docs.nemar.org` | This site | `nemarOrg/docs`, Worker Static Assets | Anonymous, except `/admin/*` behind Cloudflare Access |
-| `dashboard.nemar.org` | `/observability` health dashboard, `/citations` | `nemarOrg/nemar-observability`, plus a Pages project for `/citations` | Anonymous and read-only; the public snapshot carries no private dataset ids |
+| `dashboard.nemar.org` | The hub at `/`, the `/observability` health dashboard, and `/citations` | `nemarOrg/nemar-observability` for the first two; a separate legacy Pages project still serves `/citations` | Anonymous reads, plus one token-gated pipeline push. The public snapshot carries no private dataset ids |
 
 ## One Worker, four hostnames
 
 `api`, `data`, `zarr` and `mcp` are not four deployments.
 They are one Worker that forks on the hostname it was reached at,
-so a change to shared middleware, D1 access or a service module lands on all four at once.
+so a change to D1 access or to a service module lands on all four at once.
+Shared middleware is the exception, for the reason in the second bullet below.
 
 | Hostname | Fork | What it dispatches to |
 |---|---|---|
@@ -59,6 +60,9 @@ Two properties of the fork are worth knowing, because both are deliberate:
   The global CORS policy allows `*.nemar.org` broadly, which is right for the API
   and wrong for a host that browsers hit with credentials-free byte-range reads.
   Those two hosts declare their own.
+  So the logger, security headers, CORS, rate limiter and maintenance-mode middleware run for
+  `api` and `data` only: the data fork re-enters the API app to inherit them,
+  while zarr and mcp are dispatched straight to their own sub-app.
 
 Every fork is also reachable by path on the api host and on the `workers.dev` fallback,
 which is how a deploy is tested before a custom domain exists:
@@ -69,8 +73,8 @@ which is how a deploy is tested before a custom domain exists:
 | `<worker>.workers.dev/zarrproxy/<id>/zarr/<path>` | The zarr gateway |
 | `<worker>.workers.dev/mcp` | The MCP transport endpoint, and only that endpoint |
 
-The hostnames themselves are environment variables (`DATA_HOSTNAME`, `ZARR_HOSTNAME`,
-`MCP_HOSTNAME`) rather than literals in code,
+The production hostnames are built-in defaults in the fork table,
+each overridable by an environment variable (`DATA_HOSTNAME`, `ZARR_HOSTNAME`, `MCP_HOSTNAME`),
 which is what lets the staging Worker answer on the `-test` mirrors below without a code change.
 
 ## The website's two hosts
@@ -94,7 +98,7 @@ These prefixes live on the app host:
 | `/admin` | Admin and owner operations |
 | `/cli` | The CLI device-authorization page the backend hands the CLI as its `verification_uri` |
 | `/auth` | The ORCID browser flow; the state, pending and session cookies are all host-scoped, and the OAuth `redirect_uri` host has to match |
-| `/api/auth`, `/api/admin`, `/api/v1` | Same-origin proxies for cookie-authenticated calls. Classified as marketing they would be redirected cross-origin and the cookie would not travel |
+| `/api/auth`, `/api/admin`, `/api/v1` | Same-origin proxies for cookie-authenticated calls. Classified as marketing they would be redirected cross-origin and the cookie would not travel. `/api/admin` is reserved: the prefix is classified, but nothing is served under it yet |
 | `/dataset/<id>/collaborators` | Per-dataset access management |
 
 Two exceptions to the binary split, both of which exist because something was broken without them:
@@ -154,7 +158,7 @@ are collected in [For agents and tools](/platform/for-agents/).
 | `/cli/authorize` | Confirm or deny a CLI device code |
 | `/auth/orcid/start`, `/auth/orcid/callback`, `/auth/orcid/complete` | The ORCID browser flow |
 | `/admin`, `/admin/users`, `/admin/users/<username>`, `/admin/publication-requests`, `/admin/imports`, `/admin/notices` | Admin surface |
-| `/api/auth/...`, `/api/admin/...`, `/api/v1/<path>` | Same-origin proxies to the backend for the cookie session |
+| `/api/auth/...`, `/api/v1/<path>` | Same-origin proxies to the backend for the cookie session |
 
 ## Backend path mounts
 
@@ -171,6 +175,10 @@ On `api.nemar.org`, the API is mounted by prefix:
 | `/openapi.json` | The OpenAPI 3.1 document for this API, generated from the same schemas the server validates against | [Backend API](/platform/api/) |
 | `/data` | The data plane, also served at the root of `data.nemar.org` | [Data API](/platform/data-api/) |
 | `/webhooks` | Internal callbacks from dataset CI. Not a public contract | — |
+
+Two more public endpoints sit directly on this host rather than under a prefix:
+`GET /health` for liveness, and `GET /notices` for the site-wide notices
+that the website's `/api/notices` proxy reads.
 
 ## Staging
 
@@ -200,7 +208,7 @@ Those URLs are permanently redirected, so a citation or a bookmark still resolve
 |---|---|---|
 | `/dataexplorer` | `/discover` | 301 |
 | `/dataexplorer/detail?dataset_id=<id>` | `/dataset/<id>` | 301 |
-| `/docs`, `/docs/<page>` | The matching page on `docs.nemar.org` | 301 |
+| `/docs`, and six known `/docs/<page>` paths | The matching page on `docs.nemar.org`. Anything else under `/docs/` lands on the site root | 301 |
 | `/citation-dashboard` | `dashboard.nemar.org/citations/` | 301 |
 | `/resources`, `/tools`, `/members`, `/groups`, `/citations` | The legacy site at `ww1.nemar.org` | 302 |
 
