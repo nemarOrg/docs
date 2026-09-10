@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator';
 
@@ -7,6 +8,19 @@ import starlightLinksValidator from 'starlight-links-validator';
 export default defineConfig({
 	site: 'https://docs.nemar.org',
 	integrations: [
+		// Declared here so the admin section stays out of the sitemap. Starlight
+		// adds its own copy of this integration only when the array does not
+		// already contain one (node_modules/@astrojs/starlight/index.ts:101), so
+		// this REPLACES that copy rather than producing a second sitemap. Nothing
+		// is lost by replacing it: Starlight's wrapper only passes i18n options,
+		// and this site declares no `locales`.
+		//
+		// The `/admin/*` gate cannot cover /sitemap-0.xml, so without this filter
+		// the sitemap hands every gated URL to any crawler that asks -- which is
+		// how all twelve were published while the section was believed private.
+		// `scripts/check-admin-gating.ts --built` fails the build if one comes
+		// back, because a filter nobody checks is a filter that quietly breaks.
+		sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/admin/') }),
 		starlight({
 			title: 'NEMAR',
 			description: 'Documentation for the NEMAR ecosystem: the CLI, the platform APIs, and the data plane.',
