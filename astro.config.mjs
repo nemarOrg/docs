@@ -43,6 +43,7 @@ export default defineConfig({
 						{ label: 'Why NEMAR?', slug: 'why-nemar' },
 						{ label: 'Mission and vision', slug: 'ecosystem/mission-and-vision' },
 						{ label: 'Overview', link: '/ecosystem/' },
+						{ label: 'Which surface should I use?', slug: 'ecosystem/which-surface' },
 						{ label: 'CLI vs the web', slug: 'ecosystem/cli-vs-web' },
 						{ label: 'Compute roadmap', slug: 'ecosystem/compute' },
 					],
