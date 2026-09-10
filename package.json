@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "sh scripts/ensure-full-history.sh && bun run scripts/check-admin-gating.ts && astro build",
+    "build": "sh scripts/ensure-full-history.sh && bun run scripts/check-admin-gating.ts && astro build && bun run scripts/check-admin-gating.ts --built",
     "test": "bun test",
     "probe:gate": "bun run scripts/probe-admin-gate.ts",
     "preview": "astro preview",
