@@ -42,8 +42,8 @@ the canonical target its Digital Object Identifier (DOI) resolves to,
 and `?v=v1.0.0` selects a particular version.
 
 It is also a complete account and upload surface, not just a catalog.
-Signing up, browser upload, collaborator management, and the publication-request queue are all here,
-on the signed-in half of the site at `app.nemar.org`
+Sign-in, browser upload, collaborator management, and the publication-request queue live on the
+signed-in half of the same site, at `app.nemar.org`
 (the split between the two hostnames is about the session cookie, not about features;
 see [Hosts and routes](/platform/hosts-and-routes/)).
 
@@ -162,9 +162,9 @@ Four reasons, and none of them is "the CLI was missing a feature".
 The CLI's interface is prose: `--help` text, positional arguments, and exit codes meant for a human
 who will read an error and try again.
 A model driving that has to have a shell, guess at flags, and parse output written for eyes.
-MCP is the same archive presented as typed tools with argument schemas,
+MCP is the same archive presented as tools with declared argument schemas,
 so the client knows what a call takes before it makes it,
-and gets a typed refusal it can act on rather than a message it has to interpret.
+and a rejected call comes back naming the limit it crossed rather than as output to be parsed.
 The server also does the arithmetic that is easiest to get wrong by hand:
 `read_window` converts your seconds into a sample range at the rate the array is actually served at,
 and `get_events` returns event sample indices computed by the converter rather than
@@ -204,8 +204,8 @@ Neither one substitutes for the other.
 
 Several tasks have more than one right answer, and the docs should say so.
 
-- **Searching the catalog** is available on all five surfaces.
-  Use the website if you are the one reading the results.
+- **Searching the catalog** is available on four of the five: the website, the CLI, the API, and
+  the MCP server all answer it. Use the website if you are the one reading the results.
 - **Uploading** happens on exactly two: the website and the CLI.
   Both need upload access first; see [Upload access](/web/upload-access/).
 - **Downloading a whole dataset** is the CLI or the data plane.
