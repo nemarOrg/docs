@@ -48,6 +48,7 @@ metadata, and the streaming copy each live on a different host:
 | Can I read one BIDS path? | `https://data.nemar.org/<id>/<version>/<bids-path>` |
 | Can I stream converted chunks? | `https://zarr.nemar.org/<id>/zarr/...` where indexed |
 | What does a person see? | `https://nemar.org/dataset/<id>` |
+| Can I send a person to one recording? | `https://nemar.org/dataset/<id>?view=sub-01_task-rest` ([linking to a recording](/web/viewer-links/)) |
 | What is the page in simple text? | `https://nemar.org/dataset/<id>.md` |
 | Where are the conventions? | `https://docs.nemar.org/` and `/llms.txt` |
 | My client speaks MCP — can I skip URL assembly? | `https://mcp.nemar.org/mcp` ([tool calling](#tool-calling-mcpnemarorg)) |
