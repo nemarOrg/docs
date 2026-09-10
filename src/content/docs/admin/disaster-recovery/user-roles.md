@@ -1,5 +1,6 @@
 ---
 title: "NEMAR User Roles and Responsibilities"
+pagefind: false
 ---
 
 **Version:** 1.0.0

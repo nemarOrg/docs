@@ -1,5 +1,6 @@
 ---
 title: "NEMAR Disaster Recovery Documentation"
+pagefind: false
 ---
 
 This directory contains comprehensive disaster recovery procedures for NEMAR dataset restoration.

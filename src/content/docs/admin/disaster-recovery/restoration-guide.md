@@ -1,5 +1,6 @@
 ---
 title: "NEMAR Dataset Restoration Guide"
+pagefind: false
 ---
 
 **Version:** 1.0.0

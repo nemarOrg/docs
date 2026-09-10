@@ -1,5 +1,6 @@
 ---
 title: "NEMAR DISASTER RECOVERY GUIDE"
+pagefind: false
 ---
 
 **🚨 EMERGENCY RESPONSE PROCEDURES**

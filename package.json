@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "sh scripts/ensure-full-history.sh && astro build",
+    "build": "sh scripts/ensure-full-history.sh && bun run scripts/check-admin-gating.ts && astro build",
+    "test": "bun test",
+    "probe:gate": "bun run scripts/probe-admin-gate.ts",
     "preview": "astro preview",
     "astro": "astro",
     "gen:commands": "bun run scripts/generate-commands.ts",
-    "deploy": "astro build && wrangler deploy",
-    "preview:worker": "astro build && wrangler dev"
+    "deploy": "bun run build && wrangler deploy",
+    "preview:worker": "bun run build && wrangler dev"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.39.3",

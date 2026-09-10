@@ -1,5 +1,6 @@
 ---
 title: "GitHub App setup"
+pagefind: false
 ---
 
 This is the operational runbook for creating the GitHub App that the

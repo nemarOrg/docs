@@ -1,5 +1,6 @@
 ---
 title: "Zarr serving copy — operations runbook"
+pagefind: false
 ---
 
 NEMAR tracks every recording and keeps a derived, **latest-only** Zarr v3 serving copy where
