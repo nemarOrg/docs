@@ -35,7 +35,7 @@ This page answers the question before those: *which host, and why that one.*
 | `data.nemar.org` | Public dataset files, version manifests, archive zips | The same Worker, data fork | Anonymous |
 | `zarr.nemar.org` | The Zarr serving copies and their index documents | The same Worker, zarr fork | Anonymous |
 | `mcp.nemar.org` | The Model Context Protocol server | The same Worker, mcp fork | Anonymous |
-| `docs.nemar.org` | This site | `nemarOrg/docs`, Worker Static Assets | Anonymous, except `/admin/*` behind Cloudflare Access |
+| `docs.nemar.org` | This site | `nemarOrg/docs`, Cloudflare Pages, built from `main` on merge | Anonymous, except `/admin/*` behind Cloudflare Access |
 | `dashboard.nemar.org` | The hub at `/`, the `/observability` health dashboard, and `/citations` | `nemarOrg/nemar-observability` for the first two; a separate legacy Pages project still serves `/citations` | Anonymous reads, plus one token-gated pipeline push. The public snapshot carries no private dataset ids |
 
 ## One Worker, four hostnames
@@ -241,5 +241,5 @@ If you need to confirm or extend it, read these rather than sending requests:
 | The app and public host split, redirects, canonical origins, legacy URLs | `website` `src/lib/host.ts`, applied in `src/middleware.ts` |
 | The website's routes | `website` `src/pages/` |
 | Website environment hostnames | `website` `wrangler.toml`, and `.github/workflows/deploy-test.yml` for staging |
-| This site's deploy | `docs` `wrangler.jsonc` |
+| This site's deploy | The `nemar-docs` Cloudflare Pages project, git-connected to `main`. The `wrangler.jsonc` in the `docs` repo describes a planned Workers Static Assets deployment that is not live |
 | The dashboard's routes | `nemar-observability` `wrangler.toml` |
