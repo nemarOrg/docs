@@ -5,7 +5,7 @@
 ## Project Context
 **Purpose:** Source for [docs.nemar.org](https://docs.nemar.org), the documentation for the whole NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) ecosystem. The command-line interface (CLI) is one section among others (platform APIs, data plane, admin); design new content so additional NEMAR systems can join as their own sections rather than being folded into the CLI docs.
 **Tech Stack:** Astro Starlight, Bun, TypeScript. This repo is intentionally free of any Python toolchain (it was migrated off MkDocs precisely to drop the Python dependency that lived in `nemar-cli`).
-**Deploy target:** Cloudflare Worker via Workers Static Assets (`wrangler.jsonc` serves `./dist`), SCCN Cloudflare account, custom domain `docs.nemar.org`.
+**Deploy target:** the `nemar-docs` Cloudflare **Pages** project on the SCCN account, git-connected to `main` and bound to `docs.nemar.org`. A push to `main` builds and deploys itself; nothing here is deployed by hand. The `wrangler.jsonc` in this repo describes a planned move to a Workers Static Assets deployment and is NOT what serves the site today (its own comment says the name is provisional to avoid colliding with this Pages project). See the Deployment section below.
 
 ## Architecture Map
 ```
@@ -65,7 +65,11 @@ A shallow clone hides both git-derived dates and logs a build warning instead of
 5. PR; run `/review-pr` for non-trivial changes.
 
 ## Deployment
-Deployed as a Cloudflare Worker (Workers Static Assets) on the SCCN account. `bun run build` produces `./dist`; `bun run deploy` runs `astro build && wrangler deploy`. Custom-domain binding to `docs.nemar.org` and the Cloudflare Access app on `/admin/*` are configured in the Cloudflare dashboard.
+Served by the `nemar-docs` Cloudflare Pages project on the SCCN account, git-connected with `main` as the production branch: merging to `main` triggers the build and the deploy, and a branch push gets a preview deployment. Confirm one with `bunx cfman wrangler --account sccn pages deployment list --project-name nemar-docs`.
+
+Custom-domain binding to `docs.nemar.org` and the Cloudflare Access app on `/admin/*` are configured in the Cloudflare dashboard.
+
+`bun run deploy` (`astro build && wrangler deploy`) targets the Workers Static Assets deployment in `wrangler.jsonc`, which does not exist on the account yet (`wrangler deployments list` answers `This Worker does not exist`). Do not run it expecting to publish the live site.
 
 ## [NEVER DO THIS]
 - Never use `npm`, `npx`, or `pnpm`; use Bun.
