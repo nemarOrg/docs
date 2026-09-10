@@ -8,6 +8,11 @@ integration deciding how to find, describe, or fetch NEMAR data programmatically
 pages that carry the real contracts rather than restating them — where this page and a page it
 links to ever disagree, the linked page is right.
 
+If you are a person deciding *whether* you want any of this, rather than a client already using it,
+read [Which surface should I use?](/ecosystem/which-surface/) first. It compares all five NEMAR
+surfaces in plain terms, including why the MCP server exists when the CLI already does, and links
+back here for the contracts.
+
 NEMAR is committed to agentic research: not only the code repositories, but also the webpages,
 dataset records, and data access paths should be understandable to software. An agent should be
 able to discover a dataset, inspect its context, identify the exact release, and explain what it
@@ -225,6 +230,10 @@ dequantization rule — and you fetch the bytes yourself, straight from S3 or th
 rather than truncates when you ask for too much. So the server is a broker that tells you where to
 read and what the numbers mean; the bytes stay on the fast path.
 
+For the human-facing version of that argument, including why this server is not a wrapper around
+the CLI, see
+[Why this exists when the CLI already does](/ecosystem/which-surface/#why-this-exists-when-the-cli-already-does).
+
 ### Transport
 
 Streamable HTTP, protocol revision `2026-07-28`. The older 2025 revision is served from the same
@@ -435,6 +444,14 @@ and an `index.json` over 24 MiB. Both are readable directly, and a handful of th
 in the archive are in that range.
 
 ### Client configuration
+
+**Which clients this has actually been verified against.** The server serves both the 2026-07-28
+revision and the 2025 era from the same endpoint, so an older client still works; what varies is
+whether a client can negotiate the newer revision at all. Claude Code is verified. The Python SDK is
+verified, on `mcp` 2.2.0. Claude Desktop is stated as supported by Anthropic, but no specific
+version was checked here. **Cursor is unverified and may not support the revision yet**, so treat
+the snippet below as the shape to use once it does rather than a configuration known to work. If you
+try one of the unverified clients, the quickest check is whether `tools/list` returns the six tools.
 
 Claude Desktop or Claude Code, in `claude_desktop_config.json` or via `claude mcp add`:
 

@@ -24,14 +24,17 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 NEMAR (Neuroelectromagnetic Data Archive and Tools Resource) is a platform for archiving,
 sharing, and processing neuroimaging datasets in Brain Imaging Data Structure (BIDS) format.
-It is several systems working together; the command-line interface is the entry point most
-users start with, but it is only one part.
+It is several systems working together: a website, a CLI, a backend API, a Zarr serving copy for
+signal data, and a Model Context Protocol (MCP) server for AI assistants. If you are not sure
+which of those you want, start with [Which surface should I use?](/ecosystem/which-surface/).
 
 <CardGrid stagger>
   <LinkCard title="Why use NEMAR?" href="/why-nemar/" description="See what NEMAR adds around a citable dataset: metadata, versioning, APIs, the CLI, and derived access." />
+  <LinkCard title="Which surface should I use?" href="/ecosystem/which-surface/" description="The website, the CLI, the API, the Zarr copy, or the MCP server: what each is for, and why not the others." />
   <LinkCard title="The NEMAR ecosystem" href="/ecosystem/" description="How the CLI, APIs, data plane, browser, and viewer fit together." />
   <LinkCard title="CLI" href="/cli/" description="Upload, validate, version, and download datasets from your terminal." />
   <LinkCard title="Platform & APIs" href="/platform/" description="The backend API and the public data plane." />
+  <LinkCard title="MCP server" href="/platform/for-agents/#tool-calling-mcpnemarorg" description="Tool calling for AI assistants and agents: six tools at mcp.nemar.org, no account and no install." />
   <LinkCard title="Admin" href="/admin/commands/" description="Operations and runbooks for NEMAR administrators (access-gated)." />
 </CardGrid>
 

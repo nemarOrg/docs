@@ -1,11 +1,17 @@
 ---
 title: CLI vs the web
-description: NEMAR has two surfaces, the CLI and the web app. They share one backend, accounts, and datasets. Here is when to use each.
+description: The CLI and the web app are the two surfaces a person uses to do dataset work. They share one backend, accounts, and datasets. Here is when to use each.
 ---
 
-NEMAR has two surfaces: the **web app** ([nemar.org](https://nemar.org)) and the
-**[CLI](/cli/)**. They share the same backend, the same accounts, and the same datasets, but each
-is optimized for a different workflow.
+The **web app** ([nemar.org](https://nemar.org)) and the **[CLI](/cli/)** are the two surfaces a
+person uses to do dataset work. They share the same backend, the same accounts, and the same
+datasets, but each is optimized for a different workflow.
+
+This page compares those two in depth.
+NEMAR has three more surfaces that are not aimed at a person clicking or typing: the backend API,
+the Zarr serving copy, and the Model Context Protocol (MCP) server.
+For the whole set, and which one a given task calls for, see
+[Which surface should I use?](/ecosystem/which-surface/).
 
 ## What the web is best for
 
