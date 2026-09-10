@@ -553,3 +553,7 @@ review remains authoritative.
 
 These interfaces are designed to be explicit and inspectable. They are not permission to expose
 private datasets or to send participant-level recordings to a language model.
+
+Every NEMAR hostname, the paths each one serves, and where a retired URL now points are listed in
+[Hosts and routes](/platform/hosts-and-routes/). Derive a URL from that page rather than probing
+for one.
