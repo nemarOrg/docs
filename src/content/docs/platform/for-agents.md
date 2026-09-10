@@ -8,6 +8,11 @@ integration deciding how to find, describe, or fetch NEMAR data programmatically
 pages that carry the real contracts rather than restating them — where this page and a page it
 links to ever disagree, the linked page is right.
 
+If you are a person deciding *whether* you want any of this, rather than a client already using it,
+read [Which surface should I use?](/ecosystem/which-surface/) first. It compares all five NEMAR
+surfaces in plain terms, including why the MCP server exists when the CLI already does, and links
+back here for the contracts.
+
 NEMAR is committed to agentic research: not only the code repositories, but also the webpages,
 dataset records, and data access paths should be understandable to software. An agent should be
 able to discover a dataset, inspect its context, identify the exact release, and explain what it
@@ -224,6 +229,10 @@ dequantization rule — and you fetch the bytes yourself, straight from S3 or th
 `zarr.nemar.org`. It will decode a small window inline if you ask (`taste: true`), and it refuses
 rather than truncates when you ask for too much. So the server is a broker that tells you where to
 read and what the numbers mean; the bytes stay on the fast path.
+
+For the human-facing version of that argument, including why this server is not a wrapper around
+the CLI, see
+[Why this exists when the CLI already does](/ecosystem/which-surface/#why-this-exists-when-the-cli-already-does).
 
 ### Transport
 

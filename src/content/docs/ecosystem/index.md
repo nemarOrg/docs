@@ -25,7 +25,11 @@ canonical data plane from derived Zarr access.
 | **Data plane** | `data.nemar.org` | Public dataset files, version manifests, `records.json`, archive zips | [Data API](/platform/data-api/) |
 | **Dataset browser** | `nemar.org` | The dataset browser (Astro) | external |
 | **Zarr serving plane** | `zarr.nemar.org` | Derived, chunked access used by the in-browser signal viewer where conversion is available | [Zarr and edge access](/platform/zarr/) |
+| **MCP server** | `mcp.nemar.org` | The archive as six callable tools, for AI assistants and agents that speak Model Context Protocol (MCP) | [For agents and tools](/platform/for-agents/) |
 | **Scholarly record** | DOI landing pages | A durable concept identity and precise version citations | [DOI and versioning](/platform/doi-and-versioning/) |
+
+Not sure which of those you want? [Which surface should I use?](/ecosystem/which-surface/) is the
+decision page: what each surface is for, and why not one of the others.
 
 ## How a dataset flows through NEMAR
 
@@ -47,6 +51,8 @@ than silently changing the object that an earlier analysis used.
 
 ## Where to go next
 
+- Not sure which surface fits your task? Read
+  [Which surface should I use?](/ecosystem/which-surface/).
 - New to NEMAR? Start with the [CLI installation guide](/cli/getting-started/installation/).
 - Read the [mission and vision](/ecosystem/mission-and-vision/) for the public purpose and open
   science commitments.
