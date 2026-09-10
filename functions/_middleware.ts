@@ -166,9 +166,16 @@ export function readCookies(header: string | null, name: string): string[] {
 	return values;
 }
 
-/** 404, matching the website's `adminGate`, which answers 404 rather than 403 so
- *  the existence of the admin surface is not disclosed by a status code.
- *  Reaching this means a real signed-in account that is not an admin. */
+/** 404, matching the website's `adminGate`. Reaching this means a real signed-in
+ *  account that is not an admin.
+ *
+ *  Why 404 and not 403: it does not confirm to a signed-in reader that their
+ *  account was checked and found wanting. It is NOT a claim that the section is
+ *  hidden -- the sidebar links every admin page by title from every public page,
+ *  `robots.txt` names the prefix in order to ask crawlers off it, and this
+ *  repository is public, so the pages themselves are readable on GitHub. This
+ *  gate controls who is SERVED the pages on this host; concealment is not one of
+ *  its properties, and no comment here should imply otherwise. */
 function notFound(): Response {
 	return new Response(
 		"<!doctype html><meta charset=utf-8><title>Not found</title><h1>404</h1>\n",
