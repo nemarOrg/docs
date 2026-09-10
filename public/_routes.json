@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/admin/*", "/__docs-auth/*"],
+  "exclude": []
+}
