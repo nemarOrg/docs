@@ -49,8 +49,81 @@ Two things it deliberately will not do:
 - **It never guesses across differing labels.** `sub-1` will find `sub-01`, since leading zeros are a common difference between one catalog's records and another's, but an exact match always wins first.
 
 :::note
-The viewer only opens for recordings NEMAR has converted for streaming. A dataset still being converted shows a note explaining that instead. See [the Zarr serving copy](/platform/zarr/) for what conversion covers.
+The viewer only opens for recordings NEMAR has converted for streaming. A dataset still being converted shows a note explaining that instead, and the next section is how to find out which recordings are ready.
 :::
+
+## Which recordings can I link to?
+
+The viewer opens for recordings NEMAR has converted to its streaming copy, which is usually most of a dataset but rarely all of it. That list is public, per dataset, and needs no key:
+
+```bash
+curl -s https://zarr.nemar.org/on007753/zarr/index.json | jq -r '.stores[].path'
+```
+
+```
+sub-01/eeg/sub-01_task-BCCWJreading_eeg.vhdr
+sub-02/eeg/sub-02_task-BCCWJreading_eeg.vhdr
+sub-03/eeg/sub-03_task-BCCWJreading_eeg.vhdr
+...
+```
+
+Each entry in `stores` is a recording the viewer can open. The same document's `failures` says why anything missing is missing, in the same words the dataset page shows a visitor:
+
+```bash
+curl -s https://zarr.nemar.org/nm000112/zarr/index.json \
+  | jq '{discovered: .discovered_count, viewable: .store_count, failed: .failure_count},
+       (.failures[0] | {path, code, reason})'
+```
+
+```json
+{ "discovered": 123, "viewable": 90, "failed": 33 }
+{
+  "path": "sub-004/eeg/sub-004_task-watchingVideoClips_eeg.bdf",
+  "code": "corrupt_or_truncated",
+  "reason": "This recording's data file appears truncated or corrupt, so the viewer could not be generated."
+}
+```
+
+That view is trimmed; a real failure entry also carries `zarr`, `attempts`, and a `detail` field with the underlying converter error (for the recording above, an EDF/BDF compliance error). `reason` is the visitor-facing sentence, `detail` is for whoever is going to fix it.
+
+Nothing is silently dropped: every discovered recording is either in `stores`, in `failures` with a reason, or in `pending` because it is still expected to convert. [The index contract](/platform/zarr/index-contract/) documents all three field by field, and [the serving copy overview](/platform/zarr/) explains what conversion covers.
+
+:::caution[Read `format_version` first]
+Older datasets still serve a version 1 index until they are reconverted, and version 1 has no `discovered_count`. Branch on `format_version` rather than assuming the shape above; for a v1 index, treat `store_count + failure_count` as the denominator.
+:::
+
+### Generating a link per recording
+
+Derive the entities from each store's own path rather than from a participant table, and the links cannot outrun the data:
+
+```bash
+curl -s https://zarr.nemar.org/on007753/zarr/index.json \
+  | jq -r --arg id on007753 '.stores[] | "https://nemar.org/dataset/\($id)?view=" +
+      (.path | split("/") | last | split("_")
+             | map(select(test("^(sub|ses|task|acq|run)-"))) | join("_"))'
+```
+
+```
+https://nemar.org/dataset/on007753?view=sub-01_task-BCCWJreading
+https://nemar.org/dataset/on007753?view=sub-02_task-BCCWJreading
+...
+```
+
+Two reasons to take the list from `stores` rather than from subject numbering: `on007753` above has 41 recordings but skips `sub-22`, `sub-37`, and `sub-42`, and `nm000112` has 33 recordings that exist in the dataset yet cannot be viewed. Enumerating subjects yourself produces links to both.
+
+### Starting from no dataset id
+
+For a list of every dataset with a streaming copy, read the catalog at the same host:
+
+```bash
+curl -s https://zarr.nemar.org/catalog.json | jq -r '.count, .datasets[0].index_url'
+```
+
+It carries each dataset's identity, modalities, tasks, and the absolute `index_url` for the per-dataset document above. Anonymous bucket listing is denied, so these two documents -- the catalog and the per-dataset index -- are the intended discovery path rather than a fallback.
+
+### Or just look at the page
+
+Every dataset page shows the same thing to a reader, computed from that identical index: a panel reading **"N of M recordings viewable"**, with anything that failed grouped by reason underneath and each viewable recording linking into the file tree. If you only want to check one dataset, that is faster than any of the above.
 
 ## For catalogs and other integrators
 

@@ -14,6 +14,11 @@ Anonymous `ListBucket` is denied on the serving bucket entirely, including at th
 see [Access and hosting](/platform/zarr/access/) for the bucket's access model.
 A request without the `/zarr/` path segment, or for a dataset id alone with no file name, returns `404`.
 
+:::tip[Just want the list of viewable recordings?]
+`stores[].path` is the answer, and [Linking to a recording](/web/viewer-links/#which-recordings-can-i-link-to) has the one-line `curl`
+for it plus a recipe that turns each entry into a shareable viewer link. This page is the full contract behind those commands.
+:::
+
 The document's JSON Schema is published at:
 
 ```
