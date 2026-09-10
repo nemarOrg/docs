@@ -445,6 +445,14 @@ in the archive are in that range.
 
 ### Client configuration
 
+**Which clients this has actually been verified against.** The server serves both the 2026-07-28
+revision and the 2025 era from the same endpoint, so an older client still works; what varies is
+whether a client can negotiate the newer revision at all. Claude Code is verified. The Python SDK is
+verified, on `mcp` 2.2.0. Claude Desktop is stated as supported by Anthropic, but no specific
+version was checked here. **Cursor is unverified and may not support the revision yet**, so treat
+the snippet below as the shape to use once it does rather than a configuration known to work. If you
+try one of the unverified clients, the quickest check is whether `tools/list` returns the six tools.
+
 Claude Desktop or Claude Code, in `claude_desktop_config.json` or via `claude mcp add`:
 
 ```json
