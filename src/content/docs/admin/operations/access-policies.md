@@ -1,5 +1,6 @@
 ---
 title: "Access Policies"
+pagefind: false
 ---
 
 This document codifies how NEMAR manages credentials and access across

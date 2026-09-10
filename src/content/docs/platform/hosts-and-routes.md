@@ -35,7 +35,7 @@ This page answers the question before those: *which host, and why that one.*
 | `data.nemar.org` | Public dataset files, version manifests, archive zips | The same Worker, data fork | Anonymous |
 | `zarr.nemar.org` | The Zarr serving copies and their index documents | The same Worker, zarr fork | Anonymous |
 | `mcp.nemar.org` | The Model Context Protocol server | The same Worker, mcp fork | Anonymous |
-| `docs.nemar.org` | This site | `nemarOrg/docs`, Cloudflare Pages, built from `main` on merge | Anonymous, except `/admin/*` behind Cloudflare Access |
+| `docs.nemar.org` | This site | `nemarOrg/docs`, Cloudflare Pages, built from `main` on merge | Anonymous, except `/admin/*`: a NEMAR session with the `admin` role, obtained by a handoff through `app.nemar.org` |
 | `dashboard.nemar.org` | The hub at `/`, the `/observability` health dashboard, and `/citations` | `nemarOrg/nemar-observability` for the first two; a separate legacy Pages project still serves `/citations` | Anonymous reads, plus one token-gated pipeline push. The public snapshot carries no private dataset ids |
 
 ## One Worker, four hostnames
@@ -179,6 +179,28 @@ On `api.nemar.org`, the API is mounted by prefix:
 Two more public endpoints sit directly on this host rather than under a prefix:
 `GET /health` for liveness, and `GET /notices` for the site-wide notices
 that the website's `/api/notices` proxy reads.
+
+## The docs host and its gated section
+
+This site is anonymous everywhere except `/admin/*`,
+which serves the operator runbooks and needs a NEMAR session whose account carries the `admin` role.
+`users.role` in the platform database is the only source of truth for that,
+so the gate is not a second list of who counts as an administrator.
+
+The gate is NEMAR's own, not a Cloudflare Access application.
+It cannot read the platform session directly:
+that cookie is scoped to `app.nemar.org` and never travels to this hostname,
+which is the same reason the data and Zarr hosts cannot read it either.
+So sign-in is a handoff.
+This host redirects to `app.nemar.org`, which proves the session and returns a short-lived
+one-time code, and this host trades that code for a cookie of its own.
+An account without the role gets a 404 rather than a 403, matching the website.
+
+Cloudflare Access does exist on this Pages project, and it is worth being precise about what it
+covers, because imprecision here is exactly what produced a since-corrected claim that
+`/admin/*` was protected by it:
+the Access application covers **preview deployments** only, never the production hostname.
+Preview URLs are gated by it; `docs.nemar.org/admin/*` is gated by the handoff described above.
 
 ## Staging
 

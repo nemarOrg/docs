@@ -1,6 +1,7 @@
 ---
 title: "Account Kinds"
 description: "person, service, and test accounts: who sets a kind, the sign-in refusal, owner-minted keys, and the migrated operational accounts."
+pagefind: false
 ---
 
 `users.account_kind` names what an account IS, not what it may do (ADR 0048).

@@ -1,0 +1,21 @@
+# NEMAR documentation (docs.nemar.org)
+#
+# Until this file existed, docs.nemar.org served a Cloudflare-generated
+# robots.txt: 24 lines explaining the content-signal vocabulary and reserving
+# rights under Article 4 of EU Directive 2019/790, and not one directive -- no
+# User-agent group, no Content-Signal line, no Disallow. By its own clause (c) a
+# use with no signal is neither granted nor restricted, so that file expressed no
+# policy and nothing is lost by serving this one instead. Cloudflare appends its
+# preamble to an origin robots.txt rather than replacing it, so expect both.
+#
+# Disallowing /admin/ names the prefix, which is the trade this file makes
+# deliberately: keeping the runbooks out of search results is worth more than
+# hiding that a gated section exists. Non-disclosure was never available anyway
+# -- this repository is public, so every admin page is readable on GitHub. The
+# access control is the gate itself (see AGENTS.md), never the obscurity of a URL.
+
+User-agent: *
+Disallow: /admin/
+Allow: /
+
+Sitemap: https://docs.nemar.org/sitemap-index.xml

@@ -1,5 +1,6 @@
 ---
 title: "Backend Fail-Safes Against Dataset Deletion"
+pagefind: false
 ---
 
 **Status:** IMPLEMENTED (shipped; originally tracked in Issue #35)

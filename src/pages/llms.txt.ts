@@ -25,8 +25,10 @@ const SECTION_TITLES: Record<string, string> = {
 };
 
 export const GET: APIRoute = async ({ site }) => {
-	// Admin content is edge-gated by Cloudflare Access (see AGENTS.md); it must
-	// never be advertised in a public index.
+	// Admin content is gated by an admin-only NEMAR session (see AGENTS.md), and
+	// this file is served from /llms.txt, outside that gate. So the filter is the
+	// only thing keeping the gated pages out of a public index, which is why
+	// `scripts/check-admin-gating.ts --built` fails the build if one appears here.
 	const entries = await getCollection(
 		'docs',
 		(entry) => entry.id !== 'admin' && !entry.id.startsWith('admin/'),

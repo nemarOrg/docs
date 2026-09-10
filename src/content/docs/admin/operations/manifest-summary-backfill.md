@@ -1,5 +1,6 @@
 ---
 title: "Manifest summary.json backfill"
+pagefind: false
 ---
 
 Backfill the compact `summary.json` artifact for datasets that were

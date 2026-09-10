@@ -19,7 +19,8 @@ src/content/docs/
 │   └── reference/         #   configuration, environment
 ├── platform/              # PUBLIC: backend API + data plane
 ├── develop/               # PUBLIC: contributor setup, zenodo testing
-└── admin/                 # GATED: served under /admin/*, edge-gated by Cloudflare Access
+└── admin/                 # GATED: served under /admin/*, admin-only NEMAR session (see below)
+    ├── index.md           #   section index: what each gated group is for
     ├── commands.mdx        #   admin command reference (GENERATED)
     ├── github-app-setup.md
     ├── operations/         #   access-policies, manifest-summary-backfill, zarr-serving
@@ -33,7 +34,21 @@ wrangler.jsonc             # Cloudflare Worker (Workers Static Assets -> dist)
 ```
 
 ## Public vs Admin (access model)
-Everything under `src/content/docs/admin/` builds to `/admin/*`. The whole site is static; access control is applied at the **edge by Cloudflare Access** on `docs.nemar.org/admin/*` (email/IdP policy), NOT by repo privacy. The repo is public. Keep genuinely internal material (webhook contracts, observability internals, SSR contracts) in the `nemar-cli` repo, not on this site even behind the gate.
+Everything under `src/content/docs/admin/` builds to `/admin/*` and is gated by **NEMAR's own ORCID-backed session**, not by repo privacy and not by Cloudflare Access. The repo is public. Keep genuinely internal material (webhook contracts, observability internals, SSR contracts) in the `nemar-cli` repo, not on this site even behind the gate.
+
+**What this file used to say was false, and it matters.** It claimed Cloudflare Access enforced on `docs.nemar.org/admin/*`. It did not: the Access app on this Pages project covers **preview deployments only**, so every page under `/admin/` answered 200 to anyone on production and all 12 were listed in the public sitemap. Nothing confidential leaked (procedures and identifiers, never credential values, in a public repo), but anyone reading this file believed the section was protected and would have written accordingly. If you find yourself relying on a control described here, check it with a request before you trust it.
+
+The gate has three parts, and removing any one of them reopens the hole:
+
+1. **`functions/_middleware.ts`** requires a `__Host-nemar_docs_session` cookie and asks `api.nemar.org/auth/docs/verify` whether it belongs to an admin. `users.role` in the platform database is the single source of truth, which is why this is not an Access email allowlist: a second copy of "who is an admin" is the thing that drifts. It **fails closed**: only an exact `200` carrying `ok: true` is an admin verdict, so an unreachable API, a redirect, a 204, a body that is not JSON and a 200 that says otherwise all refuse. A signed-in non-admin gets **404, not 403**, matching `adminGate` on the website, so the response does not confirm to a signed-in reader that their account was checked and found wanting.
+
+   **Do not upgrade that into a claim that the section is hidden.** It is not, and aiming for it would be wasted work: the sidebar links all 13 admin pages by title from every public page, `robots.txt` names the prefix in order to ask crawlers off it, and this repository is public, so the pages themselves are on GitHub. The gate controls who is *served* the pages on this host. Non-disclosure is not one of its properties, and no comment or document here should imply otherwise.
+2. **The gate runs SITE-WIDE and normalizes the path itself**, and it must stay that way. It was scoped to `/admin/*` first, and that was bypassable: Pages decides whether to invoke a Function by matching `_routes.json` against the RAW pathname, while the asset server percent-decodes before it looks up a file, so `GET /admin%2Fcommands/` matched no rule, ran no Function, and was then served as `/admin/commands/` to anyone. `/%61dmin/commands/`, `/ADMIN/commands/`, `//admin/commands/` and `/admin%252Fcommands/` are the same defect wearing other spellings. The lesson generalizes: an access control fronted by an allowlist of path spellings is fail-open by construction, because it can only enumerate the encodings someone has already thought of. `public/_routes.json` is therefore `include: ["/*"]` with an `exclude` list holding only prefixes that cannot resolve to an admin page (hashed assets, the search index, the crawler files). Narrowing `include` back to `/admin/*` re-opens a hole that was already found once.
+3. **Nothing about `/admin/` in the documents served outside the gate**, enforced by `scripts/check-admin-gating.ts`, which the `build` script runs twice: once on the source before `astro build` (a fast error naming the page that is missing a top-level `pagefind: false`) and once with `--built` on `dist/` afterwards. The second run is the deciding one, because the source check argues about text while the built one reads what was published: it fails on an `/admin/` URL in a Pagefind fragment, in the sitemap, or in `llms.txt`. `/pagefind/*`, `/sitemap-0.xml` and `/llms.txt` are all outside `/admin/`, so the middleware never sees them, and the search index otherwise carries the full text of every admin page. Two traps: Starlight honours `pagefind: false` only as a **top-level** frontmatter field, so a nested one is a false pass; and fragments are gzip behind a `pagefind_dcd` marker, so a plain `grep` over `dist/pagefind/` finds nothing **even when the content is there** -- decompress, or you will get a false pass. The sitemap exclusion is the `filter` on the `@astrojs/sitemap` integration declared in `astro.config.mjs`; declaring it there replaces the copy Starlight would otherwise inject.
+
+Signing in goes through the website: the middleware redirects to `app.nemar.org/auth/docs/authorize`, which proves an admin session and returns to `/__docs-auth/callback` with a one-time code worth 60 seconds. The docs host trades it for its own cookie (`functions/__docs-auth/callback.ts`). The cookie is host-only by design; the platform's own session is scoped to `app.nemar.org` so it never travels to the data or zarr hosts, which is exactly why a handoff is needed rather than a shared cookie. Signing out of nemar.org revokes the docs session too.
+
+**Verifying it.** `bun test` covers the middleware's decisions. It cannot cover the routing, and this is the trap: `wrangler pages dev` serves a static asset **without invoking the Function**, while deployed Pages invokes the Function first and falls back to the asset only when none matches. So a local run can show a gate working that does nothing in production, or the reverse. Against a deployed host use `bun run probe:gate` (add a URL argument for a preview), which needs no credentials because the thing worth checking is what an anonymous visitor gets. Run it after any deploy that touches the gate, the routes file, or the admin section.
 
 ## Environment Setup
 ```bash
@@ -67,7 +82,7 @@ A shallow clone hides both git-derived dates and logs a build warning instead of
 ## Deployment
 Served by the `nemar-docs` Cloudflare Pages project on the SCCN account, git-connected with `main` as the production branch: merging to `main` triggers the build and the deploy, and a branch push gets a preview deployment. Confirm one with `bunx cfman wrangler --account sccn pages deployment list --project-name nemar-docs`.
 
-Custom-domain binding to `docs.nemar.org` and the Cloudflare Access app on `/admin/*` are configured in the Cloudflare dashboard.
+Custom-domain binding to `docs.nemar.org` is configured in the Cloudflare dashboard. So is the Cloudflare Access application on this project, which covers **preview deployments only** and has never covered the production hostname: `/admin/*` on `docs.nemar.org` is gated by the session handoff described above, and nothing in the dashboard gates it.
 
 `bun run deploy` (`astro build && wrangler deploy`) targets the Workers Static Assets deployment in `wrangler.jsonc`, which does not exist on the account yet (`wrangler deployments list` answers `This Worker does not exist`). Do not run it expecting to publish the live site.
 

@@ -1,6 +1,7 @@
 ---
 title: "Account Tiers and Upload Access"
 description: "What nemar admin approve now grants, the users filters and tier column, duplicate-account cleanup, and the name/username backfills."
+pagefind: false
 ---
 
 Three account states matter to admins:

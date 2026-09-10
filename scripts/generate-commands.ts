@@ -115,7 +115,14 @@ function walk(rootPath: string): Node[] {
 
 for (const group of GROUPS) {
   const nodes = walk(group.path);
-  let doc = `---\ntitle: "${group.title}"\n---\n\n`;
+  // Admin pages are gated at /admin/*, but Pagefind's index is served from
+  // /pagefind/*, which that gate does not cover, so an indexed admin page hands
+  // its full text to anyone who queries search. `pagefind: false` keeps it out.
+  // Derived from the output path rather than hardcoded to "admin" so a future
+  // gated group inherits the exclusion, and so this matches the rule
+  // scripts/check-admin-gating.ts enforces on the hand-written pages.
+  const gated = group.out.startsWith("admin/");
+  let doc = `---\ntitle: "${group.title}"\n${gated ? "pagefind: false\n" : ""}---\n\n`;
   doc += `${group.intro}\n\n`;
   doc += `:::note\nThis page is generated from \`nemar ${group.path} --help-all\`. Run \`generate-commands.ts\` to refresh it.\n:::\n\n`;
   for (const node of nodes) {
